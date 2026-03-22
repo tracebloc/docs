@@ -1,0 +1,369 @@
+---
+title: "Customize Models"
+description: "Learn the model format requirements for uploading and training models on the Tracebloc platform."
+---
+
+# Customize Models
+
+This section explains the model format so that it can be transfered and trained on the model architecture.
+
+Model code can be:
+- A single Python file containing one or more functions
+- A single Python file with no functions
+- Multiple Python files (zipped), with the main file code outside of any function
+- Multiple Python files (zipped), with the main file code inside a function
+
+<Note>
+In case of multiple files saved as .zip format, the file should be directly inside .zip file, subdirectory structure in .zip file is not supported.
+</Note>
+
+## Mandatory Variables
+
+### PyTorch mandatory variables
+
+The file must contain these variables:
+* **framework** : name of the framework for which this model file is created. For PyTorch it's value will be pytorch.
+* **model_type** : name of the model type for which this model file is created. It's value will be either *empty* or *rcnn* or *heatmap* or *yolo*.
+* **main_class** : name of the main class of the model.
+* **image_size** : name of the variable defining the input size considered for creating model layers.
+* **category** : name of the category for which this model file is created. It's value will be either of these : *image_classification*, *object_detection*, *keypoint_detection*, *text_classification*.
+* **batch_size** : name of the variable defining the batch size of the images considered for creating model layers.
+
+### Sklearn mandatory variables
+
+The file must contain these variables:
+* **framework** : name of the framework for which this model file is created. For PyTorch it's value will be pytorch.
+* **model_type** : name of the model type for which this model file is created. It's value will be either *empty* or *tree* or *linear* or *knn* or *naive* or *mlp*.
+* **main_class or main_method** : name of the main class or main method of the model. Any one of these is necessary for model.
+* **image_size** : name of the variable defining the input size considered for creating model layers.
+* **category** : name of the category for which this model file is created. It's value will be either of these : *image_classification*, *object_detection*, *keypoint_detection*, *text_classification*.
+* **batch_size** : name of the variable defining the batch size of the images considered for creating model layers.
+
+### Tensorflow mandatory variables
+
+Each format must contain these variables on the main file:
+* **framework** : name of the framework for which this model file is created. For tensorflow it's value will be tensorflow.
+* **model_type** : name of the model type for which this model file is created. It's value will be either *empty* or *rcnn* or *heatmap*.
+* **main_method** : name of the main function
+* **input_shape or image_size** : name of the variable defining the input shape of the model
+* **category** : name of the category for which this model file is created. It's value will be either of these : *image_classification*, *object_detection*, *keypoint_detection*, *text_classification*.
+* **output_classes** : name of the variable defining the output shape of the variables. The value of this variable is equal to the number of classes in the dataset.
+
+### Additional variables
+
+Some variables are neccessary specific to a category
+* **num_feature_points** : number of keypoints or feature points for which this model file is created. This variable is used only for keypoint_detection and generic_classification category.
+* **model_id** : model id using which this model file is created. This variable is used only for text_classification category.
+* **hf_token** : hf token using which this model file is created. This variable is used only for text_classification category.
+
+<Note>
+* The framework variable is compulsory and should always be placed at the top of your code just after the imports, before any other variable.
+* Changing the sequence of the framework variable will cause the model upload to fail.
+* Do not add any comment after these variables it will cause model upload to fail.
+</Note>
+
+## Detailed Information on each format
+
+### 1. Single python file containing one class for pyTorch
+
+All your model code needs to be contained in a **single python file** with the following structure:
+
+
+#### 1.1 Import Section
+
+Import all the necessary functionality needed to build your model.
+
+```python
+# Example
+import torch
+import torch.nn as nn
+```
+
+#### 1.2 Main Class
+
+This is the main method which should return the model as output.
+
+```python
+#Example
+class MyModel(nn.Module):
+    def __init__(self):
+        super(MyModel, self).__init__()
+        self.layer1 = nn.Sequential(
+            nn.Conv2d(3, 6, kernel_size=5, stride=1, padding=0),
+            nn.BatchNorm2d(6),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2))
+        self.layer2 = nn.Sequential(
+            nn.Conv2d(6, 16, kernel_size=5, stride=1, padding=0),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2))
+        self.fc = nn.Linear(16 * 53 * 53, 120)
+        self.relu = nn.ReLU()
+        self.fc1 = nn.Linear(120, 84)
+        self.relu1 = nn.ReLU()
+        self.fc2 = nn.Linear(84, 1)
+
+    def forward(self, x):
+        out = self.layer1(x)
+        out = self.layer2(out)
+        out = out.reshape(out.size(0), -1)
+        out = self.fc(out)
+        out = self.relu(out)
+        out = self.fc1(out)
+        out = self.relu1(out)
+        out = self.fc2(out)
+        return out
+```
+
+The value of the above variables would look like this:
+* framework = 'pytorch'
+* main_method = 'Net'
+* image_size = 224
+* batch_size = 16
+
+
+An example model file of this format can be found [here](https://github.com/tracebloc/model-zoo/blob/master/model_zoo/image_classification/pytorch/CNN.py).
+
+### 1. Single python file containing one class for sklearn
+
+All your model code needs to be contained in a **single python file** with the following structure:
+
+
+
+#### 1.1 Import Section
+
+Import all the necessary functionality you need to build your model.
+
+```python
+# Example
+from sklearn.svm import SVC
+```
+
+#### 1.2 Main Method
+
+This is the main method which should return the model as output.
+
+```python
+#Example
+def MyModel():
+    return SVC(kernel='linear')
+```
+
+The value of the above variables would look like this:
+* framework = 'sklearn'
+* main_method = 'MyModel'
+* image_size = 224
+* batch_size = 16
+
+### 3. Single python file containing one/multiple methods for tensorflow
+
+All your model code needs to be contained in a **single python file** with the following structure:
+
+
+
+#### 3.1 Import Section
+
+Import all the necessary functionality you need to build your model.
+
+```python
+# Example
+import tensorflow as tf
+from tensorflow.keras import layers, utils
+```
+
+#### 3.2 Supporting Functions
+
+Any kind of functionality that supports the model architecture. This section is optional. This section can be left out if the model architecture does not require it.
+
+```python
+def dense_block(input_tensor, k, block_reps):
+	"""
+	tensor: input tensor from the previous layers
+	k: growth rate
+	block_reps: Number of times the block is repeated
+	Return the concatenated tensors
+	"""
+	for _ in range(block_reps):
+
+		x = layers.BatchNormalization()(input_tensor)
+		x = layers.ReLU()(x)
+		x = layers.Conv2D(filters=4*k, kernel_size=1)(x)
+		x = layers.BatchNormalization()(x)
+		x = layers.ReLU()(x)
+		x = layers.Conv2D(filters=k, kernel_size=3, padding='same')(x)
+		output_tensor = layers.Concatenate()([input_tensor, x])
+
+		return output_tensor
+
+```
+#### 3.3 Main Method
+
+This is the main method which should return the model as output.
+
+```python
+#Example
+def MyModel(input_shape=(224,224,3),classes=3):
+
+	k = 32 #growth rate
+
+	input = layers.Input(shape=input_shape)
+	x = layers.BatchNormalization()(input)
+	x = layers.ReLU()(x)
+	x = layers.Conv2D(filters=2*k, kernel_size=7, strides=2)(x)
+	x = layers.MaxPooling2D(pool_size=3, strides=2)(x)
+
+	x = dense_block(x, 32, 6)
+	x = transition_layers(x)
+
+	x = dense_block(x, 32, 12)
+	x = transition_layers(x)
+
+	x = dense_block(x, 32, 32)
+	x = transition_layers(x)
+
+	x = dense_block(x, 32, 32)
+
+	x = layers.GlobalAveragePooling2D()(x)
+	output = layers.Dense(classes, activation='softmax')(x)
+
+	model_densenet = tf.keras.Model(input, output)
+
+	return model_densenet
+```
+
+The value of the above variables would look like this:
+* framework = 'tensorflow'
+* main_method = 'MyModel'
+* input_shape = 'input_shape'
+* output_classes = 'classes'
+
+
+### 4. Single python file having no method for tensorflow
+
+All your model code needs to be in a **single python file** with the following structure:
+
+
+
+
+The model file can be broken down into two sections: The Import section and the main code.
+
+
+#### 4.1 Import Section
+
+Import all the necessary functionalities you need to build your model.
+
+```python
+# Example
+import tensorflow as tf
+from tensorflow.keras import layers, models
+```
+#### 4.2 Main Code
+
+This is the model code with all layers.
+
+```python
+#Example
+input_shape=(224,224,3)
+classes=3
+
+model = models.Sequential()
+# layer conv 1
+model.add(layers.Conv2D(32, 3, activation='relu', input_shape=input_shape))
+model.add(layers.MaxPooling2D(2))
+layers.BatchNormalization()
+# layer conv 2
+model.add(layers.Conv2D(64, 3, activation='relu', input_shape=input_shape))
+model.add(layers.MaxPooling2D(2))
+layers.BatchNormalization()
+# layer conv 3
+model.add(layers.Conv2D(128, 3, activation='relu', input_shape=input_shape))
+model.add(layers.MaxPooling2D(2))
+layers.BatchNormalization()
+# layer conv 4
+model.add(layers.Conv2D(264, 3, activation='relu', input_shape=input_shape))
+model.add(layers.MaxPooling2D(2))
+layers.BatchNormalization()
+# layer conv 5
+model.add(layers.Conv2D(1, 1, activation='relu', input_shape=input_shape))
+layers.BatchNormalization()
+# Flatten the feature maps to serve dense
+model.add(layers.Flatten())
+model.add(layers.Dense(classes, activation='softmax'))
+```
+
+The value of the above variables would look this:
+* framework = 'tensorflow'
+* main_method = ''
+* input_shape = 'input_shape'
+* output_classes = 'classes'
+
+
+An example model file of this format:
+```python
+import tensorflow as tf
+from tensorflow.keras import layers, models
+
+framework = 'tensorflow'
+main_method = ''
+input_shape = 'input_shape'
+output_classes = 'classes'
+
+
+input_shape=(224,224,3)
+classes=3
+
+model = models.Sequential()
+# layer conv 1
+model.add(layers.Conv2D(32, 3, activation='relu', input_shape=input_shape))
+model.add(layers.MaxPooling2D(2))
+layers.BatchNormalization()
+# layer conv 2
+model.add(layers.Conv2D(64, 3, activation='relu', input_shape=input_shape))
+model.add(layers.MaxPooling2D(2))
+layers.BatchNormalization()
+# layer conv 3
+model.add(layers.Conv2D(128, 3, activation='relu', input_shape=input_shape))
+model.add(layers.MaxPooling2D(2))
+layers.BatchNormalization()
+# layer conv 4
+model.add(layers.Conv2D(264, 3, activation='relu', input_shape=input_shape))
+model.add(layers.MaxPooling2D(2))
+layers.BatchNormalization()
+# layer conv 5
+model.add(layers.Conv2D(1, 1, activation='relu', input_shape=input_shape))
+layers.BatchNormalization()
+# Flatten the feature maps to serve dense
+model.add(layers.Flatten())
+model.add(layers.Dense(classes, activation='softmax'))
+```
+
+
+### 5. Multiple python files with main file code not contained in a method
+
+In this format the model architecture is defined using multiple python files. But the main file should use the same format as type 1.
+
+In order to upload models with this format, zip all python files with the main method containing the mentioned variables and upload the zip file.
+
+<Note>
+The main file should contain the variable values as mentioned in the type 1 format. Other files should not contain these variables.
+</Note>
+
+
+### 6. Multiple python file with main file code contained in a method
+
+In this format the model architecture is defined using multiple python files. But the main file should use the same format as type 2.
+
+In order to upload models with this format, zip all python files with the main method containing the mentioned variables and upload the zip file.
+
+<Note>
+The main file should contain the variable values as mentioned in type 2 format. Other files should not contain these variables.
+</Note>
+
+
+---
+
+## Need Help?
+
+- Email us at [support@tracebloc.io](mailto:support@tracebloc.io)
+- Visit [docs.tracebloc.io](https://docs.tracebloc.io).

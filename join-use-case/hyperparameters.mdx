@@ -1,0 +1,209 @@
+---
+title: "Hyperparameters"
+description: "Configure your model's training behavior by setting hyperparameters, training parameters, and augmentation options."
+---
+
+# Hyperparameters
+
+Configure your model's training behavior by setting hyperparameters, training parameters, and augmentation options. All parameters are set through the `trainingObject` after linking your model with the dataset
+
+```python
+trainingObject = user.linkModelDataset('Dataset ID')
+```
+
+To see all current parameter settings, run `trainingObject.getTrainingPlan()`. To run consecutive experiments, overwrite parameters and re-start training with `trainingObject.start()`.
+
+<Info>
+You can refer to the [TensorFlow Documentation](https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/image/ImageDataGenerator) for more information on TensorFlow augmentation parameters and the [PyTorch Documentation](https://albumentations.ai/docs/examples/pytorch-classification/) for more information on PyTorch augmentation parameters.
+</Info>
+
+## Training Parameters
+
+Basic training configuration parameters that control the fundamental aspects of your training process.
+
+| Parameter | Description | Default | Example |
+|-----------|-------------|---------|---------|
+| **Epochs** | Number of complete passes through the entire dataset | 10 | `trainingObject.epochs(100)` |
+| **Cycles** | Number of complete passes through training and validation datasets | 1 | `trainingObject.cycles(10)` |
+| **Batch Size** | Number of samples processed at one time. Set automatically from the `batch_size` variable in your model file | Datatype dependent <br></br> 16 in most cases | Set via `batch_size = 16` in your model `.py` file |
+| **Validation Split** | Percentage of dataset used for validation (0-1) | Dataset dependent <br></br> 20% in most cases | `trainingObject.validation_split(0.2)` |
+
+## Core Hyperparameters
+
+### 1. Optimizer
+
+Controls how the model's parameters are updated during training. Supports different optimizers for TensorFlow and PyTorch. The default optimizer is SGD for both PyTorch and tensorflow.
+
+**Supported Optimizers:**
+- **TensorFlow**: adam, rmsprop, sgd, adadelta, adagrad, adamax, nadam, ftrl
+- **PyTorch**: adam, rmsprop, sgd, adadelta, adagrad, adamax
+
+```python
+trainingObject.optimizer('rmsprop')
+```
+
+### 2. Learning Rate
+
+Controls the rate at which the model learns. Supports three different types:
+
+| Type | Description | Framework Support | Example |
+|------|-------------|-------------------|---------|
+| **Constant** | Fixed learning rate throughout training | TensorFlow, PyTorch | `trainingObject.learningRate({'type': 'constant', 'value': 0.002})` |
+| **Adaptive** | Learning rate that changes based on schedule | TensorFlow | `trainingObject.learningRate({'type': 'adaptive', 'value': {'decay_rate': 0.9, 'decay_steps': 100, 'initial_learning_rate': 0.1, 'schedular': 'ExponentialDecay'}})` |
+| **Custom** | User-defined learning rate function | TensorFlow | `trainingObject.learningRate({'type': 'custom', 'value': {'name': custom_function, 'epoch': 5}})` |
+
+**Default:** `{'type': 'constant', 'value': 0.001}`
+
+* **Custom for TensorFlow**: Define a custom learning rate function, then pass it via `learningRate()` with `type: 'custom'`:
+    ```python
+    def custom_LearningRate_schedular(epoch):
+            if epoch < 5:
+                return 0.01
+            else:
+                return 0.01 * tf.math.exp(0.1 * (10 - epoch))
+    trainingObject.learningRate({'type': 'custom', 'value': {'name': custom_LearningRate_schedular, 'epoch': 5}})
+    ```
+
+
+### 3. Loss Function
+
+Defines how the model measures prediction errors. Supports standard and custom loss functions. It is implemented similarly to the built-in [loss function](https://www.tensorflow.org/api_docs/python/tf/keras/losses) in TensorFlow.
+
+**Supported Loss Functions:**
+- **TensorFlow**: binary_crossentropy, categorical_crossentropy, mse, custom loss functions
+- **PyTorch**: crossentropy, mse, l1
+
+```python
+# Standard loss function
+trainingObject.lossFunction({'type': 'standard', 'value': 'categorical_crossentropy'})
+
+# Custom loss function (TensorFlow only)
+def custom_mse(y_true, y_pred):
+	# calculating squared difference between target and predicted values
+	loss = K.square(y_pred - y_true)  # (batch_size, 2)
+
+	# multiplying the values with weights along batch dimension
+	loss = loss * [0.3, 0.7]          # (batch_size, 2)
+
+	# summing both loss values along batch dimension
+	loss = K.sum(loss, axis=1)        # (batch_size,)
+
+	return loss
+trainingObject.lossFunction({'type': 'custom', 'value': custom_mse})
+```
+**Default:** `{'type': 'standard', 'value': 'mse'}`
+
+## Training Control
+
+### Layer Freezing
+
+Specify which layers should remain unchanged during training (TensorFlow only):
+
+```python
+trainingObject.layersFreeze(['conv1','fc1'])
+```
+
+<Info>
+Layer freezing is currently supported for TensorFlow models only. PyTorch models will receive a "not supported" message.
+</Info>
+
+### Callbacks
+
+Control training behavior with various callbacks:
+
+| Callback | Purpose | Parameters | Example |
+|----------|---------|------------|---------|
+| **Early Stopping** | Stop training when metric stops improving | metric, patience | `trainingObject.earlystopCallback('loss', 10)` |
+| **Reduce LR** | Reduce learning rate when metric plateaus | metric, factor, patience, threshold | `trainingObject.reducelrCallback('loss', 0.1, 10, 0.0001)` |
+| **Model Checkpoint** | Save model weights at specific intervals | metric, save_best_only | `trainingObject.modelCheckpointCallback('val_loss', True)` |
+| **Terminate on NaN** | Stop training if validation loss becomes NaN | None | `trainingObject.terminateOnNaNCallback()` |
+
+
+
+
+## Data Augmentation for Image Data
+
+Enhance your dataset with real-time image transformations. All parameters support both TensorFlow and PyTorch unless noted otherwise.
+
+### Geometric Transformations
+
+| Parameter | Description | Default | Framework Support | Example |
+|-----------|-------------|---------|-------------------|---------|
+| **rotation_range** | Degree range for random rotations. For example, if the rotation_range is set to 2, images will be rotated by a random degree between -2 and 2 | 0 | TensorFlow, PyTorch | `trainingObject.rotation_range(2)` |
+| **width_shift_range** | Range for horizontal shifts (float: fraction, int: pixels). If the value is a float less than 1, it represents a fraction of total width; otherwise it represents pixels. Integers represent pixel values from the interval (-width_shift_range, +width_shift_range) | 0.0 | TensorFlow, PyTorch | `trainingObject.width_shift_range(0.1)` |
+| **height_shift_range** | Range for vertical shifts (float: fraction, int: pixels). Works like width_shift_range | 0.0 | TensorFlow, PyTorch | `trainingObject.height_shift_range(0.1)` |
+| **shear_range** | Shear intensity in degrees in counter-clockwise direction | 0.0 | TensorFlow | `trainingObject.shear_range(0.2)` |
+| **zoom_range** | Range for zooming (float or list). If the value is a float, then zoom range is defined as [1-zoom_range, 1+zoom_range]. If the value is a list, it represents the range of zoom | 0.0 | TensorFlow, PyTorch | `trainingObject.zoom_range(0.1)`, `trainingObject.zoom_range([0.2, 0.8])` |
+| **horizontal_flip** | Randomly flip images horizontally | False | TensorFlow | `trainingObject.horizontal_flip(True)` |
+| **vertical_flip** | Randomly flip images vertically | False | TensorFlow | `trainingObject.vertical_flip(True)` |
+
+### Color and Intensity Transformations
+
+| Parameter | Description | Default | Framework Support | Example |
+|-----------|-------------|---------|-------------------|---------|
+| **brightness_range** | Range for brightness shifts (tuple of floats) | None | TensorFlow, PyTorch | `trainingObject.brightness_range((0.1,0.4))` |
+| **channel_shift_range** | Range for random channel shifts | 0 | TensorFlow, PyTorch* | `trainingObject.channel_shift_range(0.4)` |
+| **rescale** | Rescaling factor for pixel values (float) | None | TensorFlow, PyTorch | `trainingObject.rescale(1.0/255.0)` |
+
+*PyTorch: Only supported for RGB images
+
+### Normalization
+
+| Parameter | Description | Default | Framework Support | Example |
+|-----------|-------------|---------|-------------------|---------|
+| **samplewise_center** | Center each image by subtracting mean | False | TensorFlow | `trainingObject.samplewise_center(True)` |
+| **samplewise_std_normalization** | Standardize each image by subtracting the mean and dividing by the standard deviation of pixel values. Calculated individually | False | TensorFlow | `trainingObject.samplewise_std_normalization(True)` |
+
+### Other Parameters
+
+| Parameter | Description | Default | Framework Support | Example |
+|-----------|-------------|---------|-------------------|---------|
+| **fill_mode** | Method for filling points outside boundaries. Supported for TensorFlow: "constant", "nearest", "reflect", "wrap". For PyTorch: "constant", "edge", "symmetric", "reflect", "wrap". | 'constant' | TensorFlow, PyTorch | `trainingObject.fill_mode("nearest")` |
+| **cval** | Fill value for points outside the image boundaries when fill_mode="constant" | 0.0 | TensorFlow, PyTorch | `trainingObject.cval(0.3)` |
+| **shuffle** | Whether to shuffle the data | True | TensorFlow, PyTorch | `trainingObject.shuffle(True)` |
+
+## LLM Parameters (Text Classification)
+
+For text classification tasks in PyTorch, you can enable and configure LoRA (Low-Rank Adaptation) parameters:
+
+```python
+# Enable LoRA first
+trainingObject.enable_lora(True)
+
+# Configure LoRA parameters (positional arguments: lora_r, lora_alpha, lora_dropout, q_lora)
+trainingObject.set_lora_parameters(256, 512, 0.05, False)
+```
+
+| Parameter | Description | Type | Default | Example |
+|-----------|-------------|------|---------|---------|
+| **lora_r** | Rank for the LoRA layer | Positive integer | 256 | `lora_r=256` |
+| **lora_alpha** | Scaling factor alpha for LoRA | Positive integer | 512 | `lora_alpha=512` |
+| **lora_dropout** | Dropout rate for LoRA layers | Float (0-1) | 0.05 | `lora_dropout=0.05` |
+| **q_lora** | Enable or disable Q LoRA | Boolean | False | `q_lora=False` |
+
+**Note:** LLM parameters are supported only for PyTorch.
+
+
+## Dataset Parameters (Optional)
+
+Customize your dataset configuration and preprocessing options:
+### Dataset Customization
+
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| **trainingClasses** | Customize dataset by specifying samples per class | `trainingObject.trainingClasses({'car': 30, 'person': 30})` |
+| **dataType** | Image format: 'rgb' or 'grayscale' | `trainingObject.dataType('rgb')` |
+| **seed** | Set global random seed | `trainingObject.seed(True)` |
+
+
+---
+
+## Need Help?
+For more info about available functions and methods, call the help function in your notebook:
+
+```python
+user.help()
+```
+
+- Email us at [support@tracebloc.io](mailto:support@tracebloc.io)
+- Visit [docs.tracebloc.io](https://docs.tracebloc.io).

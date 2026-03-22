@@ -1,0 +1,107 @@
+---
+title: "Explore Use Cases"
+description: "Follow this guide to explore and join use cases, train your model and evaluate results."
+---
+
+# Explore Use Cases
+
+Follow this guide to explore and join use cases, train your model and evaluate results. This guide walks you through:
+
+- registering and joining a use case
+- pulling training and model repositories, setting up your environment
+- using notebooks to connect and submit training workloads to the client infrastructure
+- evaluating and submitting your models
+
+Explore active [public use cases](https://ai.tracebloc.io/my-use-cases) or checkout exemplary [template use cases](https://ai.tracebloc.io/explore). You can access public or template use cases even without invitation.
+
+## Understanding the Use Case View
+
+![Use Case View](/images/Understanding-the-Use-Case-View.avif)
+
+## 1. Leaderboard
+
+The leaderboard ranks the teams by their best performing model. After [submitting an experiment](/join-use-case/model-evaluation), the model gets evaluated on the test dataset or a dedicated evaluation dataset and will appear on the leaderboard.
+
+It includes:
+
+- model size in number of parameters and bytes
+- energy consumption absolute and relative to other users in (FLOPs / Rel %)"
+- number of submissions per team
+
+---
+
+## 2. Description
+
+The description tab provides information about
+
+- goal, problem statement and background
+- evaluation metrics
+- rules and guidelines specific to this use case
+
+---
+
+## 3. Exploratory Data Analysis
+
+Explore dataset details in the EDA tab. It is provided by the use case owner and should include everything needed to train and optimize models:
+
+- data format e.g. image shape
+- dataset statistics e.g. distributions, number of samples, correlations
+- target statistics e.g. class distribution
+- description, source and context
+- representative samples like images or text snippets
+- labeling process
+- test dataset information
+
+Due to privacy constraints, some details cannot be disclosed as they would be in public datasets. If relevant details are missing, contact the use case owner.
+
+---
+
+## 4. Training / Finetuning
+
+View your model training experiments and those of your team members. If no trainings have yet been started and the tab is still empty, look at [template use case experiments](https://ai.tracebloc.io/explore).
+
+![Experiments](/images/Training-Finetuning.avif)
+
+### Training Details:
+
+- **Model Information**: Experiment title, model name, supported training categories and experiment notes
+- **Performance Metrics**: Accuracy, F1 score, precision, recall, etc.
+- **Learning Curves**: Performance and loss learning curves
+- **Training Time**: Training duration and estimated remaining time
+- **Resource Usage**: Peta FLOPS (PFLOPS) and grams of CO2 equivalent (gCO2e) emissions utilized
+
+Find the detailed training plan, model architecture as well as a confusion matrix in the bottom tab of the experiment:
+
+![Training Details](/images/training-details.png)
+
+---
+
+## 5. My Submissions
+
+This tab displays all the experiments that a user has submitted for inference on the test dataset. Track and manage your model submissions:
+
+- view all submitted models of your team
+- monitor submission status and results
+
+![My Submissions](/images/My-Submissions.avif)
+
+To prevent overfitting on the test dataset, you're limited to 5 submissions daily. The leaderboad automatically picks the best submission.
+
+---
+
+## 6. Evaluation
+
+The tab shows the selected evaluation metric with an explanation and formula on the left and the implementation code snippet.
+
+---
+
+## Next Steps
+
+Learn how to [join a use case](/join-use-case/join-use-case) and get started with a model training.
+
+---
+
+## Need Help?
+
+- Email us at [support@tracebloc.io](mailto:support@tracebloc.io)
+- Visit [docs.tracebloc.io](https://docs.tracebloc.io).

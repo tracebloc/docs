@@ -1,0 +1,418 @@
+---
+title: "Prepare Data"
+description: "Learn how to prepare and ingest your datasets into Tracebloc using containerized data ingestors. Complete guide for CSV, image, and text data with Kubernetes deployment steps."
+---
+
+# Prepare Data
+
+## Overview
+
+Make your data available to the Kubernetes cluster so it can be used for training and evaluation. Regardless of where your client runs on Azure, AWS, Google Cloud, or a local Minikube setup, the process of ingesting datasets works the same way.
+
+The data ingestor is a lightweight service that bridges your raw data and the cluster's persistent storage. It comes with ready-made templates (CSV, images, text) that you can use as starting points and customize for your own dataset. By containerizing the ingestion step, the ingestor validates data format and schema, enforces consistency, and transfers the dataset securely into cluster's SQL storage where it becomes accessible to all training and evaluation jobs.
+
+This guide covers:
+- Customizing ingestor templates for different data types (CSV, images, text)
+- Deploying the data ingestor for training and test data using Kubernetes
+- Managing datasets through the tracebloc interface
+
+**IMPORTANT** Make sure that the data format and ML task is supported and that data standards are met by reviewing the [docs](/create-use-case/prerequisites). You must run the process twice, once to ingest training and once to ingest testing data.
+
+## Quick Setup
+
+Use this quick setup if you already have an ingestor configured and just want to switch datasets or toggle between training and testing. If you are setting up for the first time, go to the next section for the detailed walkthrough.
+
+### Steps
+
+1. Pick a template script and edit it. E.g. `/templates/tablular_classification/tabular_classification.py`
+- Update csv options and data_path
+- Only for tabular data: Update schema
+- Set `schema` and `CSVIngestor()`parameters like category, intent, label_column, etc. to match data type, task and train/test purpose
+
+```python
+ingestor = CSVIngestor(
+    ...
+    category=TaskCategory.TABULAR_CLASSIFICATION, # Adjust for your task
+    csv_options=csv_options,      # Defined above
+    label_column="ColumnName",    # Target column
+    intent=Intent.TRAIN,          # TRAIN or TEST
+)
+```
+2. Build and push docker image:
+
+Make sure Docker is running on your system (e.g. by starting Docker Desktop), then execute the following command:
+
+```bash
+# Build for cloud and push directly to registry
+docker buildx build --platform linux/amd64 -t <your-username>/<image-name>:<tag> --push .
+```
+3. Edit ingestor-job.yaml:
+- `metadata.name`: Unique job name (e.g. ingestor-job-train and ingestor-job-test)
+- `image`: The tag you built and pushed
+- `LABEL_FILE`: Path inside container (e.g. /data/train.csv). - Points to csv file with labels and/or data in case of tabular data
+- `TABLE_NAME`: Unique table name (no spaces, one per dataset). Title is optional
+- `PATH_TO_LOCAL_DATASET_FILE`: Path to your dataset file within the container
+- `SRC_PATH`: Root inside the container where your files are mounted
+
+3. Deploy to Kubernetes
+```bash
+`kubectl apply -f ingestor-job.yaml -n <namespace>`
+```
+## Detailed Setup
+
+## 1. Configure a Template
+
+This section walks you through the step-by-step setup of a data ingestor. You will clone the repository, select the right template for your data type, and customize it to match your task. Follow this guide if you are setting up an ingestor for the first time or need full control beyond the quick setup.
+
+### Clone the Data Ingestor Repository
+
+Clone the public [Data Ingestor GitHub repository](https://github.com/tracebloc/data-ingestors):
+
+```bash
+git clone https://github.com/tracebloc/data-ingestors.git
+cd data-ingestors
+```
+
+The repository contains ready-to-use python templates for common formats for tabular, images, and text data in the `/templates/` folder. In most cases you only need to make minimal adjustments.
+
+**IMPORTANT:** Datasets must be cleaned and preprocessed before ingestion. Participants cannot view, clean or fix raw data, so model performance will only be as good as the data you provide.
+
+
+### Choose a Template
+
+Select the appropriate template from the `/templates/` folder based on your data and task type.
+
+Each template is already configured with the correct data category and format:
+
+| Data Type | Template File | Data Category | Data Format |
+|-----------|---------------|---------------|-------------|
+| Tabular   | templates/tabular_classification/tabular_classification.py | `TaskCategory.TABULAR_CLASSIFICATION` | `DataFormat.TABULAR` |
+| Image     | templates/image_classification/image_classification.py | `TaskCategory.IMAGE_CLASSIFICATION` | `DataFormat.IMAGE` |
+| Image     | templates/object_detection/object_detection.py | `TaskCategory.OBJECT_DETECTION` | `DataFormat.IMAGE` |
+| Text      | templates/text_classification/text_classification.py | `TaskCategory.TEXT_CLASSIFICATION` | `DataFormat.TEXT` |
+
+
+#### High Level Template Structure
+
+All templates follow the same structure:
+
+
+```python
+
+from tracebloc_ingestor import Config, Database, APIClient, CSVIngestor
+from tracebloc_ingestor.utils.constants import TaskCategory, Intent, DataFormat
+
+...
+
+def main():
+    """Run the CSV ingestion example."""
+    try:
+        # Initialize components
+        database = Database(config)
+        # Initialize API client
+        api_client = APIClient(config)
+
+        # Define csv_options and schema (schema is only needed for tabular data)
+        csv_options = {...}
+        schema = {...}
+
+        # Initialize ingestor
+        ingestor = CSVIngestor()
+
+         # Run and ingest data
+        with ingestor:
+            ingestor.ingest(config.LABEL_FILE, batch_size=config.BATCH_SIZE)
+    except:
+        ...
+```
+
+Both Database, APIClient and other values are configured automatically from the environment variables defined in `ingestor_job.yaml`.
+
+- `config.LABEL_FILE`: Path to local csv label file
+- `config.BATCH_SIZE`: Batch size used during ingestion
+
+### Customize a Template
+
+Templates provide a starting point, but every dataset has its own format and labels. In this step you adapt the template to your data by tuning CSV ingestion options and setting the ingestor parameters (category, label column, intent, data path and schema). The following example in `templates/tabular_classification/tabular_classification.py` shows how to ingest a tabular dataset, but the setup works the same way for image or text data.
+
+#### Needed for Tabular Data: Define Schema
+
+Define the dataset schema as a Python dictionary, mapping each column to its SQL type and constraints. Do not include IDs or the label column into the schema.
+
+```python
+# Schema definition for tabular data
+schema = {
+  "feature_00": "FLOAT ",
+  "feature_01": "FLOAT ",
+  "feature_02": "FLOAT ",
+  ...
+}
+```
+
+#### Needed for Image Classification Data: Define Image Options
+
+Define image size and file extension.
+
+```python
+# Image specific options including CSV options
+image_options = {
+    # Image processing options
+    "target_size": (512, 512),  # Define image size. Height = Width
+    "extension": FileExtension.JPG,  # allowed extension for images: jpeg, jpg, png
+}
+```
+
+
+#### Needed for Object Detection Data: Define Image Options
+
+Define file extension.
+
+```python
+# Object detection specific options including CSV options
+object_detection_options = {
+    # Image processing options
+    "target_size": (448, 448),  # Resize images to this fixed dimension. Dimension is not changeable.
+    "extension": FileExtension.JPG,  # allowed extension for images: jpeg, jpg, png
+}
+```
+
+
+#### Needed for Text Data: Define File Extension
+
+Define file extensions.
+
+```python
+text_options = {"allowed_extension": FileExtension.TXT}  # Allowed text file extensions
+```
+
+#### Set CSV ingestion options
+Customize parsing, memory handling, and data cleaning with the csv_options dictionary:
+
+```python
+csv_options = {
+    "chunk_size": 1000,          # Process rows in batches for efficiency
+    "delimiter": ",",            # Column separator
+    "quotechar": '"',            # Quoted field character
+    "escapechar": "\\",          # Escape character for quotes
+    "encoding": "utf-8",         # File encoding
+    "on_bad_lines": "warn",      # Log malformed rows instead of failing
+    "skip_blank_lines": True,    # Ignore empty rows
+    "na_values": ["", "NA", "NULL", "None"]  # Treat these as missing values
+}
+```
+
+#### Set Up the Ingestor
+
+Define the Ingestor instance with the required configuration. See the tabular data example below:
+
+```python
+ingestor = CSVIngestor(
+    database=database,                  # From ingestor-job.yaml
+    api_client=api_client,              # From ingestor-job.yaml
+    table_name=config.TABLE_NAME,       # From ingestor-job.yaml
+    schema=schema,                      # Defined above, only needed for tabular data
+    data_format=DataFormat.TABULAR,     # Set the data format for the task
+    category=TaskCategory.TABULAR_CLASSIFICATION, # Adjust for your task
+    csv_options=csv_options,            # Defined above
+    file_options={"number_of_columns": len(schema)}, # Don´t change
+    label_column="ColumnName",          # Target column
+    intent=Intent.TRAIN,                # TRAIN or TEST
+)
+```
+
+**Specify:**
+- `category`, choose the ML task type (TABULAR_CLASSIFICATION, IMAGE_CLASSIFICATION, OBJECT_DETECTION)
+- `label_column`, target column or class labels
+- `intent`, set as TRAIN or TEST depending on dataset purpose
+- include `file_options` or `schema` depending on the data type
+
+Other data types work similarly, follow the same configuration pattern using the corresponding template scripts in the `templates/` folder.
+
+
+## 2. Build Docker Image
+
+With your template configured, the next step is to package it into a Docker image so it can run inside the Kubernetes cluster.
+
+### Edit Dockerfile
+
+Before building the image, update your `Dockerfile` so that both the dataset and the ingestion script are copied into the container. This ensures the ingestor has everything it needs at runtime, independent of your local file system.
+
+#### Copy data files
+For all use cases except tabular data (where labels and features are contained within a single labels.csv file), copy the data files into the Docker container:
+
+```bash
+# Needed for image and text data: Copy source data into the container to /app
+COPY LOCAL_PATH/images/ app/images/
+# Copy labels to /app
+COPY LOCAL_PATH/labels.csv /app/labels.csv
+```
+
+Then, move the ingestion script over to the container as well:
+
+```bash
+# Copy the ingestion script into /app
+COPY templates/tabular_classification/tabular_classification.py /app/ingestor.py
+```
+
+
+### Build Docker Image
+
+You need a docker user and password to proceed with the next step. Most cloud platforms (AWS, Azure, GCP) run on Linux AMD64. Specifying `--platform linux/amd64` guarantees compatibility, particularly if you build images on Apple Silicon (M1/M2) or other ARM-based systems. Pick a setup, build and deploy the image:
+
+#### For Local Development/Testing
+
+```bash
+# Build for your local platform
+docker build -t <your-username>/<image-name>:<tag> .
+
+# Optional: Push to registry for sharing
+docker push <your-username>/<image-name>:<tag>
+```
+
+#### For Cloud Deployment (AWS, Azure, GCP)
+
+```bash
+# Build for Linux AMD64 (required for most cloud platforms)
+docker build --platform linux/amd64 -t <your-username>/<image-name>:<tag> .
+
+# Build and push directly to registry
+docker buildx build --platform linux/amd64 -t <your-username>/<image-name>:<tag> --push .
+```
+
+
+## 3. Configure Kubernetes
+
+With the image generated and pushed to the registry, edit `ingestor-job.yaml` with your settings:
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: <JOBNAME> # Set a job name e.g. ingestor-job-train
+  namespace: <NAMESPACE> # Use the client namespace
+spec:
+  template:
+    spec:
+      containers:
+      - name: api
+        image: <YOUR_DOCKER_USER>/<YOUR_IMAGE_NAME>:latest # Your Docker image name and tag, e.g. "latest"
+        imagePullPolicy: Always  # Use IfNotPresent only for local tests
+        volumeMounts:
+          - name: shared-volume
+            mountPath: "/data/shared" # Client shared storage. Target for copied files, not the local source path
+        env:
+        # Client credentials
+        - name: CLIENT_ENV
+          value: "prod"
+        - name: CLIENT_ID # Client credentials from tracebloc dashboard
+          value: <YOUR_CLIENT_ID>
+        - name: CLIENT_PASSWORD # Client credentials from tracebloc dashboard
+          value: <YOUR_CLIENT_PASSWORD>
+
+        # Storage configuration
+        - name: CLIENT_PVC # value has to match the shared data PVC name in the client values.yaml
+          value: "client-pvc"
+
+        # MySQL configuration
+        - name: MYSQL_HOST # value has to match the mysql deployment name in the client values.yaml
+          value: "mysql-client"
+
+        # Dataset information
+        - name: SRC_PATH
+          value: "/app" # Source folder path within the data ingestor
+        - name: LABEL_FILE
+          value: <PATH_TO_DATASET_OR_LABELS_FILE_IN_DOCKER_CONTAIENR>  # Example: "/app/labels.csv"
+        - name: COMPANY
+          value: <YOUR_COMPANY_OR_ORGANISATION_NAME>
+        - name: TABLE_NAME
+          value: <UNIQUE_TABLE_NAME> # Different for train and test, no spaces
+        - name: TITLE
+          value: <DATASET_TITLE> # Optional
+        - name: BATCH_SIZE
+          value: "4000"
+        - name: LOG_LEVEL
+          value: "DEBUG" # Set DEBUG, "WARNING", "INFO" or "ERROR"
+      imagePullSecrets:
+      - name: regcred
+      nodeSelector:
+        type: system
+      volumes:
+        - name: shared-volume
+          persistentVolumeClaim:
+            claimName: client-pvc # value has to match the shared data PVC name in the client values.yaml
+      restartPolicy: Never
+```
+
+**Specify:**
+- `JOBNAME`, to distinguish between train and test data jobs.
+- `NAMESPACE`, use the same as your client.
+- `image`, your Docker image (imagePullPolicy: Always for DockerHub, IfNotPresent for local)
+- `CLIENT_ID`, `CLIENT_PASSWORD` from the [tracebloc client view](https://ai.tracebloc.io/clients)
+- `TABLE_NAME`, unique per dataset, train and test use different names, no spaces. Different names for train and test data is mandatory
+- `LABEL_FILE`, path inside the ingestor container, for images this is usually a CSV with file path and label columns. Ensure it matches the copy path in the `Dockerfile`
+- `PATH_TO_LOCAL_DATASET_FILE`, path to your dataset file within the container
+- `SRC_PATH`, root inside the container where your files are mounted
+- `YOUR_COMPANY_OR_ORGANISATION_NAME`, chose a suitable company or organisation name
+- `BATCH_SIZE` is the number of entries sent to the server per request. Keep it consistent across data types. It depends on available CPU memory, not for example image size. Too large can exhaust memory. It was tested up to 10,000, but 5,000 is a safe default for most systems.
+- `LOG_LEVEL`, "WARNING" for all warnings and errors, "INFO" for all logs, "ERROR" for errors only
+
+## 4. Deploy
+
+Run the ingestor as a Kubernetes Job:
+
+```bash
+kubectl apply -f ingestor-job.yaml -n <namespace>
+kubectl wait -n <namespace> --for=condition=complete job/<INGESTOR_JOB_NAME>
+kubectl logs -n <namespace> job/<INGESTOR_JOB_NAME>
+
+# Delete the job only after verifying logs
+kubectl delete -n <namespace> job/<INGESTOR_JOB_NAME>
+```
+This will start a pod, run the ingestion process once, and once complete you can delete the job.
+
+The data ingestor always runs a validation step before ingestion and moving files.
+
+
+#### Verify Deployment
+
+Verify if jobs and pods are deployed successfully and running:
+
+```bash
+kubectl get jobs,pods -n <namespace>
+kubectl logs -n <namespace> <pod-name>
+```
+
+Look for "All records processed successfully" in the logs.
+
+
+## Dataset Management Interface
+
+View your datasets at [tracebloc.io/data](http://tracebloc.io/data) after successful deployment.
+
+**Interface displays:**
+- Dataset name, ID, and record count
+- Data type (Tabular, Image, Text) and purpose (Training/Testing)
+- Namespace and GPU requirements
+
+## Best Practices
+- Deploy jobs for training and testing simultaneously using different job names
+- Use consistent, descriptive table names (e.g., `insurance-claims-train`, `insurance-claims-test`)
+- Validate data schemas before deployment to prevent ingestion failures
+- Clean data before ingestion - Participants cannot view, clean, or fix raw data, so model performance depends entirely on the quality of data you provide
+
+## Troubleshooting
+
+**Recommended for debugging:** Use [k9s](https://k9scli.io/), a terminal-based Kubernetes dashboard, to monitor jobs, pods, and logs in real time. Run `k9s -n <NAMESPACE>` to get a live view of resources, switch between them instantly, and inspect logs or events with a few keystrokes. Compared to kubectl, it is faster and more convenient.
+
+**Stale Kubernetes Job preventing new Job execution:**
+```bash
+kubectl delete job ingestor-job -n <namespace>
+kubectl logs <pod-name>
+```
+
+**Storage Issues:**
+```bash
+kubectl get pvc -n <namespace>
+```
+
+For additional support, contact [support@tracebloc.io](mailto:support@tracebloc.io).

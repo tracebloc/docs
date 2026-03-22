@@ -1,0 +1,83 @@
+---
+title: "Quick Setup"
+description: "Get from zero to a running workspace in under 10 minutes."
+---
+
+# Quick Setup
+
+Get from zero to a running workspace in under 10 minutes.
+
+### Prerequisites
+
+- **Docker** — installed automatically if missing
+- **Hardware** — 4+ CPU cores, 8+ GB RAM, 20+ GB free disk
+- **Network** — outbound access to `*.docker.io`, `*.tracebloc.io`
+
+## 1. Create an Account
+
+Sign up at [ai.tracebloc.io](https://ai.tracebloc.io). Free to get started.
+
+## 2. Register a Client
+
+Open the [client page](https://ai.tracebloc.io/clients) and click **"+"**. Fill in a name, location, and password. Note your **Client ID** and **password** — you need both in the next step.
+
+<Tip>
+Provisioning takes a few seconds. Refresh the page if the status doesn't update.
+</Tip>
+
+## 3. Deploy
+
+<Tabs>
+  <Tab title="macOS / Linux">
+
+```bash
+bash <(curl -fsSL https://tracebloc.io/install.sh)
+```
+
+  </Tab>
+  <Tab title="Windows">
+
+Open **PowerShell as Administrator**:
+
+```powershell
+irm https://tracebloc.io/install.ps1 | iex
+```
+
+  </Tab>
+</Tabs>
+
+The installer prompts for your workspace name, Client ID, and password. It handles Docker, Kubernetes, and the tracebloc client. Safe to re-run.
+
+## 4. Verify
+
+```bash
+kubectl get pods -n <workspace>
+```
+
+Two pods in `Running` state: `mysql-...` and `tracebloc-jobs-manager-...`
+
+Open [ai.tracebloc.io](https://ai.tracebloc.io) — your client should show **Online**.
+
+<Tip>
+Stuck? Check the [Troubleshooting](/environment-setup/troubleshooting) page.
+</Tip>
+
+---
+
+## What You Now Have
+
+- A local Kubernetes cluster running in Docker
+- The tracebloc client connected to the platform
+- A workspace ready for use cases
+
+Your data never leaves your infrastructure. Only metadata and metrics are shared with the platform.
+
+## What's Next
+
+**Data owners:** [Create a use case](/create-use-case/prerequisites) — select datasets, define metrics, invite contributors.
+
+**Data scientists:** [Join a use case](/join-use-case/join-use-case) — train and submit models on shared infrastructure.
+
+## Go Deeper
+
+Need custom cluster settings, GPU configuration, or manual Helm deployment? See the full [Setup Guide](/environment-setup/setup-guide).

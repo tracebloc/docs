@@ -1,97 +1,37 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Overview"
+description: "Tracebloc lets companies evaluate external AI models on their own infrastructure — without exposing raw data."
 ---
 
-## Setting up
+# Overview
 
-Get your documentation site up and running in minutes.
+Tracebloc lets companies evaluate external AI models on their own infrastructure — without exposing raw data.
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+Upload datasets, invite model vendors, and compare results. Your data never leaves.
 
-## Make it yours
+## How It Works
 
-Design a docs site that looks great and empowers your users.
+1. **Deploy** a secure workspace on your machine with a single command
+2. **Define** a use case — select datasets, set metrics, invite contributors
+3. **Evaluate** — vendors submit models that run inside your infrastructure
+4. **Compare** results across models with built-in reporting
 
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
-  </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+## Who Is This For
 
-## Create beautiful pages
+**Data owners** — set up use cases, control access, evaluate vendor models on real production data before making buy-or-build decisions.
 
-Everything you need to create world-class documentation.
+**Data scientists** — connect to use cases, train and fine-tune models on client infrastructure, submit results.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## Platform Components
 
-## Need inspiration?
+- **Model Submission Interface** — vendors upload and manage model submissions
+- **Secure Execution Layer** — deployed inside your infrastructure, runs all workloads locally
+- **Evaluation & Reporting Engine** — tracks accuracy, latency, cost, and summarizes tradeoffs
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+All communication is TLS-encrypted. Only metadata and metrics leave your network. [Learn more about security](/environment-setup/configuration#security).
+
+## Next Steps
+
+**New here?** Start with [Quick Setup](/getting-started/quick-setup) — zero to a running workspace in under 10 minutes.
+
+**Already deployed?** [Create a use case](/create-use-case/prerequisites) or [join one](/join-use-case/join-use-case).

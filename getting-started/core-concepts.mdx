@@ -1,0 +1,33 @@
+---
+title: "Core Concepts"
+description: "Learn how Tracebloc works — data owners, clients, and data scientists."
+---
+
+# Core Concepts
+
+## How it works
+
+**Data owners or organisations** deploy the tracebloc client within their own infrastructure, whether on-premises, in the cloud (e.g., VMs), or in Kubernetes clusters running in a DMZ or VPC.
+
+- The tracebloc client is pulled from DockerHub or GitHub and deployed via Helm or Docker Compose.
+- The data owner prepares and mounts use case specific data and configures compute resources (CPU/GPU, storage) that will be used by external data scientists.
+
+**The tracebloc client**, once deployed establishes a secure connection to the tracebloc backend over Azure Service Bus (AMQP/WebSocket, port 443). It receives training instructions—such as model configuration, batch size, number of epochs—defined by data scientists.
+
+**The tracebloc backend** is responsible for:
+
+- Validating model compatibility, security, and functionality
+- Orchestrating training and managing system stability
+- Aggregating training metrics (e.g., loss, accuracy — but never weights)
+- Providing a Web UI for training feedback, leaderboard access, and diagnostics
+
+Tracebloc enforces strict separation of code and data.
+Model weights are encrypted and never exchanged between parties, ensuring full differential privacy.
+
+
+**Data scientists** upload models and training code via notebooks and interact only with metadata and training metrics. They have no access to raw data at any point.
+
+<Note>
+- **Raw data is never shared.**
+- **Model weights and architecture are encrypted and retained within the data owner's infrastructure. Access is only granted with mutual consent from both parties.**
+</Note>

@@ -1,0 +1,103 @@
+---
+title: "Troubleshooting"
+description: "Common issues and debugging commands for your tracebloc workspace."
+---
+
+# Troubleshooting
+
+Most issues fall into a few categories: pods not starting, client not connecting, or resource limits being hit. Start with the quick checks below — they cover the most common problems.
+
+For real-time cluster monitoring, try [k9s](https://k9scli.io/) — run `k9s -n <workspace>` to get a live view of pods, logs, and events.
+
+## Quick Checks
+
+| Symptom | Check | Fix |
+|---------|-------|-----|
+| Pods not starting | `kubectl describe pod <pod> -n <workspace>` | Check resource limits, Docker status |
+| Client shows Offline | `kubectl logs -n <workspace> -l app=tracebloc-jobs-manager` | Verify client ID/password, check network |
+| Docker not running | `docker info` | Start Docker Desktop or daemon |
+| Cluster not found | `k3d cluster list` | Re-run the installer |
+| GPU not detected | `nvidia-smi` | Install NVIDIA drivers, reboot, re-run installer |
+
+## Error Messages
+
+### General
+
+These errors typically indicate storage pressure on your Kubernetes nodes:
+
+| Error Message | Description | Resolution |
+|---------------|-------------|------------|
+| `ErrImagePull` / `The node was low on resource` / `Ephemeral storage` | Kubernetes nodes have limited ephemeral storage by default. CUDA libraries and container layers can consume 8 GB+ on their own. | Increase node disk size (e.g. `--disk-size 50` in `aws eks create-nodegroup`) |
+
+### Local
+
+Issues specific to local (k3d) deployments:
+
+| Error Message | Description | Resolution |
+|---------------|-------------|------------|
+| ServiceBus connection error after Docker restart | When Docker overutilizes local resources and restarts, the ServiceBus connection may fail with `NoneType` errors. | Monitor resources via Docker Dashboard. Restart the jobs manager pod (e.g. in k9s, exit with Ctrl+D) to restore the connection. |
+
+## Debugging Commands
+
+When the quick checks don't resolve the issue, use these commands to dig deeper.
+
+### Pod status and logs
+
+```bash
+kubectl get pods -n <workspace>
+kubectl logs <pod-name> -n <workspace>
+kubectl describe pod <pod-name> -n <workspace>
+```
+
+### Resource usage
+
+See if your nodes or pods are running out of CPU or memory:
+
+```bash
+kubectl top nodes
+kubectl top pods -n <workspace>
+```
+
+### Storage
+
+Check that persistent volume claims are bound and have enough capacity:
+
+```bash
+kubectl get pvc -n <workspace>
+kubectl get pv
+```
+
+### Image pull credentials
+
+If pods fail with `ErrImagePull`, verify that the Docker registry secret exists:
+
+```bash
+kubectl get secret regcred -n <workspace>
+```
+
+## CPU and Memory Optimization
+
+Hitting resource limits during training? Two levers:
+
+- **Reduce data size** — smaller batches, lower resolution, shorter sequences
+- **Smaller models** — fewer layers, smaller hidden dimensions
+
+### Memory Consumption (RAM / GPU VRAM)
+
+Understanding what drives memory usage helps you right-size your resource limits:
+
+- **Batch size** — memory scales roughly linearly with batch size
+- **Model size** — more parameters = more memory for weights, activations, and gradients
+- **Precision** — FP16/BF16 uses half the memory of FP32. Mixed-precision training helps significantly
+- **Optimizer** — Adam requires ~2-3x the memory of SGD (stores running averages)
+- **Input dimensions** — transformer attention grows quadratically with sequence length; CNN memory grows quadratically with image resolution
+
+### Compute Consumption (CPU / GPU)
+
+If training is slow, these are the factors to look at:
+
+- **Batch size** — larger batches increase GPU utilization up to memory saturation
+- **Model complexity** — transformer attention is O(seq_len² x hidden_dim); CNNs scale with kernel x feature map x filters
+- **Precision** — FP16/BF16 can speed up training 2-3x on modern GPUs
+- **Data pipeline** — slow CPU preprocessing (augmentation, tokenization) can bottleneck training
+- **Parallelization** — data parallelism splits batches across GPUs; model parallelism splits the model itself

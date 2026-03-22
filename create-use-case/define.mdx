@@ -1,0 +1,95 @@
+---
+title: "Define and Create AI Use Case on Tracebloc"
+description: "Step-by-step guide to creating and defining AI use cases on Tracebloc. Learn how to set up privacy, configure datasets, invite participants, and publish your model evaluation project."
+---
+
+# Define Use Case
+
+This guide walks you through the 4 key steps to create, publish, and manage an AI use case on the tracebloc platform. Make sure, you have a [tracebloc client](/environment-setup/setup-guide) running and your data is ingested. Navigate to the [use cases section](https://ai.tracebloc.io/my-use-cases), click on the "+" on the top right corner and simply follow along. Use this documentation for context, clarification and examples when needed.
+
+## Step 1: Initialize and Set Privacy
+
+Objective: Define the basics and visibility of your AI use case. Set
+
+- Title
+- Cover Image (optional): JPG or PNG (max. 25MB)
+- Task: Select the task, e.g. "Image Classification", "Image Detection", "Tabular Classification", etc. In case your use case is not yet supported, please reach out to us at [support@tracebloc.io](mailto:support@tracebloc.io).
+- **Privacy Type:** Choose Public (visible to all users) or Private (invite-only visibility).
+
+![Initialize](/images/Step-1-initialize-and-set-privacy.avif)
+
+Preview your use case tile on the right side of the interface.
+
+---
+
+## Step 2: Data & Evalation
+
+Objective: Attach datasets and define the benchmarking logic.
+
+![Data & Evaluation](/images/Step-2-data-&-evalation.avif)
+
+- **Training and test metadataset**: Select the metadataset as a link to the real training and test dataset that you ingested in a previous step.
+- **Score**: Define which benchmark to use for evaluation (e.g. Accuracy, F1, etc.). In case your evaluation metric is not yet supported, please reach out to us at [support@tracebloc.io](mailto:support@tracebloc.io).
+- **Upload EDA File (Optional)**: Attach a .ipynb EDA file to help participants understand the data context. Explore [template use cases](https://ai.tracebloc.io/explore) for inspiration.
+
+### Supported Metrics per Data Type and Task
+
+| Evaluation Metric                         | Data Type and Tasks                     | Explanation                                                                                                                                                                       |
+| ----------------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Accuracy                                  | All Classification Tasks                | Measures how well a model correctly predicts the output for a given input. Calculated by dividing the number of correct predictions by the total number of predictions made.      |
+| Precision                                 | All Classification Tasks                | Measures the number of correct positive predictions compared to the total number of positive predictions made. Shows how accurate the positive predictions are.                   |
+| Recall / Sensitivity                      | All Classification Tasks                | Measures the number of correct positive predictions compared to the total number of actual positive instances. Shows the coverage of actual positive samples.                     |
+| F1-Score                                  | All Classification Tasks                | The harmonic mean of precision and recall. Good metric when you want to balance precision and recall.                                                                             |
+| Mean Average Precision (mAP@0.5)          | Object Detection                        | Calculates the average precision for each class at a fixed IoU threshold of 0.5 (50% overlap between prediction and ground truth), then averages these values across all classes. |
+| Intersection over Union (IoU)             | Object Detection, Semantic Segmentation | Measures the accuracy of object detection or segmentation by calculating the area of intersection divided by the area of union of predicted and ground truth bounding boxes.      |
+| Percentage of Correct Keypoints (PCK@0.2) | Keypoint Detection                      | Evaluates the accuracy of predicted keypoints. A keypoint is considered correct if its distance from ground truth is within the normalized distance threshold of 0.2              |
+| Mean Absolute Error (MAE)                 | Regression Tasks                        | Measures the average absolute difference between predicted and actual values. Lower values indicate better model performance.                                                     |
+
+## Step 3: Describe Your Use Case
+
+Describe your use case and objective in detail.
+
+![Describe](/images/Step-3-describe-your-use-case.avif)
+
+---
+
+## Step 4: Review & Submit
+
+Objective: Set collaboration and resource constraints.
+
+Add emails of vendors, colleagues, or researchers. Invitations are sent once the use case is saved or published. For instructions for data scientists about how to join your use case, follow the Collaboration Guide.
+
+![Review & Submit](/images/Step-4-review-&-submit.avif)
+
+### Compute Assignment
+
+Define training budget in PFLOPs.
+Example: 10 participants × 200 PFLOPs each = 2,000 PFLOPs
+Cost Calculation: 2,000 PFLOPs × €0.025 = €50.00
+
+Always allocate more resources than minimum requirements and monitor resource usage regularly. You can stop or adjust training at any time.
+
+### Final Step: Publish or Save as Draft
+
+Use "Publish" to go live or "Save as Draft" to continue editing later. You can now see your use case in the [use cases section](https://ai.tracebloc.io/my-use-cases).
+
+---
+
+## Next Steps
+
+Once your use case is published, reach out to external vendors, your colleagues or data scientists to train models on your use case.
+
+In the use case view, monitor
+
+- total resouce consumption
+- daily submits and user activity
+- overall leaderboard and submissions
+
+Once models have been submitted, you can [compare them in the leaderboard section](/create-use-case/evaluate-models) of a use case.
+
+---
+
+## Need Help?
+
+- Email us at [support@tracebloc.io](mailto:support@tracebloc.io)
+- Visit [docs.tracebloc.io](https://docs.tracebloc.io).

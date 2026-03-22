@@ -1,0 +1,72 @@
+---
+title: "tracebloc Package"
+description: "Python library for uploading models, linking them with datasets, configuring training parameters, and launching training runs on the tracebloc platform."
+---
+
+# tracebloc Package
+
+The `tracebloc_package` is a Python library for uploading models, linking them with datasets, configuring training parameters, and launching training runs on the tracebloc platform.
+
+## Installation
+
+```bash
+pip install tracebloc_package>=0.6.32
+```
+
+## Key Features
+
+- Upload model files and pretrained weights
+- Link models with datasets from your use cases
+- Configure training parameters (epochs, optimizer, learning rate, augmentation, callbacks)
+- Review training plans before starting
+- Launch remote training on secure infrastructure
+
+## Quick Start
+
+```python
+from tracebloc_package import User
+
+# 1. Log in to your tracebloc account
+user = User()  # prompts for email and password
+
+# 2. Upload a model file (must be in your current directory or provide a path)
+user.uploadModel("densenet.py")
+
+# To upload with pretrained weights (weights file must be in the same directory):
+# user.uploadModel("densenet.py", weights=True)
+
+# 3. Link model with a dataset from your use case
+#    Find the Dataset ID on your use case page at ai.tracebloc.io
+trainingObject = user.linkModelDataset("YOUR_DATASET_ID")
+
+# 4. Configure training parameters
+trainingObject.experimentName("My first experiment")
+trainingObject.epochs(10)
+trainingObject.optimizer("adam")
+trainingObject.learningRate({"type": "constant", "value": 0.001})
+trainingObject.validation_split(0.2)
+
+# 5. Review your training plan
+trainingObject.getTrainingPlan()
+
+# 6. Start training
+trainingObject.start()
+
+# 7. Log out when done
+user.logout()
+```
+
+## Model Zoo
+
+Use a ready-made model from the [tracebloc model zoo](https://github.com/tracebloc/model-zoo) or bring your own. Supported tasks include image classification, object detection, text classification, tabular classification/regression, time series forecasting, semantic segmentation, keypoint detection, and time-to-event prediction.
+
+## Google Colab Quickstart
+
+The fastest way to get started is our [Google Colab notebook](https://colab.research.google.com/drive/1N00idtpoaq1lk9OJE6g4bMqd8o-Qex2C) — runs entirely in your browser, no local setup needed.
+
+## Next Steps
+
+- [Start training](/join-use-case/start-training) — detailed walkthrough of the training workflow
+- [Hyperparameters](/join-use-case/hyperparameters) — full reference for all training configuration options
+- [FAQs](/tools-help/faqs)
+- [Key terms](/tools-help/key-terms)

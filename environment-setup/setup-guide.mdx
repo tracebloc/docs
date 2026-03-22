@@ -1,0 +1,143 @@
+---
+title: "Setup Guide"
+description: "Detailed walkthrough for deploying a tracebloc workspace — requirements, installer internals, GPU support, and verification."
+---
+
+# Setup Guide
+
+Everything the installer does, explained. This page walks through the full setup process — what each step does, what to expect, and how to verify it worked.
+
+Looking for the short version? See [Quick Setup](/getting-started/quick-setup).
+
+---
+
+## Requirements
+
+The installer runs on any modern machine. These are the minimum specs to run a workspace comfortably:
+
+| | Minimum | Recommended |
+|---|---------|-------------|
+| **CPU** | 4 cores | 8+ cores |
+| **RAM** | 8 GB | 16+ GB |
+| **Disk** | 20 GB free | 50+ GB free |
+
+**Supported platforms:** macOS (Intel & Apple Silicon) · Linux (x86_64 & arm64) · Windows (x86_64 & arm64)
+
+**Outbound access needed:** The installer downloads container images and connects to the tracebloc platform. Make sure your network allows traffic to `*.docker.io`, `*.tracebloc.io`, `github.com`, and `pypi.org`.
+
+---
+
+## 1. Create an Account
+
+Sign up at [ai.tracebloc.io](https://ai.tracebloc.io). Free to get started — no credit card required.
+
+## 2. Register a Client
+
+A **client** is your workspace's identity on the platform. It ties a specific machine to your account and controls what data and use cases are accessible from it.
+
+Open the [client page](https://ai.tracebloc.io/clients) and click **"+"**.
+
+| Field | What to enter |
+|-------|--------------|
+| **Name** | A name for your workspace, e.g. `my-team` |
+| **Location** | Where this machine is deployed |
+| **Password** | A secure password (not your account password) |
+
+The client starts as **Pending** while the backend provisions resources. Note the **Client ID** and **password** — you need both in the next step.
+
+<Tip>
+Provisioning usually takes a few seconds. Refresh the page if the status doesn't update.
+</Tip>
+
+### Client Status Reference
+
+Your client moves through these states as it goes from registration to running:
+
+| Status | Meaning |
+|--------|---------|
+| **Pending** | Registration received, being provisioned |
+| **Online** | Deployed and connected to the platform |
+| **Offline** | Disconnected or not running |
+
+## 3. Deploy
+
+One command sets up your entire workspace. The installer is idempotent — it detects what's already installed and skips it, so it's safe to re-run at any time.
+
+<Tabs>
+  <Tab title="macOS / Linux">
+
+```bash
+bash <(curl -fsSL https://tracebloc.io/install.sh)
+```
+
+  </Tab>
+  <Tab title="Windows">
+
+Open **PowerShell as Administrator**:
+
+```powershell
+irm https://tracebloc.io/install.ps1 | iex
+```
+
+  </Tab>
+</Tabs>
+
+The installer prompts for three things:
+
+1. **Workspace name** — a namespace for your Kubernetes deployment, e.g. `berlin-team`, `vision-lab`
+2. **Client ID** — from step 2
+3. **Client password** — from step 2
+
+### What the Installer Does
+
+Behind the scenes, the installer builds a complete local Kubernetes environment:
+
+1. **Detects your system** — OS, architecture, and GPU hardware
+2. **Installs dependencies** — Docker, k3d, kubectl, Helm (skips what's already present)
+3. **Creates a Kubernetes cluster** — a lightweight k3s cluster running inside Docker, with all persistent data stored in `~/.tracebloc/`
+4. **Deploys the tracebloc client** — via Helm chart, configured with your credentials
+
+Install logs are saved to `~/.tracebloc/install-*.log` if you need to debug anything.
+
+### GPU Support
+
+The installer auto-detects GPU hardware and configures the cluster accordingly:
+
+- **Linux (NVIDIA/AMD)** — drivers, container toolkit, and Kubernetes device plugin are installed automatically. A reboot may be required after driver installation.
+- **macOS** — CPU-only. For GPU workloads, deploy on a Linux machine or use [AWS (EKS)](/environment-setup/eks-client-deployment-guide).
+- **Windows** — pre-install NVIDIA drivers before running the installer. The installer detects them via `nvidia-smi`.
+
+See [Configuration > GPU](/environment-setup/configuration#gpu-support) for detailed platform-specific behavior.
+
+## 4. Verify
+
+After the installer finishes, confirm that your workspace is running:
+
+```bash
+kubectl get pods -n <workspace>
+```
+
+You should see two pods in `Running` state:
+
+| Pod | Role |
+|-----|------|
+| `mysql-...` | Local metadata store — tracks jobs, metrics, and configuration |
+| `tracebloc-jobs-manager-...` | The client — executes training jobs and communicates with the platform |
+
+Then open [ai.tracebloc.io](https://ai.tracebloc.io) and check that your client status shows **Online**. This confirms the client has established a secure connection to the tracebloc backend.
+
+<Tip>
+Stuck on Offline? Check the [Troubleshooting](/environment-setup/troubleshooting) page — most issues resolve with a pod restart or credential check.
+</Tip>
+
+---
+
+## What's Next
+
+Your workspace is running. Here's where to go from here:
+
+**Data owners:** [Create a use case](/create-use-case/prerequisites) — select datasets, define evaluation metrics, and invite contributors to submit models.
+
+**Data scientists:** [Join a use case](/join-use-case/join-use-case) — connect to a workspace, train models on real data, and submit results.
+
+**Advanced configuration:** [Configuration](/environment-setup/configuration) — customize installer options, manage the cluster, configure GPU settings, or deploy manually with Helm.

@@ -1,0 +1,220 @@
+---
+title: "Prerequisites"
+description: "Supported data types, tasks, and requirements for creating a use case on Tracebloc."
+---
+
+# Prerequisites
+
+Tracebloc is continually expanding supported data types and tasks to enable your use cases. In case your use case is not yet supported, please reach out to us at [support@tracebloc.io](mailto:support@tracebloc.io).
+
+Before you can create a use case on the [tracebloc website](https://ai.tracebloc.io/my-use-cases), make sure the following requirements are met:
+
+- You are registered as a user on the tracebloc platform
+- You have a client deployed using kubernetes either [locally or in the cloud](/environment-setup/setup-guide)
+- Your dataset is cleaned and preprocessed
+- You are familiar with the supported data types and tasks
+
+Once these requirements are met, proceed with:
+- Defining the use case
+- Preparing and ingesting the dataset
+- Setting evaluation metrics
+- Evaluating models
+
+
+## Supported Data Types and Tasks
+
+## Image Data
+
+**Requirements for all image data tasks:** Uniform image sizes and uniform file types. For example all images as 256x256 rgb .jpg files. Convert files if necessary and in case your images do not fit the supported size, crop or resize accordingly.
+
+All images are validated before ingestion by the data ingestor. The ingestion process only starts when every file meets the requirements. Fix or remove any invalid images, then retry.
+
+For object detection, images and annotations are automatically up- or downsized to 448x448 pixels.
+
+| Task                  | Input file type | Color mode                                                   | Supported image size | Label file type                   | Requirements                                 | Links    |
+|-----------------------|-----------------|--------------------------------------------------------------|----------------|-----------------------------------|----------------------------------------------|----------|
+| Classification        | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | height = width px   | CSV                               | Uniform image size and file type per dataset | [Detailed structure](#image-classification) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
+| Keypoint Detection    | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | height = width px   | CSV                              | Uniform image sizes <br></br> Same number of keypoints per image and class  | [Detailed structure](#image-keypoint-detection) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
+| Object Detection      | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | height = width px. Images and annotations will be resized to 448x448 px automatically | Pascal VOC                        | Uniform image sizes, one xml per image       | [Detailed structure](#image-object-detection-in-pascal-voc-format) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
+| Semantic Segmentation | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | height = width px   | PNG, JPG, JPEG | Uniform image and mask sizes                 | [Detailed structure](#image-semantic-segmentation) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
+
+### Image Classification
+
+``` structure
+train/
+    labels.csv
+    images/
+        cat01.jpg
+        dog02.jpg
+        ...
+test/
+    ...
+```
+
+```labels.csv
+filename,label
+cat01,cat
+dog02,dog
+...
+```
+
+The filename should not include the file extension.
+
+### Image Keypoint Detection
+
+The number of keypoints per class and per image must be fixed. For example, in a person/car keypoint detection project, both classes must define the same keypoints, and every image must contain the full set for its class. You cannot mix classes with different keypoint counts (e.g., 16 for person and 32 for car) or annotate some images with fewer keypoints for the same class.
+
+``` structure
+train/
+    annotations.csv
+    images/
+        image01.png
+        image02.png
+        ...
+test/
+    ...
+```
+
+``` annotations.csv
+filename,label,x,y,visibility
+image01,person,100,150,2
+image01,car,120,140,1
+image02,person,95,155,0
+image02,car,115,145,2
+```
+
+- **X and Y** determine the X-/Y-coordinates of a keypoint
+- **Visibility** indicates whether a keypoint is visible in the image or not: 0 = not visible (point outside the image or point is in the image but occluded), 1 = visible
+- **Filename** should not include the file extension.
+
+### Image Object Detection
+
+The filename like "street01.png" specifies the link between images and annotations. XML-file annotations are in Pascal VOC format. The labels.csv contains a global list of all images and objects. Currently, the images and annotations are resized to 448x448 pixels.
+
+``` structure
+train/
+    labels.csv
+    images/
+        street01.png
+        street02.png
+        ...
+    annotations/
+        street01.xml
+        street02.xml
+        ...
+test/
+    ...
+```
+
+``` xml
+<annotation>
+    <filename>street01.jpg</filename>
+    <object>
+        <name>car</name>
+        <bndbox>
+            <xmin>100</xmin>
+            <ymin>200</ymin>
+            <xmax>300</xmax>
+            <ymax>400</ymax>
+        </bndbox>
+    </object>
+    <object>
+        ...
+    </object>
+</annotation>
+```
+
+``` labels.csv
+filename,label
+street01,car
+street01,car
+street01,person
+street02,car
+...
+```
+
+### Image Semantic Segmentation
+
+Each mask is an rgb image whose pixel values map to classes defined in labels.csv. The labels.csv contains a global list per image and class. All masks must exactly match their corresponding image sizes and file names.
+For binary segmentation (two classes), provide a single-channel grayscale mask where background pixels are black (0) and foreground pixels are white (255).
+For three or more classes, supply an RGB mask where each class is represented by a unique color (or pixel value). The filename should not include the file extension.
+
+
+``` structure
+train/
+    labels.csv
+    images/
+        scene01.png
+        scene02.png
+        ...
+    masks/
+        scene01.png
+        scene02.png
+        ...
+test/
+    ...
+```
+
+``` labels.csv
+filename,mask_filename,label,colour
+image1,mask1,road,#FFFFFF
+image1,mask1,background,#000000
+image2,mask2,background,#000000
+image2,mask2,road,#FFFFFF
+...
+```
+
+
+
+## Tabular Data
+
+**Requirements for all tabular data tasks:** Each dataset must be provided as a single CSV file with a header row. Every column must contain uniform data types, for example numeric values for features and a categorical or alphanumeric column for labels. Use UTF-8 encoding with comma separators and validate that your schema matches the expected types. Invalid rows are skipped by the ingestor.
+
+| Task           | Data file type     | Requirements                                                                                            | Links    |
+|----------------|--------------------|---------------------------------------------------------------------------------------------------------|----------|
+| Classification | CSV (features and label in one single file) | Uniform data formats per column. <br></br>Feature columns: Numeric <br></br>Label columns: Alphanumeric | [Detailed structure](#tabular-classification) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
+
+### Tabular Classification
+
+Include a header row with clear column names, using a dedicated column for the labels. An `id` row is recommended but not required.
+
+``` csv
+id,feature1,feature2,feature3,label
+1,1.5,2.3,0.8,class_a
+2,2.1,1.9,1.2,class_b
+3,0.9,3.1,0.5,class_a
+...
+```
+
+## Text Data
+
+| Task                  | Input files    | Label file type                       | Requirements                                                                                          | Links    |
+|-----------------------|----------------|-----------------------------------|---------------------------------------------------------------------------------------------------------|----------|
+| Classification        | TXT            | CSV                               |      Text file may not be empty  | [Detailed structure](#text-classification) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
+
+### Text Classification
+
+The filename should not include the file extension.
+
+``` structure
+train/
+    labels.csv
+    texts/
+        review01.txt
+        review02.txt
+        ...
+test/
+    ...
+```
+
+``` labels.csv
+filename,label
+review01,positive
+review02,negative
+...
+```
+
+``` text file example
+# review01.txt
+This product is amazing! I love it.
+```

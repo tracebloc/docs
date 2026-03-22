@@ -1,0 +1,875 @@
+---
+title: "Setting Up EKS Infrastructure Using AWS CLI"
+description: "Step-by-step guide to deploy Tracebloc on Amazon EKS. Build a production-ready Kubernetes cluster with networking, GPU support, and security using AWS CLI in 1-2 hours."
+---
+
+# Setting Up EKS Infrastructure Using AWS CLI
+
+## Overview
+
+
+Running machine learning workloads in the cloud often requires a reliable, secure, and scalable infrastructure—yet setting it up can be complex. This guide walks you through building a complete Amazon EKS (Elastic Kubernetes Service) environment from scratch using the AWS CLI. By following these steps, you'll create a production-ready foundation with networking, GPU-optional compute, storage, and security fully aligned with AWS and Kubernetes best practices.
+
+Once the infrastructure is in place, you'll deploy and configure the tracebloc client to securely train and benchmark AI models. This setup ensures that your proprietary data stays within your environment, while still allowing external AI models to be tested and fine-tuned in a controlled, isolated way. The result: a scalable, secure platform for high-performance ML workloads that accelerates collaboration with external experts while maintaining full control over your data and IP.
+
+The entire setup can be completed in about 1–2 hours.
+
+If the cluster is already up and you are just adding another client to it, skip the cluster-creation steps and go straight to ["Client Configuration"](#5-client-configuration).
+
+## Prerequisites
+
+Before proceeding with the EKS infrastructure setup, make sure the following requirements are met:
+
+### AWS Setup
+
+#### 1. Create or use an AWS Account
+- If you don't already have one, [create an AWS account](https://signin.aws.amazon.com/signup?request_type=register).
+- Your account must have permissions to create and manage EKS resources, VPCs, EC2 instances, and IAM roles.
+
+#### 2. Install and configure AWS CLI
+- [Install the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) on your local machine.
+- Configure your credentials with:
+```bash
+aws configure
+```
+This prompts you to enter your Access Key ID, Secret Access Key, default region (recommended: `eu-central-1`), and output format.
+
+#### 3. Verify your AWS CLI configuration
+Check if your credentials and region are set correctly:
+```bash
+aws configure list
+```
+
+If needed, set the region explicitly:
+```bash
+aws configure set region eu-central-1
+```
+
+#### Required Permissions
+Your AWS user/role should have permissions for:
+- Amazon EKS cluster management
+- VPC and networking resources
+- EC2 instances and security groups
+- IAM roles and policies
+
+### Required Tooling & Tracebloc Account
+- **Helm 3.x**: Install Helm on your local machine. [Installation Guide](https://helm.sh/docs/intro/install/)
+- **kubectl**: Install kubectl to interact with your EKS cluster. [Installation Guide](https://kubernetes.io/docs/tasks/tools/)
+- **Tracebloc Account**: You will need your Client ID and Client Password ([from the tracebloc client view](https://ai.tracebloc.io/clients)).
+- **Docker Registry Credentials**: Docker Hub username, password/token, and email for pulling container images.
+
+### Recommended for Monitoring: Use k9s
+
+You can use [k9s](https://k9scli.io/), a terminal-based Kubernetes dashboard, to monitor jobs, pods, and logs in real time. Run `k9s -n <NAMESPACE>` to get a live view of resources, switch between them instantly, and inspect logs or events with a few keystrokes. Compared to kubectl, it is faster and more convenient.
+
+
+### Components
+
+The EKS infrastructure setup consists of two main parts: Core Infrastructure and Client Deployment. Together, they provide a secure, scalable environment for running ML workloads with the tracebloc client.
+
+#### Core Infrastructure
+
+**VPC with isolated networking**
+Creates a dedicated, secure network environment with subnets across multiple Availability Zones for high availability.
+
+**EKS Cluster**
+A managed Kubernetes control plane with auto-scaling nodegroups to run your ML workloads.
+
+**IAM Roles and Policies**
+Granular roles for the cluster and worker nodes following least-privilege principles.
+
+**Security Groups**
+Network-level access controls for pods, nodes, and storage.
+
+**EFS Storage System**
+Shared persistent storage for training datasets and model artifacts, accessible from all nodes.
+
+#### Client Deployment
+
+**tracebloc Client Application**
+Deployed into the EKS cluster using Helm, configured with your account credentials and storage.
+
+**Monitoring and Verification**
+Tools for validating that your cluster, workloads, and client are running correctly.
+
+By combining these components, you get a production-ready Kubernetes environment tailored for secure, high-performance machine learning workloads.
+
+### Process Flow
+
+1. **Infrastructure Setup** - Create VPC, networking, EKS cluster, and storage
+2. **Client Deployment** - Configure and deploy the tracebloc application
+3. **Verification** - Validate everything is running correctly
+
+
+
+## Security
+
+Security is a core consideration when setting up and running ML workloads on EKS. This setup follows AWS and Kubernetes best practices to ensure data protection, secure communication, and controlled access at every layer.
+
+### Data Protection
+
+- **Data Locality**: Training data always remains within your infrastructure. Only pre-defined metrics and logs are shared externally.
+- **Model Encryption**: Model weights are encrypted and never leave your environment.
+- **Secure Communication**: All platform communication is protected with TLS.
+
+### tracebloc Backend Security
+
+- **Code Analysis**: Submitted external models are scanned with the Bandit library to detect vulnerabilities or malicious code.
+- **Input Validation**: Training scripts and model code undergo strict validation before execution.
+- **Sandboxed Execution**: Training workloads run in isolated environments with restricted system access.
+- **Namespace Isolation**: Kubernetes namespaces ensure logical separation from other applications.
+
+### Identity & Access Management
+
+**AWS IAM Roles:**
+- **Cluster Role**: Minimal permissions (`AmazonEKSClusterPolicy`) for cluster management.
+- **Nodegroup Role**: Least-privilege permissions for worker nodes, networking, container registry, and storage access.
+
+**Kubernetes RBAC:**
+- Cluster roles provide limited permissions for jobs, pods, and deployments.
+- Service accounts are bound to roles within their namespace, preventing cross-namespace access.
+
+### Network Security
+
+- **VPC Isolation**: Dedicated VPC with private subnets and an Internet Gateway for controlled communication.
+- **Security Groups**: Restrict access to EFS mount targets and cluster traffic.
+- **Outbound Access**: Limited to required destinations such as `*.amazonaws.com`, `*.docker.io`, and `*.tracebloc.io`.
+
+Together, these measures ensure that external models can be deployed safely into your EKS environment without exposing proprietary data or infrastructure.
+
+## Quick Setup
+
+### Purpose
+Spin up a production-ready EKS baseline (VPC, subnets, internet gateway, EKS cluster, managed nodegroup, EFS + CSI driver) in one go. Includes basic validation, colored logging, and a cleanup mode.
+
+### What this script does
+- Creates networking (VPC + 3 public subnets + route to IGW)
+- Provisions an EKS cluster and a system nodegroup (t3.medium, 2–5 nodes)
+- Creates EFS and mount targets in all AZs, sets up the EFS CSI driver + storage class
+- Updates your kubeconfig for kubectl access
+- Prints a summary and next steps
+
+### Prerequisites
+- AWS CLI installed and configured (able to run `aws sts get-caller-identity`)
+- kubectl installed and on PATH
+- Permissions to create EKS, EC2/VPC, EFS, and IAM resources in the target account
+- (Recommended) Helm installed for later app deployment
+
+### How to run
+1. Save the script below as `setup_eks.sh`
+2. Make it executable: `chmod +x setup_eks.sh`
+3. (Optional) Edit the configuration variables at the top (REGION, CLUSTER_NAME, OWNER_TAG, etc.)
+4. Execute: `./setup_eks.sh`
+5. When finished, follow the printed "Next steps" to create your Docker registry secret and deploy workloads
+
+### Cleanup (teardown)
+Run `./setup_eks.sh cleanup` to remove cluster, nodegroup, EFS, subnets, gateway, roles, and VPC (irreversible).
+
+### Tips:
+- **Costs**: This creates billable resources (EC2, EKS, EFS, data transfer). Remove when not needed.
+- **Network model**: Subnets are configured to auto-assign public IPs for simplicity. Adjust to private subnets + NAT as needed.
+- **Kubernetes version**: The script requests `--kubernetes-version 1.32`; update if your region/account supports a different current version.
+- **Security hardening**: Treat this as a solid baseline; adapt SGs, private subnets, IRSA, and PodSecurity/OPA as required by your environment.
+
+If you prefer more control over your setup and want to customize the environment to your needs, follow the step-by-step guide below.
+
+## Detailed Setup
+
+This section walks through a step-by-step build with AWS CLI and kubectl. It mirrors the Quick Setup but lets you choose your own resource settings (# of CPUs, Memory, VPC CIDRs, instance types, namespace, Helm release name, StorageClass, etc.). Expect about 1–2 hours end-to-end.
+
+### What you'll do (Steps 1–6):
+1. **VPC & Network Configuration** — Create an isolated Virtual Private Cloud (VPC) with subnets distributed across three availability zones for high availability, an Internet Gateway for outbound connectivity, and routing tables with proper associations. This provides network isolation and fault tolerance for your cluster infrastructure.
+2. **EKS Cluster Setup** — Create the cluster service role and provision the EKS control plane which manages the Kubernetes API server.
+3. **EKS Nodegroup Setup** — Create a node service role and provision two managed nodegroups: A system nodegroup for Kubernetes system components and a training nodegroup for ML workloads. Each nodegroup can be customized with different instance types, scaling parameters, and capacity types depending on the work loads and data types.
+4. **Storage** — Create an Amazon EFS file system for shared persistent storage, configure a security group that allows NFS traffic from the cluster nodes, and create mount targets in each availability zone. This provides scalable, shared storage for training data as well as weights and logs.
+5. **Client Configuration** — Install the Amazon EFS (Elastic File System) CSI driver (Container Storage Interface) in your EKS (Elastic Kubernetes Service) cluster. This driver is what lets Kubernetes automatically create and mount EFS storage volumes.
+6. **Client Deployment** — Add the tracebloc Helm repository, configure your deployment values (authentication credentials, registry access, storage settings, resource limits), install the chart into your chosen namespace. Deploy and verify that all pods are running and persistent volume claims are properly bound.
+
+**Helm Usage**: Helm is used to install and manage Kubernetes applications. In steps 5 and 6 you will deploy the tracebloc client via the tracebloc/eks chart from the tracebloc Helm repository.
+
+## 1. VPC and Network Configuration
+
+Your AWS EKS cluster must run in a secure and isolated network with subnets across availability zones, DNS resolution, and internet access. This is provided by an AWS VPC (Virtual Private Cloud), which is a logically isolated section of AWS where you define your own IP address range (CIDR block), subnets, routing, and gateways.
+This section sets up the foundation.
+
+### VPC Creation
+
+VPC provides network isolation, so your workloads are not exposed to the public internet by default.
+
+```bash
+aws ec2 create-vpc \
+  --cidr-block 10.0.0.0/16 \
+  --tag-specifications "ResourceType=vpc,Tags=[{Key=owner,Value=<OWNER_NAME>}]"
+```
+
+Creates an isolated network environment where your EKS cluster runs securely. Uses CIDR (Classless Inter-Domain Routing) block `10.0.0.0/16` to define the IP address range for all resources in the VPC and tags it with the specified owner name. Replace `<OWNER_NAME>` with your preferred identifier. Keep the output and the `VPC_ID`for the next steps.
+
+### Enable DNS Hostnames
+
+DNS (Domain Name System) support and hostnames let Kubernetes pods and services find each other by name, which is essential for service discovery in Kubernetes, which relies on DNS resolution.
+
+```bash
+aws ec2 modify-vpc-attribute --vpc-id <VPC_ID> --enable-dns-hostnames
+```
+
+Enables DNS resolution so nodes and services can resolve each other by name instead of IP addresses. Find the `VPC_ID`from the previous step or list VPCs using `aws ec2 describe-vpcs`.
+
+
+### Create Subnets Across Availability Zones
+
+Subnets (smaller ranges of IP addresses inside the VPC) are spread across multiple AZs (Availability Zones) to ensure high availability and fault tolerance. EKS requires subnets in at least 2 availability zones for high availability - using 3 zones provides better fault tolerance and load distribution.
+
+```bash
+aws ec2 create-subnet \
+  --vpc-id <VPC_ID> \
+  --cidr-block 10.0.1.0/24 \
+  --availability-zone eu-central-1a \
+  --tag-specifications "ResourceType=subnet,Tags=[{Key=owner,Value=<OWNER_NAME>}]"
+
+aws ec2 create-subnet \
+  --vpc-id <VPC_ID> \
+  --cidr-block 10.0.2.0/24 \
+  --availability-zone eu-central-1b \
+  --tag-specifications "ResourceType=subnet,Tags=[{Key=owner,Value=<OWNER_NAME>}]"
+
+aws ec2 create-subnet \
+  --vpc-id <VPC_ID> \
+  --cidr-block 10.0.3.0/24 \
+  --availability-zone eu-central-1c \
+  --tag-specifications "ResourceType=subnet,Tags=[{Key=owner,Value=<OWNER_NAME>}]"
+```
+
+Creates three subnets with separate CIDR blocks (`10.0.1.0/24`, `10.0.2.0/24`, `10.0.3.0/24`) distributed across different availability zones. Use or create tags if needed. Register the generated `SUBNET_IDs` for the following steps.
+
+### Enable Public IPs on Subnets
+
+EKS worker nodes need public IPs to communicate with the EKS control plane, download container images from Dockerhub, and allow external traffic to reach applications.
+
+```bash
+aws ec2 modify-subnet-attribute --subnet-id <SUBNET_ID_1A> --map-public-ip-on-launch
+aws ec2 modify-subnet-attribute --subnet-id <SUBNET_ID_1B> --map-public-ip-on-launch
+aws ec2 modify-subnet-attribute --subnet-id <SUBNET_ID_1C> --map-public-ip-on-launch
+```
+Configures each subnet to automatically assign public IP addresses to new EC2 instances.
+
+### Create and Attach an Internet Gateway
+
+An Internet Gateway (IGW) connects your VPC to the internet so nodes can pull container images and reach AWS APIs.
+
+```bash
+aws ec2 create-internet-gateway \
+  --tag-specifications "ResourceType=internet-gateway,Tags=[{Key=owner,Value=<OWNER_NAME>}]"
+
+```
+Register the generated INTERNET_GATEWAY_ID for the next step:
+
+```bash
+aws ec2 attach-internet-gateway \
+  --vpc-id <VPC_ID> \
+  --internet-gateway-id <INTERNET_GATEWAY_ID>
+```
+
+### Create Default Route Table to Internet Gateway
+
+A route table defines how network traffic is directed within the VPC and out through the IGW.
+
+```bash
+aws ec2 describe-route-tables \
+  --region eu-central-1 \
+  --filters Name=vpc-id,Values=<VPC_ID> \
+  --query "RouteTables[].RouteTableId" \
+  --output table
+```
+This lists the route table IDs linked to your VPC. Pick the main route table ID you want to update, then add a default route:
+
+```bash
+aws ec2 create-route \
+  --route-table-id <ROUTE_TABLE_ID> \
+  --destination-cidr-block 0.0.0.0/0 \
+  --gateway-id <INTERNET_GATEWAY_ID>
+```
+This adds a rule that sends all internet-bound traffic (0.0.0.0/0) through the IGW, enabling external connectivity for your nodes.
+
+
+
+
+
+## 2. EKS Cluster Setup
+
+Amazon EKS provides the managed Kubernetes control plane. It needs permissions through AWS IAM (Identity and Access Management) to create and manage resources such as load balancers, security groups, and network interfaces.
+The cluster itself is the logical container for the API server, linking your VPC networking with the control plane and IAM role. To interact with it you must update your local kubeconfig so kubectl can send commands. Setting this up gives you a working API server that can manage workloads once worker nodes are added in the next step.
+
+### Create EKS Cluster Role
+
+EKS needs an IAM role to manage your cluster's control plane and AWS resources:
+
+```bash
+aws iam create-role \
+  --role-name <ROLE_NAME> \
+  --assume-role-policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [{
+      "Action": "sts:AssumeRole",
+      "Effect": "Allow",
+      "Principal": {"Service": "eks.amazonaws.com"}
+    }]
+  }' \
+  --tags Key=owner,Value=<OWNER_NAME>
+```
+
+Creates a role with the following parameters:
+
+- `--role-name`: Name for your EKS service role
+- `--assume-role-policy-document`: Trust policy allowing EKS to use this role
+- `--tags`: Optional resource tags for organization
+
+### Attach EKS Cluster Policy to Role
+
+To give the EKS control plane the necessary permissions, you must attach the AmazonEKSClusterPolicy.
+
+```bash
+aws iam attach-role-policy \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy \
+  --role-name <ROLE_NAME>
+```
+Adds the AWS-managed EKS cluster policy to the role, giving the control plane its required permissions to manage networking, security groups, or load balancers.
+
+### Create EKS Cluster
+
+Create the EKS cluster to provision the managed Kubernetes control plane and connect it to your VPC, subnets, and IAM role.
+
+```bash
+aws eks create-cluster \
+  --name <CLUSTER_NAME> \
+  --role-arn arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME> \
+  --resources-vpc-config subnetIds=<SUBNET_ID_1A>,<SUBNET_ID_1B>,<SUBNET_ID_1C>,endpointPublicAccess=true,publicAccessCidrs=0.0.0.0/0 \
+  --kubernetes-network-config serviceIpv4Cidr=172.20.0.0/16,ipFamily=ipv4 \
+  --kubernetes-version 1.32 \
+  --tags owner=<OWNER_NAME>
+```
+Creates the EKS cluster using the specified role, VPC subnets, and Kubernetes version. Set an appropriate `CLUSTER_NAME`, **expect this to take around 10 minutes**. If you do not have your accound ID ready, run `aws sts get-caller-identity`.
+
+### Configure kubectl
+
+Your local kubectl must know the cluster's API endpoint and credentials, otherwise you cannot interact with the cluster you just created:
+
+```bash
+aws eks update-kubeconfig --region eu-central-1 --name <CLUSTER_NAME>
+```
+Updates your local kubeconfig for kubectl.
+
+### Manage Multiple Clusters (Optional)
+
+If you work with several clusters, make sure your context points to the right one. List all contexts:
+
+```bash
+kubectl config get-contexts
+```
+Find your `CONTEXT_NAME`, then apply it:
+
+```bash
+kubectl config use-context <CONTEXT_NAME>
+```
+This ensures subsequent kubectl commands apply to the intended cluster.
+
+### Create Application Namespace
+
+Namespaces let you isolate your workloads from system components and other applications running in the cluster. Define an appropriate namespace for your setup
+
+```bash
+kubectl create namespace <NAMESPACE>
+```
+Adds a dedicated namespace for your workloads, keeping them isolated from system components.
+
+
+
+## 3. EKS Nodegroup Setup
+
+Nodegroups are sets of EC2 instances that act as worker nodes, running your system and training workloads. Each nodegroup needs an IAM role so the nodes can join the cluster and interact with AWS services such as pulling images from registries, attaching EFS storage, and sending logs. It is best practice to create at least two groups: a small system nodegroup to host cluster services and a training nodegroup sized for your ML workloads. The training nodegroup can be CPU-based for general jobs or GPU-based for deep learning, ensuring that heavy jobs do not interfere with core Kubernetes functions.
+
+### Create Nodegroup Role
+
+Worker nodes need an IAM role to join the cluster and access AWS services.
+
+```bash
+aws iam create-role \
+  --assume-role-policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [{
+      "Effect": "Allow",
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": ["ec2.amazonaws.com"]
+      }
+    }]
+  }' \
+  --role-name <NODEGROUP_ROLE_NAME> \
+  --tags Key=owner,Value=<OWNER_NAME>
+```
+Creates an IAM role that nodes can assume, allowing them to join the cluster and interact with AWS services. Create an appropriate `NODEGROUP_ROLE_NAME`.
+
+### Attach Required Policies
+
+Attach minimum required AWS-managed policies so the nodes have permissions:
+
+```bash
+aws iam attach-role-policy \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy \
+  --role-name <NODEGROUP_ROLE_NAME>
+
+aws iam attach-role-policy \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly \
+  --role-name <NODEGROUP_ROLE_NAME>
+
+aws iam attach-role-policy \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy \
+  --role-name <NODEGROUP_ROLE_NAME>
+```
+- **AmazonEKSWorkerNodePolicy:** lets nodes communicate with the cluster control plane
+- **AmazonEC2ContainerRegistryReadOnly:** allows pulling images from ECR
+- **AmazonEKS_CNI_Policy:** required for pod networking via the Container Network Interface (CNI) plugin
+
+### Create Managed Nodegroups
+
+Now let`s create two nodegroups: A system nodegroup that runs critical Kubernetes components (CoreDNS, kube-proxy, Container Network Interface (CNI), Storage Interface drivers (CSI), metrics-server, etc.) and a training nodegroup that runs your machine learning workloads. This separation ensures cluster stability even under heavy training load.
+
+#### System Nodegroup
+
+It is recommended to use [AWS EC2 instance type t3.medium](https://aws.amazon.com/ec2/instance-types/t3/) for system pods as they are relatively cheap and sufficient. Spread nodes across three Availability Zones for resilience, set ON_DEMAND for reliability and label as "system":
+
+```bash
+aws eks create-nodegroup \
+  --cluster-name <CLUSTER_NAME> \
+  --nodegroup-name <SYSTEM_NODEGROUP_NAME> \
+  --scaling-config minSize=2,maxSize=5,desiredSize=2 \
+  --subnets <SUBNET_ID_1A> <SUBNET_ID_1B> <SUBNET_ID_1C> \
+  --node-role arn:aws:iam::<ACCOUNT_ID>:role/<NODEGROUP_ROLE_NAME> \
+  --instance-types t3.medium \
+  --ami-type AL2_x86_64 \
+  --capacity-type ON_DEMAND \
+  --update-config maxUnavailable=1 \
+  --labels type=system \
+  --tags owner=<OWNER_NAME>
+```
+
+Creates a nodegroup with `t3.medium` instances (2 vCPUs, 4 GiB memory) spread across three AZs. The group scales between 2 and 5 nodes (EC2s), each node is labeled for system workloads. Set an appropriate `SYSTEM_NODEGROUP_NAME`. Always make sure to use `AL2_x86_64` for system nodes so that the data ingestor runs on this node, too.
+
+#### Training Nodegroup
+
+This group runs your ML training workloads and **must be sized appropriately** to provide sufficient memory and compute. Consider dataset size, model type, the number of parallel workloads and whether GPU acceleration is needed. Select instance types and scaling parameters carefully, based on the kind of models you expect to train and the resources they demand.
+
+Refer to the [EC2 instance types list](https://aws.amazon.com/ec2/instance-types) and [EKS managed nodegroups docs](https://docs.aws.amazon.com/eks/latest/userguide/create-managed-node-group.html) for guidance.
+
+```bash
+aws eks create-nodegroup \
+  --cluster-name <CLUSTER_NAME> \
+  --nodegroup-name <TRAINING_NODEGROUP_NAME> \
+  --scaling-config minSize=0,maxSize=5,desiredSize=2 \
+  --subnets <SUBNET_ID_1A> <SUBNET_ID_1B> <SUBNET_ID_1C> \
+  --node-role arn:aws:iam::<ACCOUNT_ID>:role/<NODEGROUP_ROLE_NAME> \
+  --instance-types <INSTANCE_TYPE> \
+  --ami-type <AMI_TYPE> \
+  --capacity-type ON_DEMAND \
+  --update-config maxUnavailable=1 \
+  --labels trainingset=<LABEL> \
+  --tags owner=<OWNER_NAME> \
+  --disk-size 50
+```
+
+Set an appropriate `TRAINING_NODEGROUP_NAME`. Depending on the compute type (CPU vs. GPU), set variables as follows:
+
+| Compute Type | INSTANCE_TYPE | AMI_TYPE | LABEL |
+|--------------|---------------|----------|-------|
+| CPU | t3.xlarge | AL2_x86_64 | cpu |
+| GPU | g5g.xlarge | AL2023_x86_64_NVIDIA | gpu |
+
+The first example provisions a training nodegroup with t3.xlarge instances (4 vCPUs, 16 GiB memory). It starts with 2 nodes, can scale down to 0 when idle, and grows to 5 under load.
+
+You can limit the compute per participant or team: Refer to the [creating a use case](/create-use-case/define) section for details.
+
+
+#### Optional for GPU Training Nodegroup
+
+Install the NVIDIA device plugin so Kubernetes can automatically detect and schedule GPUs on any new node:
+
+```bash
+kubectl create -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.1/deployments/static/nvidia-device-plugin.yml
+```
+
+## 4. Storage
+
+Your workloads need persistent storage across nodes to store:
+- train and test datasets
+- model checkpoints and weights during training
+- client logs
+
+Tracebloc leverages Amazon EFS (Elastic File System) to provide a scalable, managed file system that integrates directly with Kubernetes via the EFS CSI (Container Storage Interface) driver. It provides shared, persistent storage that all nodes and pods in the cluster can access at the same time.
+
+
+### Create EFS File System
+
+Let`s create an EFS file system:
+
+```bash
+aws efs create-file-system \
+  --performance-mode generalPurpose \
+  --throughput-mode elastic \
+  --tags Key=owner,Value=<OWNER_NAME>
+```
+Creates an Amazon EFS file system with elastic throughput that scales automatically with workload demand. Save the generated `FILE_SYSTEM_ID` for later use.
+
+### Identify Security Groups
+
+List all security groups in the VPC so you can allow NFS traffic from your worker nodes to the EFS mount targets. NFS traffic is the file system protocol that EFS uses to let your nodes read and write shared storage.
+
+
+```bash
+aws ec2 describe-security-groups \
+  --region eu-central-1 \
+  --filters Name=vpc-id,Values=<VPC_ID> \
+  --query "SecurityGroups[*].{ID:GroupId,Name:GroupName}" \
+  --output table
+```
+
+List all security groups so you can identify the security group id your EKS cluster uses for the next step.
+
+### Create EFS Mount Targets
+
+Mount targets act as network endpoints in each Availability Zone, letting your worker nodes connect to the EFS file system using NFS.
+
+```bash
+aws efs create-mount-target \
+  --file-system-id <FILE_SYSTEM_ID> \
+  --subnet-id <SUBNET_ID_1A> \
+  --security-groups <SECURITY_GROUP_ID>
+
+aws efs create-mount-target \
+  --file-system-id <FILE_SYSTEM_ID> \
+  --subnet-id <SUBNET_ID_1B> \
+  --security-groups <SECURITY_GROUP_ID>
+
+aws efs create-mount-target \
+  --file-system-id <FILE_SYSTEM_ID> \
+  --subnet-id <SUBNET_ID_1C> \
+  --security-groups <SECURITY_GROUP_ID>
+```
+
+Creates EFS mount targets in each subnet so nodes across all Availability Zones can attach to the same shared file system.
+
+### Attach EFS CSI Driver Policy to Node Role
+
+The EFS CSI (Container Storage Interface) driver is the Kubernetes plugin that makes Amazon EFS usable inside your cluster. It translates Kubernetes PersistentVolumeClaims into actual EFS mounts. For the driver to do this, the worker nodes need IAM permissions to create, mount, and manage EFS volumes.
+
+```bash
+aws iam attach-role-policy \
+  --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicy \
+  --role-name <NODEGROUP_ROLE_NAME>
+```
+Attaches the AWS-managed AmazonEFSCSIDriverPolicy to your nodegroup role. This lets the EFS CSI driver running on your nodes provision and mount EFS storage for pods, so workloads can share datasets, logs, and model checkpoints across the cluster.
+
+### Add EFS CSI Driver Helm Repository
+
+The EFS CSI driver is packaged as a Helm chart, which makes it easy to install and upgrade in your cluster.
+
+```bash
+helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver
+```
+
+This command registers the AWS EFS CSI driver Helm repository with your local Helm setup. Once added, you can install or update the EFS CSI driver in your cluster using Helm commands. The driver runs as pods in the kube-system namespace and allows Kubernetes to dynamically provision and mount EFS volumes for your workloads.
+
+### Configure EFS CSI Driver Placement
+
+The EFS CSI driver consists of a controller (manages provisioning of storage) and node pods (handle actual EFS mounts on each worker). By default, the controller could be scheduled onto any node, including your training nodes. Since training jobs consume heavy CPU and memory, this risks starving the controller and blocking storage operations.
+Lets manually create a driver configuration file `efs-csi-driver.yaml`:
+
+```bash
+vi efs-csi-driver.yaml
+```
+
+and deploy it to the cluster. Paste content into file:
+
+```bash
+controller:
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        preference:
+          matchExpressions:
+          - key: node.kubernetes.io/scope
+            operator: In
+            values:
+            - system
+```
+This node affinity ensures the EFS CSI controller pods run on the system nodegroup (nodes labeled node.kubernetes.io/scope=system) instead of training nodes.
+
+### Install EFS CSI Driver with Helm
+
+Now, the EFS CSI driver needs to be installed into the cluster (namespace kube-system by convention) using the configuration file.
+
+```bash
+helm install efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver \
+  --namespace kube-system \
+  -f efs-csi-driver.yaml
+```
+
+### Install Metrics Server
+
+The Metrics Server is the cluster-wide aggregator for resource usage data. It collects CPU and memory metrics for autoscaling and live resource monitoring. Install it to monitor resources usage:
+
+```bash
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/high-availability-1.21+.yaml
+```
+
+Deploys the Metrics Server in high-availability mode for reliable metric collection.
+
+
+## 5. Client Configuration
+
+You can now prepare the Helm chart that deploys the tracebloc client itself: The client is the component that runs your model evaluation and training jobs inside the cluster. To install it, you use a Helm chart, which bundles all required Kubernetes manifests into a single, configurable package.
+A values.yaml file controls this deployment, where you specify credentials (to authenticate with tracebloc), registry access (to pull container images), and storage settings (to mount your EFS volumes). This configuration ensures the client can securely connect, schedule workloads, and store results.
+
+### Add Helm Repository
+
+Install and update the tracebloc client using Helm instead of managing raw YAML. For details, refer to the public [GitHub Repository](https://github.com/tracebloc/client/tree/main/eks).
+
+```bash
+helm repo add tracebloc https://tracebloc.github.io/client/
+helm repo update
+```
+
+Adds the official tracebloc Helm repository to your local configuration so you can install the client with a single Helm command.
+
+###  Configure your Deployment Settings
+
+Export the chart's default configuration into a local file that you can edit:
+
+```bash
+helm show values tracebloc/eks > values.yaml
+```
+
+Downloads the default configuration template for the tracebloc client. Open and update the following sections in `values.yaml`:
+
+#### Deployment Namespace
+
+Use the defined namespace:
+
+```yaml
+namespace: <NAMESPACE>
+```
+Defines where the client will be deployed.
+
+#### Tracebloc Authentication
+
+##### Client ID
+
+Provide your client ID from the [tracebloc client view](https://ai.tracebloc.io/clients).
+
+```yaml
+jobsManager:
+  env:
+    CLIENT_ID: "<YOUR_CLIENT_ID>"
+```
+##### Client Password
+
+Set `create: true` to generate the secret during installation:
+
+```yaml
+# Secrets configuration
+secrets:
+  # Whether to create the secret or use existing secret
+  create: true
+  # Client password
+  clientPassword: "<YOUR_CLIENT_PASSWORD>"
+```
+
+#### Docker Registry Configuration
+
+The tracebloc client images are stored in a private container registry. Kubernetes needs valid Docker Hub credentials to pull these images onto your nodes.
+
+```yaml
+dockerRegistry:
+  create: true
+  secretName: regcred
+  server: https://index.docker.io/v1/
+  username: <DOCKER_USERNAME>
+  password: <DOCKER_TOKEN> OR <DOCKER_PASSWORD>
+  email: <DOCKER_EMAIL>
+```
+
+- DOCKER_USERNAME: Docker Hub username
+- DOCKER_PASSWORD: Password or access token (if 2FA enabled)
+- DOCKER_TOKEN: Alternative token for automation or personal access
+- DOCKER_EMAIL: Email linked to your Docker account
+
+#### Storage
+
+Your workloads need persistent storage that survives pod restarts and can be shared across all nodes. Kubernetes uses PersistentVolumeClaims (PVCs) to request storage, and in this setup those PVCs are backed by EFS. By linking PVCs to your EFS file system, training pods can read datasets, write logs, and store database files even if they move between nodes. Configure Persistent Volume Claims (PVCs) for datasets, logs, and MySQL:
+
+```yaml
+storageClass:
+  # Set to true to create a new storage class, false to use existing. Be careful not to overwrite existing datafiles by setting it true.
+  create: true
+...
+  parameters:
+    fileSystemId: <FILE_SYSTEM_ID>
+
+...
+sharedData:
+  name: shared-data
+  storage: 50Gi
+
+logsPvc:
+  name: logs-pvc
+  storage: 10Gi
+
+mysqlPvc:
+  name: mysql-pvc
+  storage: 2Gi
+```
+Add the FILE_SYSTEM_ID from your EFS setup. Adjust PVC sizes as needed.
+
+**Options:**
+- `create: true`: create a new storage class (overwrites existing data)
+- `create: false`: reuse an existing class (keeps data intact)
+
+#### Set Resource Limits at Pod/Container Level
+
+Kubernetes schedules pods based on declared resource requests and enforces limits to prevent a single workload from monopolizing the cluster. If you do not set these, training jobs can consume all available CPU or memory, starving system components and other workloads and forcing jobs to restart. Setting GPU requests is equally important. Make sure the limits are within the AWS EC2 instance capacity you set previously. **IMPORTANT:** For the GPU setup, requests and limits must be the same. Kubernetes will reject configs where they differ.
+
+```yaml
+  RESOURCE_REQUESTS: "cpu=2,memory=8Gi"
+  RESOURCE_LIMITS: "cpu=2,memory=8Gi"
+
+  GPU_REQUESTS: "" # for GPU support set "nvidia.com/gpu=1"
+  GPU_LIMITS: "" # for GPU support set ""nvidia.com/gpu=1"
+```
+
+These values define pod-level resource allocations. Kubernetes then places pods onto nodes (EC2s) that can satisfy them, based on current usage.
+
+**In short:** Set pod requests to what the training actually needs but keep limits well inside the EC2 capacity.
+
+**Tip:** Estimating VRAM requirements for LLMs can be tricky. Use the [VRAM Calculator](https://apxml.com/tools/vram-calculator)
+ to approximate memory needs for different model sizes and batch configurations.
+
+**Node, Pod, Job relationship**
+
+- One EC2 equals one node, one node runs many pods
+- One pod contains one or more containers
+- One training run equals one Job, which in most cases creates one pod by default
+
+Pods are lightweight, many pods can share one EC2.
+
+
+#### Proxy Settings (Optional)
+
+These settings are only required if your EKS worker nodes need to reach the internet through a corporate or institutional proxy or firewall. Without them, the tracebloc client may fail to pull container images from Docker Hub or connect to the tracebloc backend.
+
+```yaml
+  # proxy hostname.
+  HTTP_PROXY_HOST:
+  # proxy port.
+  HTTP_PROXY_PORT:
+  # username used for proxy authentication if needed.
+  HTTP_PROXY_USERNAME:
+  # password used for proxy authentication if needed.
+  HTTP_PROXY_PASSWORD:
+```
+If your cluster is deployed in the VPC with direct outbound internet access, you can leave these fields empty. In restricted environments, coordinate with your cloud or network team
+
+### Optional: Repeated Setups
+
+Change the RBAC `clusterRole.create: name` in your `values.yaml` to a new name, e.g. your namespace.
+
+
+## 6. Client Deployment
+
+With the configuration ready, deploy the tracebloc client into your EKS cluster using Helm.
+
+### Deploy the client with Helm
+
+Install the tracebloc Helm chart into the specified namespace and a suitable release name using your customized values file:
+
+```bash
+helm install <RELEASE_NAME> tracebloc/eks \
+  --namespace <NAMESPACE> \
+  --values values.yaml
+```
+This creates:
+
+- One MySQL pod: `mysql-...`
+- One tracebloc client pod: `tracebloc-jobs-manager-...`
+- Supporting resources such as a Service, ConfigMap, Secret, and PVC
+
+
+Expect a few minutes for all pods to pull images, create persistent volumes, and reach Running state.
+
+
+## Verification and Maintenance
+
+After deployment, confirm the client is running correctly and learn how to maintain it.
+
+### Verify Deployment
+Check that all pods are running in your namespace:
+
+#### Check pod status:
+```bash
+kubectl get pods -n <NAMESPACE>
+```
+Within a few minutes, you should see the two pods "mysql-..." and "tracebloc-jobs-manager-..." in Running state. If not, inspect the logs for troubleshooting.
+
+#### Check services:
+```bash
+kubectl get services -n <NAMESPACE>
+```
+Should list the database service (for example, mysql-service).
+
+#### Check persistent volumes:
+```bash
+kubectl get pvc -n <NAMESPACE>
+```
+Verifies that PVCs are bound and storage is available.
+
+### Maintenance
+#### Update your values:
+```bash
+helm show values tracebloc/eks > new-values.yaml
+# Edit new-values.yaml with your changes
+```
+#### Upgrade the deployment:
+
+```bash
+helm upgrade tracebloc tracebloc/eks \
+  --namespace <NAMESPACE> \
+  --values new-values.yaml
+```
+
+### Uninstall
+
+#### Remove the Helm release:
+```bash
+helm uninstall <RELEASE_NAME> -n <NAMESPACE>
+```
+
+#### Clean up persistent resources (optional):
+```bash
+kubectl delete pvc --all -n <NAMESPACE>
+kubectl delete namespace <NAMESPACE>
+```
+
+
+
+## Next Steps
+
+**Create a New Use Case**
+- **[Prepare your dataset](/create-use-case/prepare-dataset)** - Upload and configure your training data
+- **[Create an AI use case](/create-use-case/define)** - Set up a new use case
+**Join an Existing Use Case**
+- **[Explore and join available use cases](/join-use-case/explore-use-case)** - Browse ongoing AI projects
+- **[Start training models](/join-use-case/start-training)** - Begin training on shared datasets
+
+
+## Need Help?
+
+- Email: [support@tracebloc.io](mailto:support@tracebloc.io)
+- Docs: [tracebloc Documentation Portal](https://docs.tracebloc.io)

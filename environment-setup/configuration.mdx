@@ -1,0 +1,213 @@
+---
+title: "Configuration"
+description: "Customize your tracebloc workspace — environment variables, cluster management, GPU support, and manual Helm deployment."
+---
+
+# Configuration
+
+The installer uses sensible defaults. This page covers everything you can change — from cluster naming and port mapping to GPU configuration, manual Helm deployment, and day-to-day cluster management.
+
+## Installer Options
+
+Override defaults by setting environment variables before the install command. Useful when you need a custom cluster name, multiple worker nodes, or non-standard ports.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CLUSTER_NAME` | `tracebloc` | Name of the k3d cluster |
+| `SERVERS` | `1` | Number of control-plane nodes |
+| `AGENTS` | `1` | Number of worker nodes |
+| `K8S_VERSION` | `v1.29.4-k3s1` | k3s image tag |
+| `HTTP_PORT` | `80` | Host port mapped to cluster HTTP ingress |
+| `HTTPS_PORT` | `443` | Host port mapped to cluster HTTPS ingress |
+| `HOST_DATA_DIR` | `~/.tracebloc` | Persistent data directory on host |
+
+Example — custom cluster name with two worker nodes:
+
+```bash
+CLUSTER_NAME=my-cluster AGENTS=2 bash <(curl -fsSL https://tracebloc.io/install.sh)
+```
+
+## Cluster Management
+
+The installer creates a k3d cluster that runs inside Docker. You can stop it to free resources, start it again later, or delete it entirely. Your data persists in `HOST_DATA_DIR` between stop/start cycles.
+
+```bash
+# Stop — frees CPU/RAM, data persists
+k3d cluster stop tracebloc
+
+# Start — resume where you left off
+k3d cluster start tracebloc
+
+# Delete — removes the cluster entirely
+k3d cluster delete tracebloc
+```
+
+### View logs
+
+The jobs manager is the main tracebloc process. Check its logs when debugging connectivity or job execution issues:
+
+```bash
+kubectl logs -n <workspace> -l app=tracebloc-jobs-manager
+```
+
+### Useful commands
+
+Common kubectl commands for inspecting cluster state:
+
+```bash
+kubectl get nodes -o wide          # Node status and IPs
+kubectl get pods -A                # All pods across namespaces
+kubectl get pods -n <workspace>    # Pods in your workspace
+kubectl get pvc -n <workspace>     # Persistent volume claims
+kubectl get services -n <workspace> # Services and endpoints
+```
+
+Install logs are saved to `~/.tracebloc/install-*.log`.
+
+## GPU Support
+
+The installer auto-detects GPU hardware and configures the cluster accordingly. No manual setup required on Linux — the installer handles drivers, container toolkit, and Kubernetes device plugin.
+
+### NVIDIA (Linux)
+
+Fully automatic. The installer:
+
+1. Detects NVIDIA GPUs via `nvidia-smi` or `lspci`
+2. Installs drivers if missing (Ubuntu, RHEL/CentOS, Arch)
+3. Installs the NVIDIA Container Toolkit and configures Docker
+4. Deploys the NVIDIA k8s device plugin into the cluster
+5. Passes `--gpus=all` to k3d
+
+A reboot may be required after driver installation. Re-run the installer afterward — it picks up where it left off.
+
+### AMD (Linux)
+
+Auto-detected. ROCm is installed automatically on Ubuntu and RHEL/CentOS. A logout/login may be needed for full GPU access.
+
+### macOS
+
+CPU only. Docker Desktop on macOS does not support GPU passthrough. For GPU workloads, deploy on a Linux machine with NVIDIA GPUs or use [AWS (EKS)](/environment-setup/eks-client-deployment-guide).
+
+### Windows
+
+The installer does **not** install GPU drivers on Windows. Pre-install NVIDIA drivers before running the installer. The installer detects them via `nvidia-smi` and configures the cluster to use them.
+
+## Manual Deployment
+
+Skip the installer entirely. Use this if you already have a Kubernetes cluster, need custom resource limits, or want full control over the Helm deployment.
+
+### Add the Helm repository
+
+```bash
+helm repo add tracebloc https://tracebloc.github.io/client/
+helm repo update
+```
+
+### Get default values
+
+Export the chart's default configuration to customize it:
+
+```bash
+helm show values tracebloc/client > values.yaml
+```
+
+### Configure values.yaml
+
+#### Authentication
+
+Connect the client to your tracebloc account:
+
+```yaml
+clientId: "<YOUR_CLIENT_ID>"
+clientPassword: "<YOUR_CLIENT_PASSWORD>"
+```
+
+#### Resource Limits
+
+Control how much CPU, memory, and GPU each training job can consume. Size these according to your workloads and available hardware:
+
+```yaml
+env:
+  RESOURCE_REQUESTS: "cpu=2,memory=8Gi"
+  RESOURCE_LIMITS: "cpu=2,memory=8Gi"
+  GPU_REQUESTS: ""        # "nvidia.com/gpu=1" for GPU
+  GPU_LIMITS: ""          # "nvidia.com/gpu=1" for GPU
+  RUNTIME_CLASS_NAME: ""  # "nvidia" for GPU with k3s
+```
+
+#### Storage
+
+Persistent volumes for the database, logs, and training data. Adjust sizes based on your dataset:
+
+```yaml
+storageClass:
+  create: true
+  name: client-storage-class
+  provisioner: manual
+  allowVolumeExpansion: true
+  parameters: {}
+
+hostPath:
+  enabled: true
+
+pvc:
+  mysql: 2Gi
+  logs: 10Gi
+  data: 50Gi
+
+pvcAccessMode: ReadWriteOnce
+```
+
+#### Proxy (optional)
+
+Only needed if your machine accesses the internet through a corporate proxy:
+
+```yaml
+env:
+  HTTP_PROXY_HOST: "your-proxy.company.com"
+  HTTP_PROXY_PORT: "8080"
+  HTTP_PROXY_USERNAME: ""
+  HTTP_PROXY_PASSWORD: ""
+```
+
+### Deploy
+
+Install the chart into a new namespace:
+
+```bash
+helm upgrade --install <workspace> tracebloc/client \
+  --namespace <workspace> \
+  --create-namespace \
+  --values values.yaml
+```
+
+### Update
+
+Pull the latest chart version and apply your configuration:
+
+```bash
+helm repo update
+helm upgrade <workspace> tracebloc/client \
+  --namespace <workspace> \
+  --values values.yaml
+```
+
+### Uninstall
+
+Remove the client and all associated resources:
+
+```bash
+helm uninstall <workspace> -n <workspace>
+kubectl delete pvc --all -n <workspace>
+kubectl delete namespace <workspace>
+```
+
+## Security
+
+Tracebloc is designed so your data never has to leave your network. Here's how:
+
+- **Data stays local.** Training data never leaves your infrastructure. Only metadata and metrics are shared with the platform.
+- **Encrypted.** All communication between client and platform is TLS-encrypted.
+- **Isolated.** Training runs in containers with restricted system access. Kubernetes namespaces separate workloads from each other.
+- **Scanned.** Submitted models are analyzed for vulnerabilities before execution on your infrastructure.
+- **Minimal footprint.** The installer only modifies `~/.tracebloc/` and Docker. No system-wide changes.
