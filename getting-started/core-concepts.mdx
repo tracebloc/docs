@@ -3,8 +3,6 @@ title: "Core Concepts"
 description: "Learn how Tracebloc works — data owners, clients, and data scientists."
 ---
 
-# Core Concepts
-
 ## How it works
 
 **Data owners or organisations** deploy the tracebloc client within their own infrastructure, whether on-premises, in the cloud (e.g., VMs), or in Kubernetes clusters running in a DMZ or VPC.
@@ -21,13 +19,11 @@ description: "Learn how Tracebloc works — data owners, clients, and data scien
 - Aggregating training metrics (e.g., loss, accuracy — but never weights)
 - Providing a Web UI for training feedback, leaderboard access, and diagnostics
 
-Tracebloc enforces strict separation of code and data.
-Model weights are encrypted and never exchanged between parties, ensuring full differential privacy.
-
+Tracebloc enforces strict separation of code and data. Model weights are encrypted and never exchanged between parties, ensuring full differential privacy.
 
 **Data scientists** upload models and training code via notebooks and interact only with metadata and training metrics. They have no access to raw data at any point.
 
 <Note>
-- **Raw data is never shared.**
-- **Model weights and architecture are encrypted and retained within the data owner's infrastructure. Access is only granted with mutual consent from both parties.**
+  - **Raw data is never shared.**
+  - **Model weights and architecture are encrypted and retained within the data owner's infrastructure. Access is only granted with mutual consent from both parties.**
 </Note>

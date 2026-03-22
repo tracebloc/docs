@@ -3,14 +3,10 @@ title: "Quick Setup"
 description: "Get from zero to a running workspace in under 10 minutes."
 ---
 
-# Quick Setup
-
-Get from zero to a running workspace in under 10 minutes.
-
 ### Prerequisites
 
 - **Docker** — installed automatically if missing
-- **Hardware** — 4+ CPU cores, 8+ GB RAM, 20+ GB free disk
+- **Hardware** — 4\+ CPU cores, 8\+ GB RAM, 20\+ GB free disk
 - **Network** — outbound access to `*.docker.io`, `*.tracebloc.io`
 
 ## 1. Create an Account
@@ -19,30 +15,26 @@ Sign up at [ai.tracebloc.io](https://ai.tracebloc.io). Free to get started.
 
 ## 2. Register a Client
 
-Open the [client page](https://ai.tracebloc.io/clients) and click **"+"**. Fill in a name, location, and password. Note your **Client ID** and **password** — you need both in the next step.
+Open the [client page](https://ai.tracebloc.io/clients) and click **"\+"**. Fill in a name, location, and password. Note your **Client ID** and **password** — you need both in the next step.
 
 <Tip>
-Provisioning takes a few seconds. Refresh the page if the status doesn't update.
+  Provisioning takes a few seconds. Refresh the page if the status doesn't update.
 </Tip>
 
 ## 3. Deploy
 
 <Tabs>
   <Tab title="macOS / Linux">
-
-```bash
-bash <(curl -fsSL https://tracebloc.io/install.sh)
-```
-
+    ```bash
+    bash <(curl -fsSL https://tracebloc.io/install.sh)
+    ```
   </Tab>
   <Tab title="Windows">
+    Open **PowerShell as Administrator**:
 
-Open **PowerShell as Administrator**:
-
-```powershell
-irm https://tracebloc.io/install.ps1 | iex
-```
-
+    ```powershell
+    irm https://tracebloc.io/install.ps1 | iex
+    ```
   </Tab>
 </Tabs>
 
@@ -59,7 +51,7 @@ Two pods in `Running` state: `mysql-...` and `tracebloc-jobs-manager-...`
 Open [ai.tracebloc.io](https://ai.tracebloc.io) — your client should show **Online**.
 
 <Tip>
-Stuck? Check the [Troubleshooting](/environment-setup/troubleshooting) page.
+  Stuck? Check the [Troubleshooting](/environment-setup/troubleshooting) page.
 </Tip>
 
 ---
