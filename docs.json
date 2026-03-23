@@ -24,12 +24,9 @@
         "tab": "Documentation",
         "groups": [
           {
-            "group": "Get Started",
+            "group": "Overview",
             "pages": [
-              "index",
-              "getting-started/quick-setup",
-              "getting-started/core-concepts",
-              "getting-started/pricing"
+              "getting-started/tracebloc"
             ]
           },
           {
