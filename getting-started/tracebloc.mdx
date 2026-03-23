@@ -1,0 +1,159 @@
+---
+title: "tracebloc"
+description: "tracebloc: Build AI with anyone. On data that can't move. Deploy a workspace on your Mac, your Linux box, your GPU server, or any Kubernetes cluster. Invite contributors. They train and benchmark models on your data — your data never leaves."
+---
+
+Build better AI together. Without moving data.
+
+Deploy a workspace on your infrastructure. Invite anyone — researchers, partners, vendors, startups, your own teams across locations. They train and benchmark models on your data. Your data never leaves.
+
+```bash
+# macOS / Linux
+bash <(curl -fsSL https://tracebloc.io/install.sh)
+
+# Windows (PowerShell as Administrator)
+irm https://tracebloc.io/install.ps1 | iex
+```
+
+---
+
+## How It Works
+
+1. **Deploy on your hardware** — one script deploys a tracebloc workspace on your Mac, a Linux workstation, an NVIDIA GPU box, or any Kubernetes cluster. No cloud account needed.
+2. **Define a use case** — select datasets, set evaluation metrics, connect metadatasets. Use a template or build your own.
+3. **Invite anyone** — whitelist contributors by email. Assign compute budgets. They see the use case and metadata. They never see raw data.
+4. **Build together** — contributors submit models and train inside your environment. PyTorch, TensorFlow, custom containers. Your data and all fine-tuned weights stay on your infrastructure. Always.
+5. **Compare and decide** — every submission benchmarked under identical conditions. One leaderboard. Ship the winner.
+
+---
+
+## Who Is This For
+
+**You have data and a problem.** You need the best model — but getting external input on sensitive data is a nightmare. NDAs, data-sharing agreements, security reviews. Months pass before a single training run happens. With tracebloc, you deploy a workspace, invite anyone, and they build on your data without it ever leaving. You're the **workspace owner**.
+
+**You have expertise and want to help.** Someone shared a use case with you. You see the EDA, understand the problem, and submit your model. It trains on their data inside their infrastructure. You never see raw records — just the leaderboard showing how your approach stacks up. You're a **contributor**.
+
+---
+
+## What You Can Do
+
+- **Benchmark models** — invite vendors, startups, or your own teams to submit models. One leaderboard. One dataset. Identical conditions. [Create a use case →](/create-use-case/prerequisites)
+- **Run federated training** — connect nodes across organizations. Train together at the weight level, not the data level. Data stays where it is. [Learn more →](/join-use-case/start-training)
+- **Host internal competitions** — your teams across offices, departments, and time zones compete to build the best model. Same data, same metrics. [Explore templates →](/create-use-case/templates)
+- **Validate before production** — benchmark any model against alternatives under identical production conditions before you ship it. [Evaluate models →](/create-use-case/evaluate-models)
+
+---
+
+## Core Concepts
+
+### Architecture
+
+**Workspace owners** deploy the tracebloc client within their own infrastructure — on-premises, in the cloud, or in Kubernetes clusters running in a DMZ or VPC.
+
+- The tracebloc client is pulled from DockerHub or GitHub and deployed via Helm or Docker Compose.
+- The workspace owner prepares and mounts use-case-specific data and configures compute resources (CPU/GPU, storage) that contributors will use.
+
+**The tracebloc client**, once deployed, establishes a secure connection to the tracebloc backend over Azure Service Bus (AMQP/WebSocket, port 443). It receives training instructions — model configuration, batch size, number of epochs — defined by contributors.
+
+**The tracebloc backend** handles:
+
+- Validating model compatibility, security, and functionality
+- Orchestrating training and managing system stability
+- Aggregating training metrics (e.g., loss, accuracy — never weights)
+- Providing a web UI for training feedback, leaderboard access, and diagnostics
+
+### Security
+
+tracebloc enforces strict separation of code and data. Model weights are encrypted and never exchanged between parties, ensuring full differential privacy.
+
+Contributors upload models and training code via notebooks and interact only with metadata and training metrics. They have no access to raw data at any point.
+
+<Note>
+  - **Raw data is never shared.**
+  - **Model weights and architecture are encrypted and retained within the workspace owner's infrastructure. Access is only granted with mutual consent from both parties.**
+</Note>
+
+---
+
+## Quick Setup
+
+Get from zero to a running workspace in under 10 minutes.
+
+### Prerequisites
+
+- **Docker** — installed automatically if missing
+- **Hardware** — 4\+ CPU cores, 8\+ GB RAM, 20\+ GB free disk
+- **Network** — outbound access to `*.docker.io`, `*.tracebloc.io`
+
+### 1. Create an Account
+
+Sign up at [ai.tracebloc.io](https://ai.tracebloc.io). Free to get started.
+
+### 2. Register a Node
+
+Open the [client page](https://ai.tracebloc.io/clients) and click **"\+"**. Fill in a name, location, and password. Note your **Client ID** and **password** — you need both in the next step.
+
+<Tip>
+  Provisioning takes a few seconds. Refresh the page if the status doesn't update.
+</Tip>
+
+### 3. Deploy
+
+<Tabs>
+  <Tab title="macOS / Linux">
+    ```bash
+    bash <(curl -fsSL https://tracebloc.io/install.sh)
+    ```
+  </Tab>
+  <Tab title="Windows">
+    Open **PowerShell as Administrator**:
+
+    ```powershell
+    irm https://tracebloc.io/install.ps1 | iex
+    ```
+  </Tab>
+</Tabs>
+
+The installer prompts for your workspace name, Client ID, and password. It handles Docker, Kubernetes, and the tracebloc client. Safe to re-run.
+
+### 4. Verify
+
+```bash
+kubectl get pods -n <workspace>
+```
+
+Two pods in `Running` state: `mysql-...` and `tracebloc-jobs-manager-...`
+
+Open [ai.tracebloc.io](https://ai.tracebloc.io) — your node should show **Online**.
+
+<Tip>
+  Stuck? Check the [Troubleshooting](/environment-setup/troubleshooting) page.
+</Tip>
+
+### What You Now Have
+
+- A local Kubernetes cluster running in Docker
+- The tracebloc client connected to the backend
+- A workspace ready for use cases
+
+Your data never leaves your infrastructure. Only metadata and metrics leave your network.
+
+---
+
+## Pricing
+
+Detailed pricing information will be provided here soon. For custom enterprise pricing, contact [support@tracebloc.io](mailto:support@tracebloc.io).
+
+---
+
+## Next Steps
+
+**Deploy your workspace:** [Quick Setup guide](/getting-started/tracebloc#quick-setup) — zero to running in under 10 minutes.
+
+**Create a use case:** [Select datasets, define metrics, invite contributors →](/create-use-case/prerequisites)
+
+**Join a use case:** [Train and submit models on a workspace owner's infrastructure →](/join-use-case/join-use-case)
+
+**Explore workspaces:** [See what builders are creating on tracebloc →](https://ai.tracebloc.io/explore)
+
+**Need advanced setup?** Custom cluster settings, GPU configuration, or manual Helm deployment — see the full [Setup Guide](/environment-setup/setup-guide).
