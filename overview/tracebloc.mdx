@@ -10,7 +10,7 @@ description: "Build better AI together. Without moving data."
 tracebloc is **your collaborative AI workspace** you deploy on your own infrastructure. Invite friends, peers, researchers, partners, vendors — anyone — to train, fine-tune, and benchmark models on your private data. Your data never moves.
 
 <CardGroup cols={3}>
-  <Card title="Quick Setup" icon="rocket" href="/overview/tracebloc#quick-setup">
+  <Card title="Quick Setup" icon="rocket" href="/environment-setup/setup-guide">
     Zero to a running workspace in under 10 minutes.
   </Card>
 
@@ -23,7 +23,7 @@ tracebloc is **your collaborative AI workspace** you deploy on your own infrastr
   </Card>
 </CardGroup>
 
----
+<br />
 
 ## What is tracebloc?
 
@@ -39,7 +39,7 @@ tracebloc is a **collaborative AI workspace** you deploy on your own infrastruct
 - **One leaderboard:** every submission benchmarked under identical conditions. Ship the winner.
 - **Compliance by architecture:** data never moves. Sign off once on the architecture, not once per partner.
 
----
+<br />
 
 ## How It Works
 
@@ -73,7 +73,7 @@ tracebloc is a **collaborative AI workspace** you deploy on your own infrastruct
   </Step>
 </Steps>
 
----
+<br />
 
 ## When Should You Use tracebloc
 
@@ -95,92 +95,7 @@ tracebloc is a **collaborative AI workspace** you deploy on your own infrastruct
   </Card>
 </CardGroup>
 
----
-
-## Security
-
-tracebloc enforces strict separation of code and data at the infrastructure level.
-
-- **Raw data never leaves your infrastructure.** Training runs execute locally. Only metadata and aggregated metrics are shared.
-- **Model artifacts remain under the workspace owner's control** and are never shared without explicit mutual consent.
-- **All communication is TLS-encrypted.** The tracebloc client connects to the backend over secure channels (port 443).
-- **Contributors interact only with metadata and training metrics.** No access to raw data at any point.
-
-For architecture details and security configuration — see the [Environment Setup](/environment-setup/configuration) docs.
-
----
-
-## Quick Setup
-
-Get from zero to a running workspace in under 10 minutes.
-
-### Prerequisites
-
-- **Docker** — installed automatically if missing
-- **Hardware** — 4\+ CPU cores, 8\+ GB RAM, 20\+ GB free disk
-- **Network** — outbound access to `*.docker.io`, `*.tracebloc.io`
-
-### 1. Create an Account
-
-Sign up at [ai.tracebloc.io](https://ai.tracebloc.io). Free to get started.
-
-### 2. Register a Node
-
-Open the [client page](https://ai.tracebloc.io/clients) and click **"\+"**. Fill in a name, location, and password. Note your **Client ID** and **password** — you need both in the next step.
-
-<Tip>
-  Provisioning takes a few seconds. Refresh the page if the status doesn't update.
-</Tip>
-
-### 3. Deploy
-
-<Tabs>
-  <Tab title="macOS / Linux">
-    ```bash
-    bash <(curl -fsSL https://tracebloc.io/install.sh)
-    ```
-  </Tab>
-  <Tab title="Windows">
-    Open **PowerShell as Administrator**:
-
-    ```powershell
-    irm https://tracebloc.io/install.ps1 | iex
-    ```
-  </Tab>
-</Tabs>
-
-The installer prompts for your workspace name, Client ID, and password. It handles Docker, Kubernetes, and the tracebloc client. Safe to re-run.
-
-### 4. Verify
-
-```bash
-kubectl get pods -n <workspace>
-```
-
-Two pods in `Running` state: `mysql-...` and `tracebloc-jobs-manager-...`
-
-Open [ai.tracebloc.io](https://ai.tracebloc.io) — your node should show **Online**.
-
-<Tip>
-  Stuck? Check the [Troubleshooting](/environment-setup/troubleshooting) page.
-</Tip>
-
----
-
-## Pricing
-
-|  | Free | Pro | Enterprise |
-| --- | --- | --- | --- |
-| **Workspace** | 1 local workspace | Unlimited | Unlimited |
-| **Contributors** | Up to 3 | Unlimited | Unlimited |
-| **Compute** | 100 PF included | Pay per PF | Custom |
-| **Support** | Community | Email | Dedicated |
-
-Free to start. No credit card required. [Deploy your workspace →](#quick-setup)
-
-For custom enterprise pricing, contact [support@tracebloc.io](mailto:support@tracebloc.io).
-
----
+<br />
 
 ## Next Steps
 
