@@ -3,75 +3,86 @@ title: "tracebloc"
 description: "tracebloc: Build AI with anyone. On data that can't move. Deploy a workspace on your Mac, your Linux box, your GPU server, or any Kubernetes cluster. Invite contributors. They train and benchmark models on your data — your data never leaves."
 ---
 
-Build better AI together. Without moving data.
+<img src="/logo/dark.png" alt="tracebloc" width="300" />
 
-Deploy a workspace on your infrastructure. Invite anyone — researchers, partners, vendors, startups, your own teams across locations. They train and benchmark models on your data. Your data never leaves.
+> **Build better AI together. Without moving data.**
+
+Deploy a workspace on your infrastructure. Invite anyone — researchers, partners, vendors, startups, your own teams. They train and benchmark models on your data. Your data never leaves.
 
 ```bash
-# macOS / Linux
 bash <(curl -fsSL https://tracebloc.io/install.sh)
-
-# Windows (PowerShell as Administrator)
-irm https://tracebloc.io/install.ps1 | iex
 ```
+
+<CardGroup cols={3}>
+  <Card title="Quick Setup" icon="rocket" href="/getting-started/tracebloc#quick-setup">
+    Zero to a running workspace in under 10 minutes.
+  </Card>
+  <Card title="Create a Use Case" icon="plus" href="/create-use-case/prerequisites">
+    Define datasets, set metrics, invite contributors.
+  </Card>
+  <Card title="Join a Use Case" icon="users" href="/join-use-case/join-use-case">
+    Train and submit models on someone else's data.
+  </Card>
+</CardGroup>
+
+---
+
+## What is tracebloc?
+
+tracebloc is a **collaborative AI workspace** you deploy on your own infrastructure. Anyone you invite — researchers, partners, vendors, startups — can train, fine-tune, and benchmark models on your data. Your data never moves. Compliance is solved by architecture.
+
+**Who is it for?** Anyone who asks "which model works best on MY data?" and wants external input without the nightmare of NDAs, data-sharing agreements, and security reviews.
+
+**What makes it different?**
+
+- **Your infrastructure:** runs on your Mac, Linux box, GPU server, or any Kubernetes cluster
+- **Invite anyone:** whitelist contributors by email. They see EDA and metadata. Never raw data.
+- **One leaderboard:** every submission benchmarked under identical conditions. Ship the winner.
+- **Compliance by architecture:** data never moves. Sign off once on the architecture, not once per partner.
+
+**What do you need?** Docker, 4+ CPU cores, 8 GB RAM, 20 GB disk, and 10 minutes.
 
 ---
 
 ## How It Works
 
-1. **Deploy on your hardware** — one script deploys a tracebloc workspace on your Mac, a Linux workstation, an NVIDIA GPU box, or any Kubernetes cluster. No cloud account needed.
-2. **Define a use case** — select datasets, set evaluation metrics, connect metadatasets. Use a template or build your own.
-3. **Invite anyone** — whitelist contributors by email. Assign compute budgets. They see the use case and metadata. They never see raw data.
-4. **Build together** — contributors submit models and train inside your environment. PyTorch, TensorFlow, custom containers. Your data and all fine-tuned weights stay on your infrastructure. Always.
+1. **Deploy on your hardware** — one script. Your Mac, a Linux workstation, an NVIDIA GPU box, or any Kubernetes cluster.
+2. **Define a use case** — select datasets, set evaluation metrics. Use a template or build your own.
+3. **Invite anyone** — whitelist contributors by email. Assign compute budgets. They never see raw data.
+4. **Build together** — contributors submit models and train inside your environment. PyTorch, TensorFlow, custom containers.
 5. **Compare and decide** — every submission benchmarked under identical conditions. One leaderboard. Ship the winner.
 
 ---
 
-## Who Is This For
+## When Should You Use tracebloc
 
-**You have data and a problem.** You need the best model — but getting external input on sensitive data is a nightmare. NDAs, data-sharing agreements, security reviews. Months pass before a single training run happens. With tracebloc, you deploy a workspace, invite anyone, and they build on your data without it ever leaving. You're the **workspace owner**.
-
-**You have expertise and want to help.** Someone shared a use case with you. You see the EDA, understand the problem, and submit your model. It trains on their data inside their infrastructure. You never see raw records — just the leaderboard showing how your approach stacks up. You're a **contributor**.
+<CardGroup cols={2}>
+  <Card title="Vendor Benchmarking" icon="ranking-star">
+    5 vendors claim they have the best model. Invite all five to submit. One leaderboard. One week. Decisions based on measured performance — not claims.
+  </Card>
+  <Card title="Cross-Org Research" icon="building">
+    Research teams want to improve your model — but the data is regulated. They train on your data without ever seeing it.
+  </Card>
+  <Card title="Internal Competitions" icon="trophy">
+    Teams across offices and time zones compete on the same dataset. Same metrics. Same holdout set. Best model wins.
+  </Card>
+  <Card title="Pre-Production Validation" icon="check-double">
+    Before shipping a model, benchmark it against 4 alternatives on real production data. Know you're shipping the best option.
+  </Card>
+</CardGroup>
 
 ---
 
-## What You Can Do
+## Security
 
-- **Benchmark models** — invite vendors, startups, or your own teams to submit models. One leaderboard. One dataset. Identical conditions. [Create a use case →](/create-use-case/prerequisites)
-- **Run federated training** — connect nodes across organizations. Train together at the weight level, not the data level. Data stays where it is. [Learn more →](/join-use-case/start-training)
-- **Host internal competitions** — your teams across offices, departments, and time zones compete to build the best model. Same data, same metrics. [Explore templates →](/create-use-case/templates)
-- **Validate before production** — benchmark any model against alternatives under identical production conditions before you ship it. [Evaluate models →](/create-use-case/evaluate-models)
+tracebloc enforces strict separation of code and data at the infrastructure level.
 
----
+- **Raw data never leaves your infrastructure.** Training runs execute locally. Only metadata and aggregated metrics are shared.
+- **Model artifacts remain under the workspace owner's control** and are never shared without explicit mutual consent.
+- **All communication is TLS-encrypted.** The tracebloc client connects to the backend over secure channels (port 443).
+- **Contributors interact only with metadata and training metrics.** No access to raw data at any point.
 
-## Core Concepts
-
-### Architecture
-
-**Workspace owners** deploy the tracebloc client within their own infrastructure — on-premises, in the cloud, or in Kubernetes clusters running in a DMZ or VPC.
-
-- The tracebloc client is pulled from DockerHub or GitHub and deployed via Helm or Docker Compose.
-- The workspace owner prepares and mounts use-case-specific data and configures compute resources (CPU/GPU, storage) that contributors will use.
-
-**The tracebloc client**, once deployed, establishes a secure connection to the tracebloc backend over Azure Service Bus (AMQP/WebSocket, port 443). It receives training instructions — model configuration, batch size, number of epochs — defined by contributors.
-
-**The tracebloc backend** handles:
-
-- Validating model compatibility, security, and functionality
-- Orchestrating training and managing system stability
-- Aggregating training metrics (e.g., loss, accuracy — never weights)
-- Providing a web UI for training feedback, leaderboard access, and diagnostics
-
-### Security
-
-tracebloc enforces strict separation of code and data. Model weights are encrypted and never exchanged between parties, ensuring full differential privacy.
-
-Contributors upload models and training code via notebooks and interact only with metadata and training metrics. They have no access to raw data at any point.
-
-<Note>
-  - **Raw data is never shared.**
-  - **Model weights and architecture are encrypted and retained within the workspace owner's infrastructure. Access is only granted with mutual consent from both parties.**
-</Note>
+For architecture details and security configuration — see the [Environment Setup](/environment-setup/configuration) docs.
 
 ---
 
@@ -130,30 +141,36 @@ Open [ai.tracebloc.io](https://ai.tracebloc.io) — your node should show **Onli
   Stuck? Check the [Troubleshooting](/environment-setup/troubleshooting) page.
 </Tip>
 
-### What You Now Have
-
-- A local Kubernetes cluster running in Docker
-- The tracebloc client connected to the backend
-- A workspace ready for use cases
-
-Your data never leaves your infrastructure. Only metadata and metrics leave your network.
-
 ---
 
 ## Pricing
 
-Detailed pricing information will be provided here soon. For custom enterprise pricing, contact [support@tracebloc.io](mailto:support@tracebloc.io).
+| | Free | Pro | Enterprise |
+|---|---|---|---|
+| **Workspace** | 1 local workspace | Unlimited | Unlimited |
+| **Contributors** | Up to 3 | Unlimited | Unlimited |
+| **Compute** | 100 PF included | Pay per PF | Custom |
+| **Support** | Community | Email | Dedicated |
+
+Free to start. No credit card required. [Deploy your workspace →](#quick-setup)
+
+For custom enterprise pricing, contact [support@tracebloc.io](mailto:support@tracebloc.io).
 
 ---
 
 ## Next Steps
 
-**Deploy your workspace:** [Quick Setup guide](/getting-started/tracebloc#quick-setup) — zero to running in under 10 minutes.
-
-**Create a use case:** [Select datasets, define metrics, invite contributors →](/create-use-case/prerequisites)
-
-**Join a use case:** [Train and submit models on a workspace owner's infrastructure →](/join-use-case/join-use-case)
-
-**Explore workspaces:** [See what builders are creating on tracebloc →](https://ai.tracebloc.io/explore)
-
-**Need advanced setup?** Custom cluster settings, GPU configuration, or manual Helm deployment — see the full [Setup Guide](/environment-setup/setup-guide).
+<CardGroup cols={2}>
+  <Card title="Create a Use Case" icon="plus" href="/create-use-case/prerequisites">
+    Select datasets, define metrics, invite contributors.
+  </Card>
+  <Card title="Join a Use Case" icon="users" href="/join-use-case/join-use-case">
+    Train and submit models on a workspace owner's infrastructure.
+  </Card>
+  <Card title="Explore Workspaces" icon="compass" href="https://ai.tracebloc.io/explore">
+    See what builders are creating on tracebloc.
+  </Card>
+  <Card title="Advanced Setup" icon="gear" href="/environment-setup/setup-guide">
+    GPU configuration, Helm deployment, EKS.
+  </Card>
+</CardGroup>
