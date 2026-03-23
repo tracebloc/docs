@@ -44,8 +44,20 @@ tracebloc is a **collaborative AI workspace** you deploy on your own infrastruct
 ## How It Works
 
 <Steps>
-  <Step title="Deploy on your hardware">
+  <Step title="Create your AI workspace">
     One script. Your Mac, a Linux workstation, an NVIDIA GPU box, or any Kubernetes cluster.
+
+    <CodeGroup>
+
+    ```shellscript Mac / Linux
+    bash <(curl -fsSL https://tracebloc.io/install.sh)
+    ```
+
+    ```powershell Windows
+    irm https://tracebloc.io/install.ps1 | iex
+    ```
+
+    </CodeGroup>
   </Step>
   <Step title="Define a use case">
     Select datasets, set evaluation metrics. Use a template or build your own.
@@ -60,18 +72,6 @@ tracebloc is a **collaborative AI workspace** you deploy on your own infrastruct
     Every submission benchmarked under identical conditions. One leaderboard. Ship the winner.
   </Step>
 </Steps>
-
-<CodeGroup>
-
-```shellscript Mac / Linux
-bash <(curl -fsSL https://tracebloc.io/install.sh)
-```
-
-```powershell Windows
-irm https://tracebloc.io/install.ps1 | iex
-```
-
-</CodeGroup>
 
 ---
 
