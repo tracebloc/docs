@@ -147,6 +147,7 @@ model-zoo/model_zoo/image_classification/pytorch/lenet.py
 
 <Tip>
 Modify the architecture however you like: add layers, change activations, swap to a different backbone entirely. The only requirement is that the mandatory variables (`framework`, `main_class`, `image_size`, `batch_size`, `output_classes`, `category`) stay consistent with the use case parameters.
+In case of multiple uploads, only the most recently uploaded model will be linked to the dataset.
 </Tip>
 
 Then navigate back to the notebook and upload the model to the use case client:
@@ -154,10 +155,6 @@ Then navigate back to the notebook and upload the model to the use case client:
 ```python
 user.uploadModel("../../model-zoo/model_zoo/<task>/<framework>/model.py")
 ```
-
-<Info>
-- In case of multiple uploads, only the most recently uploaded model will be linked to the dataset.
-</Info>
 
 For more instructions how to customize models and use different frameworks, refer to the [model optimisation](/join-use-case/model-optimization) section.
 
