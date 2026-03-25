@@ -73,7 +73,8 @@ user.help()
 
 ### Define and Upload your Model Architecture
 
-You can define any model architecture and training strategy — see the [model optimisation](/join-use-case/model-optimization) section for details. However, we recommend starting with the tracebloc model zoo: Go to the repository, choose a model for your use case and make sure key parameters match the dataset:
+You can define any model architecture and training strategy — see the [model optimisation](/join-use-case/model-optimization) section for details. However, we recommend starting with the tracebloc model zoo: Go to the repository, choose a model for your use case and make sure key parameters match the dataset. 
+The model zoo provides starter templates. After cloning the repo, open the model file locally in your editor and modify it freely: change layers, swap architectures, adjust parameters. The only requirement is that the mandatory variables at the top match your use case.
 
 | Data Type | Task                   | Model Parameters                                                                                                                                                      |
 | --------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -136,7 +137,19 @@ class MyModel(nn.Module):
 
 The **variables at the top are mandatory** for the use case client but the model definition is fully flexible.
 
-Edit the model architectures in the model zoo depending on your task, framework and model type. Then navigate back to the notebook and upload the model to the use case client:
+### Customize Your Model
+
+Open the model file from the model zoo in your editor, e.g.:
+
+```
+model-zoo/model_zoo/image_classification/pytorch/lenet.py
+```
+
+<Tip>
+Modify the architecture however you like: add layers, change activations, swap to a different backbone entirely. The only requirement is that the mandatory variables (`framework`, `main_class`, `image_size`, `batch_size`, `output_classes`, `category`) stay consistent with the use case parameters.
+</Tip>
+
+Then navigate back to the notebook and upload the model to the use case client:
 
 ```python
 user.uploadModel("../../model-zoo/model_zoo/<task>/<framework>/model.py")
