@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "maple",
+  "theme": "quill",
   "name": "tracebloc",
   "colors": {
     "primary": "#0184A3",
