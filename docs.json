@@ -18,7 +18,50 @@
       "weight": 400
     }
   },
+  "head": [
+  {
+    "tag": "link",
+    "attributes": {
+      "rel": "preconnect",
+      "href": "https://fonts.googleapis.com"
+    }
+  },
+  {
+    "tag": "link",
+    "attributes": {
+      "rel": "preconnect",
+      "href": "https://fonts.gstatic.com",
+      "crossorigin": ""
+    }
+  },
+  {
+    "tag": "link",
+    "attributes": {
+      "rel": "stylesheet",
+      "href": "https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&display=swap"
+    }
+  }
+],
   "navigation": {
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Website",
+          "icon": "globe",
+          "href": "https://tracebloc.io"
+        },
+        {
+          "anchor": "Blog",
+          "icon": "newspaper",
+          "href": "https://tracebloc.io/blog"
+        },
+        {
+          "anchor": "Platform",
+          "icon": "rocket",
+          "href": "https://ai.tracebloc.io"
+        }
+      ]
+    },
     "tabs": [
       {
         "tab": "Documentation",
@@ -69,26 +112,7 @@
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Website",
-          "href": "https://tracebloc.io",
-          "icon": "globe"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://tracebloc.io/blog",
-          "icon": "newspaper"
-        },
-        {
-          "anchor": "Platform",
-          "href": "https://ai.tracebloc.io",
-          "icon": "rocket"
-        }
-      ]
-    }
+    ]
   },
   "logo": "/logo/light.svg",
   "navbar": {
