@@ -9,6 +9,8 @@
   },
   "favicon": "/favicon.svg",
   "fonts": {
+    "family": "Barlow",
+    "weight": 500,
     "heading": {
       "family": "Barlow",
       "weight": 600
