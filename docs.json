@@ -3,9 +3,9 @@
   "theme": "maple",
   "name": "tracebloc",
   "colors": {
-    "primary": "#01A5CC",
-    "light": "#3B82F6",
-    "dark": "#1D4ED8"
+    "primary": "#0184A3",
+    "light": "#0184A3",
+    "dark": "#000000"
   },
   "favicon": "/favicon.svg",
   "font": {
@@ -90,11 +90,7 @@
       ]
     }
   },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.png",
-    "href": "https://tracebloc.io"
-  },
+  "logo": "/logo/light.svg",
   "navbar": {
     "links": [
       {
