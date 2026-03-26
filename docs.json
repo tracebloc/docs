@@ -4,7 +4,7 @@
   "name": "tracebloc",
   "colors": {
     "primary": "#0184A3",
-    "light": "#0184A3",
+    "light": "#ffffff",
     "dark": "#000000"
   },
   "favicon": "/favicon.svg",
