@@ -10,14 +10,11 @@
   "favicon": "/favicon.svg",
   "fonts": {
     "family": "Barlow",
-    "weight": 500,
     "heading": {
-      "family": "Barlow",
-      "weight": 600
+      "family": "Barlow"
     },
     "body": {
-      "family": "Barlow",
-      "weight": 500
+      "family": "Barlow"
     }
   },
   "navigation": {
