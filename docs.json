@@ -11,7 +11,8 @@
   "fonts": {
     "family": "Barlow",
     "heading": {
-      "family": "Barlow"
+      "family": "Barlow",
+      "weight": 500
     },
     "body": {
       "family": "Barlow"
