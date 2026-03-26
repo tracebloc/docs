@@ -52,6 +52,7 @@
           },
           {
             "group": "Create a Use Case",
+            "expanded": true,
             "pages": [
               "create-use-case/prerequisites",
               "create-use-case/prepare-dataset",
