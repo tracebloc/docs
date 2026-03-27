@@ -1,12 +1,12 @@
 ---
 title: "Start Training"
-description: "Step-by-step guide to training a model on the Tracebloc platform."
+description: "Step-by-step guide to training a model on the tracebloc platform."
 ---
 
 # Start Training
 
 You have joined a use case and accepted the terms. Training a model is easy: You run a jupyter-notebook locally to connect and submit models to the workspace.
-For a smooth first run, lets follow the step by step notebook in the public [GitHub repository](https://github.com/tracebloc/start-training/tree/main) along with the documentation below.
+For a smooth first run, let's follow the step by step notebook in the public [GitHub repository](https://github.com/tracebloc/start-training/tree/main) along with the documentation below.
 
 Alternatively, you may use the notebook hosted in [Google Colab](https://colab.research.google.com/drive/1N00idtpoaq1lk9OJE6g4bMqd8o-Qex2C#scrollTo=uuHJeLTP338z) and jump directly to [Step 1](#1-connect-to-the-tracebloc-workspace).
 
@@ -186,7 +186,7 @@ You should get "Assignment successful!" and the dataset parameters.
 
 ## 4. Set Training Plan
 
-Set the experiment name and configure hyperparameters. In case 
+Set the experiment name and configure hyperparameters.
 
 ```python
 # Set experiment name
@@ -202,7 +202,7 @@ trainingObject.getTrainingPlan()
 
 Get the training plan to check settings before you start the training. For a detailed list of all [hyperparameter options](/join-use-case/hyperparameters).
 
-For classical, non federated and non gradient decent-based machine learning algorithms like random forests, XGBoost, SVMs, logistic regression, use simplified settings:
+For classical, non federated and non gradient descent-based machine learning algorithms like random forests, XGBoost, SVMs, logistic regression, use simplified settings:
 
 ```python
 # Set training parameters
@@ -221,7 +221,7 @@ To send the model to the workspace infrastructure and start training on the trai
 trainingObject.start()
 ```
 
-Go to the [tracebloc website](https://ai.tracebloc.io/my-use-cases) and your use case, then navicate to the "Training/Finetuning" tab you will see your experiment. Monitor the training process hover over the learning curves to check the performance at specific epochs and cycles.
+Go to the [tracebloc website](https://ai.tracebloc.io/my-use-cases) and your use case, then navigate to the "Training/Finetuning" tab you will see your experiment. Monitor the training process hover over the learning curves to check the performance at specific epochs and cycles.
 
 <Info>
 If you want to run a second experiment, overwrite parameters and re-start training with `trainingObject.start()`.
@@ -239,7 +239,7 @@ Once stopped, an experiment cannot be rerun.
 
 Once training is complete, submit the model to the leaderboard:
 
-1. Select the best performing training cycle during which you want to evaluate the performance on the test dataset and submit the model. Hover over the learning cureves and read the best performing validation training cycle, then enter it below in the field "Submit for inference at c".
+1. Select the best performing training cycle during which you want to evaluate the performance on the test dataset and submit the model. Hover over the learning curves and read the best performing validation training cycle, then enter it into the "Submit" field on the use case page.
 2. Click "Submit" to start inference on the test dataset. Once complete, you will see the model's performance on the Leaderboard.
 
 ![Submit a Model](/images/Submit-an-Experiment-to-the-Leaderboard.avif)
@@ -265,4 +265,3 @@ user.help()
 ```
 
 - Email us at [support@tracebloc.io](mailto:support@tracebloc.io)
-- Visit [docs.tracebloc.io](https://docs.tracebloc.io).
