@@ -186,7 +186,7 @@ You should get "Assignment successful!" and the dataset parameters.
 
 ## 4. Set Training Plan
 
-Set the experiment name and configure hyperparameters:
+Set the experiment name and configure hyperparameters. In case 
 
 ```python
 # Set experiment name
@@ -201,6 +201,17 @@ trainingObject.getTrainingPlan()
 ```
 
 Get the training plan to check settings before you start the training. For a detailed list of all [hyperparameter options](/join-use-case/hyperparameters).
+
+For classical, non federated and non gradient decent-based machine learning algorithms like random forests, XGBoost, SVMs, logistic regression, use simplified settings:
+
+```python
+# Set training parameters
+trainingObject.epochs(1)
+
+# Set federated learning cycles = 1
+trainingObject.cycles(1)
+
+```
 
 ## 5. Start Training
 
