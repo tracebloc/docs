@@ -5,7 +5,7 @@ description: "Configure your model's training behavior by setting hyperparameter
 
 # Hyperparameters
 
-Configure your model's training behavior by setting hyperparameters, training parameters, and augmentation options. All parameters are set through the `trainingObject` after linking your model with the dataset
+Configure your model's training behavior by setting hyperparameters, training parameters, and augmentation options. All parameters are set through the `trainingObject` after linking your model with the dataset.
 
 ```python
 trainingObject = user.linkModelDataset('Dataset ID')
@@ -32,7 +32,7 @@ Basic training configuration parameters that control the fundamental aspects of 
 
 ### 1. Optimizer
 
-Controls how the model's parameters are updated during training. Supports different optimizers for TensorFlow and PyTorch. The default optimizer is SGD for both PyTorch and tensorflow.
+Controls how the model's parameters are updated during training. Supports different optimizers for TensorFlow and PyTorch. The default optimizer is SGD for both PyTorch and TensorFlow.
 
 **Supported Optimizers:**
 - **TensorFlow**: adam, rmsprop, sgd, adadelta, adagrad, adamax, nadam, ftrl
@@ -49,19 +49,19 @@ Controls the rate at which the model learns. Supports three different types:
 | Type | Description | Framework Support | Example |
 |------|-------------|-------------------|---------|
 | **Constant** | Fixed learning rate throughout training | TensorFlow, PyTorch | `trainingObject.learningRate({'type': 'constant', 'value': 0.002})` |
-| **Adaptive** | Learning rate that changes based on schedule | TensorFlow | `trainingObject.learningRate({'type': 'adaptive', 'value': {'decay_rate': 0.9, 'decay_steps': 100, 'initial_learning_rate': 0.1, 'schedular': 'ExponentialDecay'}})` |
+| **Adaptive** | Learning rate that changes based on schedule | TensorFlow | `trainingObject.learningRate({'type': 'adaptive', 'value': {'decay_rate': 0.9, 'decay_steps': 100, 'initial_learning_rate': 0.1, 'scheduler': 'ExponentialDecay'}})` |
 | **Custom** | User-defined learning rate function | TensorFlow | `trainingObject.learningRate({'type': 'custom', 'value': {'name': custom_function, 'epoch': 5}})` |
 
 **Default:** `{'type': 'constant', 'value': 0.001}`
 
 * **Custom for TensorFlow**: Define a custom learning rate function, then pass it via `learningRate()` with `type: 'custom'`:
     ```python
-    def custom_LearningRate_schedular(epoch):
+    def custom_LearningRate_scheduler(epoch):
             if epoch < 5:
                 return 0.01
             else:
                 return 0.01 * tf.math.exp(0.1 * (10 - epoch))
-    trainingObject.learningRate({'type': 'custom', 'value': {'name': custom_LearningRate_schedular, 'epoch': 5}})
+    trainingObject.learningRate({'type': 'custom', 'value': {'name': custom_LearningRate_scheduler, 'epoch': 5}})
     ```
 
 
@@ -206,4 +206,3 @@ user.help()
 ```
 
 - Email us at [support@tracebloc.io](mailto:support@tracebloc.io)
-- Visit [docs.tracebloc.io](https://docs.tracebloc.io).

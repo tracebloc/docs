@@ -1,11 +1,11 @@
 ---
 title: "Customize Models"
-description: "Learn the model format requirements for uploading and training models on the Tracebloc platform."
+description: "Learn the model format requirements for uploading and training models on the tracebloc workspace."
 ---
 
 # Customize Models
 
-This section explains the model format so that it can be transfered and trained on the model architecture.
+This section explains the model format required to upload and train models on the tracebloc workspace.
 
 Model code can be:
 - A single Python file containing one or more functions
@@ -22,45 +22,45 @@ In case of multiple files saved as .zip format, the file should be directly insi
 ### PyTorch mandatory variables
 
 The file must contain these variables:
-* **framework** : name of the framework for which this model file is created. For PyTorch it's value will be pytorch.
-* **model_type** : name of the model type for which this model file is created. It's value will be either *empty* or *rcnn* or *heatmap* or *yolo*.
+* **framework** : name of the framework for which this model file is created. For PyTorch its value will be pytorch.
+* **model_type** : name of the model type for which this model file is created. its value will be either *empty* or *rcnn* or *heatmap* or *yolo*.
 * **main_class** : name of the main class of the model.
 * **image_size** : name of the variable defining the input size considered for creating model layers.
-* **category** : name of the category for which this model file is created. It's value will be either of these : *image_classification*, *object_detection*, *keypoint_detection*, *text_classification*.
+* **category** : name of the category for which this model file is created. its value will be either of these : *image_classification*, *object_detection*, *keypoint_detection*, *text_classification*.
 * **batch_size** : name of the variable defining the batch size of the images considered for creating model layers.
 
 ### Sklearn mandatory variables
 
 The file must contain these variables:
-* **framework** : name of the framework for which this model file is created. For PyTorch it's value will be pytorch.
-* **model_type** : name of the model type for which this model file is created. It's value will be either *empty* or *tree* or *linear* or *knn* or *naive* or *mlp*.
+* **framework** : name of the framework for which this model file is created. For Sklearn its value will be pytorch.
+* **model_type** : name of the model type for which this model file is created. Its value will be either *empty* or *tree* or *linear* or *knn* or *naive* or *mlp*.
 * **main_class or main_method** : name of the main class or main method of the model. Any one of these is necessary for model.
 * **image_size** : name of the variable defining the input size considered for creating model layers.
-* **category** : name of the category for which this model file is created. It's value will be either of these : *image_classification*, *object_detection*, *keypoint_detection*, *text_classification*.
+* **category** : name of the category for which this model file is created. Its value will be either of these : *image_classification*, *object_detection*, *keypoint_detection*, *text_classification*.
 * **batch_size** : name of the variable defining the batch size of the images considered for creating model layers.
 
 ### Tensorflow mandatory variables
 
 Each format must contain these variables on the main file:
-* **framework** : name of the framework for which this model file is created. For tensorflow it's value will be tensorflow.
-* **model_type** : name of the model type for which this model file is created. It's value will be either *empty* or *rcnn* or *heatmap*.
+* **framework** : name of the framework for which this model file is created. For tensorflow its value will be tensorflow.
+* **model_type** : name of the model type for which this model file is created. Its value will be either *empty* or *rcnn* or *heatmap*.
 * **main_method** : name of the main function
 * **input_shape or image_size** : name of the variable defining the input shape of the model
-* **category** : name of the category for which this model file is created. It's value will be either of these : *image_classification*, *object_detection*, *keypoint_detection*, *text_classification*.
+* **category** : name of the category for which this model file is created. Its value will be either of these : *image_classification*, *object_detection*, *keypoint_detection*, *text_classification*.
 * **output_classes** : name of the variable defining the output shape of the variables. The value of this variable is equal to the number of classes in the dataset.
 
 ### Additional variables
 
-Some variables are neccessary specific to a category
+Some variables are necessary specific to a category
 * **num_feature_points** : number of keypoints or feature points for which this model file is created. This variable is used only for keypoint_detection and generic_classification category.
 * **model_id** : model id using which this model file is created. This variable is used only for text_classification category.
 * **hf_token** : hf token using which this model file is created. This variable is used only for text_classification category.
 
-<Note>
+<Warning>
 * The framework variable is compulsory and should always be placed at the top of your code just after the imports, before any other variable.
 * Changing the sequence of the framework variable will cause the model upload to fail.
 * Do not add any comment after these variables it will cause model upload to fail.
-</Note>
+</Warning>
 
 ## Detailed Information on each format
 
@@ -125,13 +125,13 @@ The value of the above variables would look like this:
 
 An example model file of this format can be found [here](https://github.com/tracebloc/model-zoo/blob/master/model_zoo/image_classification/pytorch/CNN.py).
 
-### 1. Single python file containing one class for sklearn
+### 2. Single python file containing one class for sklearn
 
 All your model code needs to be contained in a **single python file** with the following structure:
 
 
 
-#### 1.1 Import Section
+#### 2.2 Import Section
 
 Import all the necessary functionality you need to build your model.
 
@@ -140,7 +140,7 @@ Import all the necessary functionality you need to build your model.
 from sklearn.svm import SVC
 ```
 
-#### 1.2 Main Method
+#### 2.3 Main Method
 
 This is the main method which should return the model as output.
 
@@ -366,4 +366,3 @@ The main file should contain the variable values as mentioned in type 2 format. 
 ## Need Help?
 
 - Email us at [support@tracebloc.io](mailto:support@tracebloc.io)
-- Visit [docs.tracebloc.io](https://docs.tracebloc.io).
