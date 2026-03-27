@@ -5,14 +5,14 @@ description: "Step-by-step guide to training a model on the Tracebloc platform."
 
 # Start Training
 
-You have joined a use case and accepted the terms. Training a model is as easy as connecting to the client from a local script or notebook, then submitting models for training directly to the client's infrastructure.
+You have joined a use case and accepted the terms. Training a model is easy: You run a jupyter-notebook locally to connect and submit models to the workspace.
 For a smooth first run, lets follow the step by step notebook in the public [GitHub repository](https://github.com/tracebloc/start-training/tree/main) along with the documentation below.
 
-Alternatively, you may use the notebook hosted in [Google Colab](https://colab.research.google.com/drive/1N00idtpoaq1lk9OJE6g4bMqd8o-Qex2C#scrollTo=uuHJeLTP338z) and jump directly to [Step 1](#1-connect-to-the-tracebloc-client).
+Alternatively, you may use the notebook hosted in [Google Colab](https://colab.research.google.com/drive/1N00idtpoaq1lk9OJE6g4bMqd8o-Qex2C#scrollTo=uuHJeLTP338z) and jump directly to [Step 1](#1-connect-to-the-tracebloc-workspace).
 
 ## Pull Training Notebook and Model Repositories
 
-Create a tracebloc folder and pull the [Training GitHub repository](https://github.com/tracebloc/start-training/tree/main) and the [Model Zoo GitHub repository](https://github.com/tracebloc/model-zoo/tree/master). The notebook contains all commands to connect and start training, the model zoo has a selection of compatible models ready for training. Open a terminal and run the following commands:
+On your machine, create a tracebloc folder and pull the [Training GitHub repository](https://github.com/tracebloc/start-training/tree/main) and the [Model Zoo GitHub repository](https://github.com/tracebloc/model-zoo/tree/master). The notebook contains all commands to connect and start training, the model zoo contains a selection of compatible models ready for training. The easiest way to customize models is by starting from the model zoo. Open a terminal and run the following commands:
 
 ```bash
 mkdir tracebloc && cd tracebloc
@@ -55,11 +55,11 @@ Launch the notebook:
 jupyter notebook notebooks/traceblocTrainingGuide.ipynb
 ```
 
-## 1. Connect to the tracebloc Client
+## 1. Connect to the tracebloc workspace
 
 Follow the instructions in the notebook to authenticate. Have your tracebloc user credentials ready:
 
-![Log in](/images/Connect-to-the-tracebloc-Client.avif)
+![Log in](/images/Connect-to-the-tracebloc-client.avif)
 
 ### Getting Help
 
@@ -85,7 +85,7 @@ The model zoo provides starter templates. After cloning the repo, open the model
 | Tabular   | Tabular Classification | `output_classes` has to match # of classes <br></br> `num_feature_points` has to match # of features                                                                  |
 | Text      | Text Classification    | `input_shape`<br></br> `sequence_length` <br></br> `output_classes`                                                                                                   |
 
-You can find all the necessary info and parameters from the use case description and EDA.
+You can find all the necessary info and parameters from the use case description and exploratory data analysis (EDA).
 
 For example: A 3-way classification task on 224x224 images with LeNet would need the following lenet.py configuration:
 
@@ -135,7 +135,7 @@ class MyModel(nn.Module):
         return out
 ```
 
-The **variables at the top are mandatory** for the use case client but the model definition is fully flexible.
+The **variables at the top are mandatory** for the use case workspace but the model definition is fully flexible.
 
 ### Customize Your Model
 
@@ -150,7 +150,7 @@ Modify the architecture however you like: add layers, change activations, swap t
 In case of multiple uploads, only the most recently uploaded model will be linked to the dataset.
 </Tip>
 
-Then navigate back to the notebook and upload the model to the use case client:
+Then navigate back to the notebook and upload the model to the use case workspace:
 
 ```python
 user.uploadModel("../../model-zoo/model_zoo/<task>/<framework>/model.py")
@@ -215,7 +215,7 @@ trainingObject.cycles(1)
 
 ## 5. Start Training
 
-To send the model to the client infrastructure and start training on the training data, run:
+To send the model to the workspace infrastructure and start training on the training data, run:
 
 ```python
 trainingObject.start()
@@ -239,7 +239,7 @@ Once stopped, an experiment cannot be rerun.
 
 Once training is complete, submit the model to the leaderboard:
 
-1. Select the best performing training cycle during which you want to evaluate the performance on the test dataset and submit the model.
+1. Select the best performing training cycle during which you want to evaluate the performance on the test dataset and submit the model. Hover over the learning cureves and read the best performing validation training cycle, then enter it below in the field "Submit for inference at c".
 2. Click "Submit" to start inference on the test dataset. Once complete, you will see the model's performance on the Leaderboard.
 
 ![Submit a Model](/images/Submit-an-Experiment-to-the-Leaderboard.avif)
