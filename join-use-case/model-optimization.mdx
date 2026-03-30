@@ -5,7 +5,107 @@ description: "Learn the model format requirements for uploading and training mod
 
 # Customize Models
 
-This section explains the model format required to upload and train models on the tracebloc workspace.
+This section explains how to customize, upload and train models on the tracebloc workspace. The easiest way to get started is the [tracebloc model zoo](https://github.com/tracebloc/model-zoo), a collection of starter templates you can modify freely.
+
+## Model Parameters by Task
+
+Make sure the mandatory variables in your model file match the use case parameters. You can find all the necessary info from the use case description and exploratory data analysis (EDA).
+
+| Data Type | Task                   | Model Parameters                                                                                                                                                      |
+| --------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Image     | Classification         | `image_size` has to match image x/y-dimensions <br></br> `output_classes` has to match # of image classes                                                             |
+| Image     | Object Detection       | `image_size` has to match image x/y-dimensions <br></br> `output_classes` has to match # of object types                                                              |
+| Image     | Semantic Segmentation  | `image_size` has to match image x/y-dimensions <br></br> `output_classes` has to match # of object classes                                                            |
+| Image     | Keypoint Detection     | `image_size` has to match image x/y-dimensions <br></br> `output_classes` has to match # of object classes <br></br> `num_feature_points` has to match # of keypoints |
+| Tabular   | Tabular Classification | `output_classes` has to match # of classes <br></br> `num_feature_points` has to match # of features                                                                  |
+| Text      | Text Classification    | `input_shape`<br></br> `sequence_length` <br></br> `output_classes`                                                                                                   |
+
+## Example
+
+A 3-way classification task on 224x224 images with LeNet would need the following lenet.py configuration:
+
+```python
+import torch
+import torch.nn as nn
+
+# Mandatory variables, adapt as necessary.
+framework = "pytorch"
+main_class = "MyModel"
+image_size = 224
+batch_size = 16
+output_classes = 3
+category = "image_classification"
+
+
+class MyModel(nn.Module):
+    def __init__(self):
+        super(MyModel, self).__init__()
+        self.layer1 = nn.Sequential(
+            nn.Conv2d(3, 6, kernel_size=5, stride=1, padding=0),
+            nn.BatchNorm2d(6),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+        )
+        self.layer2 = nn.Sequential(
+            nn.Conv2d(6, 16, kernel_size=5, stride=1, padding=0),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+        )
+        self.fc = nn.Linear(16 * 53 * 53, 120)
+        self.relu = nn.ReLU()
+        self.fc1 = nn.Linear(120, 84)
+        self.relu1 = nn.ReLU()
+        self.fc2 = nn.Linear(84, output_classes)
+
+    def forward(self, x):
+        out = self.layer1(x)
+        out = self.layer2(out)
+        out = out.reshape(out.size(0), -1)
+        out = self.fc(out)
+        out = self.relu(out)
+        out = self.fc1(out)
+        out = self.relu1(out)
+        out = self.fc2(out)
+        return out
+```
+
+The **variables at the top are mandatory** for the use case workspace but the model definition is fully flexible. Open the model file from the model zoo in your editor, e.g.:
+
+```
+model-zoo/model_zoo/image_classification/pytorch/lenet.py
+```
+
+<Tip>
+Modify the architecture however you like: add layers, change activations, swap to a different backbone entirely. The only requirement is that the mandatory variables (`framework`, `main_class`, `image_size`, `batch_size`, `output_classes`, `category`) stay consistent with the use case parameters.
+In case of multiple uploads, only the most recently uploaded model will be linked to the dataset.
+</Tip>
+
+## Upload Model
+
+Upload the model to the use case workspace from your notebook:
+
+```python
+user.uploadModel("../../model-zoo/model_zoo/<task>/<framework>/model.py")
+```
+
+## Use Pre-trained Weights (Optional)
+
+Upload weights along with your model in the `user.uploadModel()` step and set `weights=True`, the default value is False:
+
+```python
+user.uploadModel("../../model-zoo/model_zoo/<task>/<framework>/model.py", weights=True)
+```
+
+A weights file with the same base name as the model and suffix "\_weights.pkl" must exist in the same directory. For example, if the model file is "mymodel.py", the corresponding weights file should be "mymodel_weights.pkl".
+
+```file
+model/
+    - model.py
+    - model_weights.pkl
+```
+
+## Model Code Formats
 
 Model code can be:
 - A single Python file containing one or more functions
