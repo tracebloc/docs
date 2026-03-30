@@ -62,6 +62,7 @@
           {
             "group": "Join a Use Case",
             "pages": [
+              "join-use-case/overview",
               "join-use-case/explore-use-case",
               "join-use-case/join-use-case",
               "join-use-case/start-training",
