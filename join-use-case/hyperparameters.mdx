@@ -3,9 +3,10 @@ title: "Hyperparameters"
 description: "Configure your model's training behavior by setting hyperparameters, training parameters, and augmentation options."
 ---
 
-# Hyperparameters
+## Training Parameters
 
-Configure your model's training behavior by setting hyperparameters, training parameters, and augmentation options. All parameters are set through the `trainingObject` after linking your model with the dataset.
+All parameters are set through the `trainingObject` after linking your model with the dataset.
+
 
 ```python
 trainingObject = user.linkModelDataset('Dataset ID')
@@ -17,7 +18,6 @@ To see all current parameter settings, run `trainingObject.getTrainingPlan()`. T
 You can refer to the [TensorFlow Documentation](https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/image/ImageDataGenerator) for more information on TensorFlow augmentation parameters and the [PyTorch Documentation](https://albumentations.ai/docs/examples/pytorch-classification/) for more information on PyTorch augmentation parameters.
 </Info>
 
-## Training Parameters
 
 Basic training configuration parameters that control the fundamental aspects of your training process.
 
