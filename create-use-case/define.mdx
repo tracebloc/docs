@@ -32,16 +32,177 @@ Objective: Attach datasets and define the benchmarking logic.
 
 ### Supported Metrics per Data Type and Task
 
-| Evaluation Metric                         | Data Type and Tasks                     | Explanation                                                                                                                                                                       |
-| ----------------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Accuracy                                  | All Classification Tasks                | Measures how well a model correctly predicts the output for a given input. Calculated by dividing the number of correct predictions by the total number of predictions made.      |
-| Precision                                 | All Classification Tasks                | Measures the number of correct positive predictions compared to the total number of positive predictions made. Shows how accurate the positive predictions are.                   |
-| Recall / Sensitivity                      | All Classification Tasks                | Measures the number of correct positive predictions compared to the total number of actual positive instances. Shows the coverage of actual positive samples.                     |
-| F1-Score                                  | All Classification Tasks                | The harmonic mean of precision and recall. Good metric when you want to balance precision and recall.                                                                             |
-| Mean Average Precision (mAP@0.5)          | Object Detection                        | Calculates the average precision for each class at a fixed IoU threshold of 0.5 (50% overlap between prediction and ground truth), then averages these values across all classes. |
-| Intersection over Union (IoU)             | Object Detection, Semantic Segmentation | Measures the accuracy of object detection or segmentation by calculating the area of intersection divided by the area of union of predicted and ground truth bounding boxes.      |
-| Percentage of Correct Keypoints (PCK@0.2) | Keypoint Detection                      | Evaluates the accuracy of predicted keypoints. A keypoint is considered correct if its distance from ground truth is within the normalized distance threshold of 0.2              |
-| Mean Absolute Error (MAE)                 | Regression Tasks                        | Measures the average absolute difference between predicted and actual values. Lower values indicate better model performance.                                                     |
+The tables below list all evaluation metrics grouped by task type. Each metric uses either **higher is better** or **lower is better** sort order on the leaderboard.
+
+#### Image Classification
+
+| Metric | Description | Sort Order |
+|--------|-------------|------------|
+| Accuracy | Proportion of predictions that exactly match the ground truth. Can be misleading on imbalanced datasets. | Higher is better |
+| Precision | Measures the proportion of predicted positives that are actually positive. Important when false positives are costly. | Higher is better |
+| Recall | Measures the proportion of actual positives correctly identified. Important when missing a positive instance is costly. | Higher is better |
+| F1 Score | Balances precision and recall into a single metric. Especially useful for imbalanced datasets. | Higher is better |
+| Loss | Quantifies the error between predicted outputs and actual values. A core metric used during training and optimization. | Lower is better |
+| Log Loss | Measures how well a model predicts probability estimates for each class. Penalizes overconfident incorrect predictions. | Lower is better |
+| AUC-ROC | Measures ability to distinguish between classes across all thresholds, independent of any single decision threshold. | Higher is better |
+| AUC-PR | Measures precision-recall balance across different thresholds. Especially useful for highly imbalanced datasets. | Higher is better |
+| Top-3 Accuracy | Measures how often the true class label appears among the model's top three predictions. | Higher is better |
+| Top-5 Accuracy | Measures how often the true class label appears among the model's top five predictions. | Higher is better |
+| Cohen's Kappa | Measures agreement between predicted and ground truth labels while accounting for chance agreement. | Higher is better |
+| Matthews Correlation Coefficient (MCC) | Classification quality using all parts of the confusion matrix. Balanced even with imbalanced classes. Ranges from -1 to 1. | Higher is better |
+| Quadratic Weighted Kappa (QWK) | Measures agreement between predicted and ground truth labels, penalizing larger disagreements more heavily. | Higher is better |
+| Brier Score | Mean squared difference between predicted probabilities and actual outcomes. | Lower is better |
+
+#### Text Classification
+
+| Metric | Description | Sort Order |
+|--------|-------------|------------|
+| Accuracy | Proportion of predictions that exactly match the ground truth. Can be misleading on imbalanced datasets. | Higher is better |
+| Precision | Measures the proportion of predicted positives that are actually positive. Important when false positives are costly. | Higher is better |
+| Recall | Measures the proportion of actual positives correctly identified. Important when missing a positive instance is costly. | Higher is better |
+| F1 Score | Balances precision and recall into a single metric. Especially useful for imbalanced datasets. | Higher is better |
+| F1 Weighted | Weights each class's F1 Score by its support (number of true instances). Suitable for imbalanced multi-class classification. | Higher is better |
+| Micro F1 | Aggregates true positives, false positives, and false negatives across all classes, treating every prediction equally. | Higher is better |
+| Loss | Quantifies the error between predicted outputs and actual values. A core metric used during training and optimization. | Lower is better |
+| Log Loss | Measures how well a model predicts probability estimates for each class. Penalizes overconfident incorrect predictions. | Lower is better |
+| AUC-ROC | Measures ability to distinguish between classes across all thresholds, independent of any single decision threshold. | Higher is better |
+| Hamming Loss | Measures the fraction of labels incorrectly predicted. Commonly used in multi-label classification tasks. | Lower is better |
+| Jaccard Score | Measures similarity between predicted and ground truth labels by comparing their intersection to their union. | Higher is better |
+| Cohen's Kappa | Measures agreement between predicted and ground truth labels while accounting for chance agreement. | Higher is better |
+| Matthews Correlation Coefficient (MCC) | Classification quality using all parts of the confusion matrix. Balanced even with imbalanced classes. Ranges from -1 to 1. | Higher is better |
+| Quadratic Weighted Kappa (QWK) | Measures agreement between predicted and ground truth labels, penalizing larger disagreements more heavily. | Higher is better |
+| Brier Score | Mean squared difference between predicted probabilities and actual outcomes. | Lower is better |
+
+#### Tabular Classification
+
+| Metric | Description | Sort Order |
+|--------|-------------|------------|
+| Accuracy | Proportion of predictions that exactly match the ground truth. Can be misleading on imbalanced datasets. | Higher is better |
+| Precision | Measures the proportion of predicted positives that are actually positive. Important when false positives are costly. | Higher is better |
+| Recall | Measures the proportion of actual positives correctly identified. Important when missing a positive instance is costly. | Higher is better |
+| F1 Score | Balances precision and recall into a single metric. Especially useful for imbalanced datasets. | Higher is better |
+| Loss | Quantifies the error between predicted outputs and actual values. A core metric used during training and optimization. | Lower is better |
+| Log Loss | Measures how well a model predicts probability estimates for each class. Penalizes overconfident incorrect predictions. | Lower is better |
+| AUC | Measures ability to distinguish between positive and negative classes across all classification thresholds. | Higher is better |
+| AUC-ROC | Measures ability to distinguish between classes across all thresholds, independent of any single decision threshold. | Higher is better |
+| AUC-PR | Measures precision-recall balance across different thresholds. Especially useful for highly imbalanced datasets. | Higher is better |
+| Balanced Accuracy | Averages recall across all classes, ensuring each class contributes equally regardless of frequency. | Higher is better |
+| Specificity (True Negative Rate) | Measures the proportion of actual negatives correctly identified. Important when false positives must be minimized. | Higher is better |
+| NPV (Negative Predictive Value) | Measures the proportion of predicted negatives that are actually negative. Important when confirming absence matters. | Higher is better |
+| F-beta Score (beta = 0.5) | Balances precision and recall with more emphasis on precision. Suitable when false positives are more costly. | Higher is better |
+| F-beta Score (beta = 2) | Balances precision and recall with more emphasis on recall. Suitable when missing positive instances is more costly. | Higher is better |
+| Hamming Loss | Measures the fraction of labels incorrectly predicted. Commonly used in multi-label classification tasks. | Lower is better |
+| Jaccard Score | Measures similarity between predicted and ground truth labels by comparing their intersection to their union. | Higher is better |
+| Cohen's Kappa | Measures agreement between predicted and ground truth labels while accounting for chance agreement. | Higher is better |
+| Matthews Correlation Coefficient (MCC) | Classification quality using all parts of the confusion matrix. Balanced even with imbalanced classes. Ranges from -1 to 1. | Higher is better |
+| Quadratic Weighted Kappa (QWK) | Measures agreement between predicted and ground truth labels, penalizing larger disagreements more heavily. | Higher is better |
+| Brier Score | Mean squared difference between predicted probabilities and actual outcomes. | Lower is better |
+| Gini Coefficient | Measures discriminatory power between positive and negative classes. Closely related to AUC-ROC. | Higher is better |
+| Normalized Gini | Scales the Gini Coefficient relative to a perfect model, enabling fair comparison across datasets. Ranges from -1 to 1. | Higher is better |
+
+#### Object Detection
+
+| Metric | Description | Sort Order |
+|--------|-------------|------------|
+| Accuracy | Proportion of predictions that exactly match the ground truth. | Higher is better |
+| Loss | Quantifies the error between predicted outputs and actual values. A core metric used during training and optimization. | Lower is better |
+| Mean Average Precision (mAP) | Evaluates the quality of ranked predictions. Commonly used in object detection and ranking tasks. | Higher is better |
+| Mean Average Precision @ IoU 0.50 | Evaluates object detection requiring at least 50% overlap between predicted and ground truth bounding boxes. | Higher is better |
+| Mean Average Precision @ IoU 0.75 | Stricter variant requiring at least 75% overlap between predicted and ground truth bounding boxes. | Higher is better |
+| mAP per Class | Reports Average Precision individually for each object class. Helps identify which classes the model struggles with. | Higher is better |
+| Intersection over Union (IoU) | Measures overlap between predicted and ground truth regions. Used for localization accuracy. | Higher is better |
+| GIoU (Generalized IoU) | Extends standard IoU by penalizing non-overlapping predictions using the smallest enclosing box. Ranges from -1 to 1. | Higher is better |
+| Mean Average Recall @ 1 Detection | Measures how well the model retrieves ground truth objects when only the single top-scoring detection is allowed. | Higher is better |
+| Mean Average Recall @ 10 Detections | Measures retrieval of ground truth objects when up to 10 detections per image are allowed. | Higher is better |
+
+#### Semantic Segmentation
+
+| Metric | Description | Sort Order |
+|--------|-------------|------------|
+| Accuracy | Proportion of predictions that exactly match the ground truth. | Higher is better |
+| Precision | Measures the proportion of predicted positives that are actually positive. | Higher is better |
+| Recall | Measures the proportion of actual positives correctly identified. | Higher is better |
+| F1 Score | Balances precision and recall into a single metric. | Higher is better |
+| Loss | Quantifies the error between predicted outputs and actual values. | Lower is better |
+| Intersection over Union (IoU) | Measures overlap between predicted and ground truth regions. | Higher is better |
+| Mean Intersection over Union (mIoU) | Averages IoU across all classes, evaluating how well a model predicts each class region. | Higher is better |
+| Frequency Weighted IoU | Weights each class's IoU by its relative frequency in the ground truth, giving more importance to dominant classes. | Higher is better |
+| Dice Coefficient | Measures similarity between predicted and ground truth segmentation regions. Especially sensitive to small structures. | Higher is better |
+| Pixel Accuracy | Proportion of correctly classified pixels across the entire image. Can be dominated by frequent classes. | Higher is better |
+| Mean Pixel Accuracy | Averages pixel accuracy per class, giving equal importance to all classes regardless of frequency. | Higher is better |
+| Boundary IoU | Measures how well predicted segmentation boundaries align with ground truth boundaries. Focuses on edge accuracy. | Higher is better |
+| Boundary F1 Score | Combines boundary precision and recall to evaluate how accurately predicted boundaries match ground truth edges. | Higher is better |
+| Hausdorff Distance | Maximum distance between predicted and ground truth boundaries. Captures the worst-case boundary mismatch. | Lower is better |
+| Average Surface Distance (ASD) | Average distance between predicted and ground truth boundary points. Stable measure of overall boundary alignment. | Lower is better |
+
+#### Instance Segmentation
+
+| Metric | Description | Sort Order |
+|--------|-------------|------------|
+| Accuracy | Proportion of predictions that exactly match the ground truth. | Higher is better |
+| Precision | Measures the proportion of predicted positives that are actually positive. | Higher is better |
+| Recall | Measures the proportion of actual positives correctly identified. | Higher is better |
+| F1 Score | Balances precision and recall into a single metric. | Higher is better |
+| Loss | Quantifies the error between predicted outputs and actual values. | Lower is better |
+
+#### Keypoint Detection
+
+| Metric | Description | Sort Order |
+|--------|-------------|------------|
+| Precision | Measures the proportion of predicted positives that are actually positive. | Higher is better |
+| Recall | Measures the proportion of actual positives correctly identified. | Higher is better |
+| F1 Score | Balances precision and recall into a single metric. | Higher is better |
+| Loss | Quantifies the error between predicted outputs and actual values. | Lower is better |
+| Mean Absolute Error (MAE) | Average magnitude of errors between predicted and actual values, expressed in the same units as the target. | Lower is better |
+| PCK (Percentage of Correct Keypoints) | Measures how accurately predicted keypoints fall within a specified distance of ground truth. | Higher is better |
+| PCK@0.05 | Keypoints within a normalized distance threshold of 0.05 from ground truth. Strictest variant. | Higher is better |
+| PCK@0.10 | Keypoints within a normalized distance threshold of 0.10 from ground truth. | Higher is better |
+| PCK@0.20 | Keypoints within a normalized distance threshold of 0.20 from ground truth. | Higher is better |
+| PCK@0.30 | Keypoints within a normalized distance threshold of 0.30 from ground truth. | Higher is better |
+| PCK@0.50 | Keypoints within a normalized distance threshold of 0.50 from ground truth. Most lenient variant. | Higher is better |
+| Object Keypoint Similarity (OKS) | Measures similarity between predicted and ground truth keypoints, accounting for scale and localization uncertainty. | Higher is better |
+| Mean Per Joint Position Error (MPJPE) | Average Euclidean distance between predicted and ground truth joint positions. Standard for pose estimation. | Lower is better |
+| Visibility Accuracy | Measures how correctly the model predicts the visibility status of keypoints, independent of spatial localization. | Higher is better |
+
+#### Tabular Regression
+
+| Metric | Description | Sort Order |
+|--------|-------------|------------|
+| Accuracy | Proportion of predictions that exactly match the ground truth. | Higher is better |
+| Loss | Quantifies the error between predicted outputs and actual values. | Lower is better |
+| Mean Absolute Error (MAE) | Average magnitude of errors between predicted and actual values, expressed in the same units as the target. | Lower is better |
+| Mean Squared Error (MSE) | Average squared difference between predicted and actual values. Penalizes larger errors more heavily. | Lower is better |
+| Root Mean Squared Error (RMSE) | Square root of MSE, expressing prediction error in the same units as the target variable. | Lower is better |
+| R² (Coefficient of Determination) | Measures how well a regression model explains variance in the target. A value of 1.0 indicates perfect prediction. | Higher is better |
+| Root Mean Squared Logarithmic Error (RMSLE) | Measures error on a logarithmic scale. Useful when target values span several orders of magnitude. | Lower is better |
+| Median Absolute Error (Median AE) | Uses the median of absolute errors instead of the mean. Highly robust to outliers. | Lower is better |
+| Explained Variance | Measures how well the model captures the variance of the target, independent of systematic bias. Ranges up to 1.0. | Higher is better |
+| Mean Bias Error (MBE) | Measures the average bias in predictions. Positive = overestimation, negative = underestimation. | Lower is better |
+
+#### Time Series Forecasting
+
+| Metric | Description | Sort Order |
+|--------|-------------|------------|
+| Accuracy | Proportion of predictions that exactly match the ground truth. | Higher is better |
+| Loss | Quantifies the error between predicted outputs and actual values. | Lower is better |
+| Mean Absolute Error (MAE) | Average magnitude of errors between predicted and actual values, expressed in the same units as the target. | Lower is better |
+| Mean Squared Error (MSE) | Average squared difference between predicted and actual values. Penalizes larger errors more heavily. | Lower is better |
+| Root Mean Squared Error (RMSE) | Square root of MSE, expressing prediction error in the same units as the target variable. | Lower is better |
+| R² (Coefficient of Determination) | Measures how well a regression model explains variance in the target. A value of 1.0 indicates perfect prediction. | Higher is better |
+| Root Mean Squared Logarithmic Error (RMSLE) | Measures error on a logarithmic scale. Useful when target values span several orders of magnitude. | Lower is better |
+| Mean Absolute Percentage Error (MAPE) | Average percentage difference between predicted and actual values. Easy to interpret across different scales. | Lower is better |
+| Symmetric Mean Absolute Percentage Error (SMAPE) | Symmetric variant of MAPE that reduces issues when actual values are close to zero. | Lower is better |
+| Median Absolute Percentage Error (MdAPE) | Uses the median of absolute percentage errors. More robust to outliers. | Lower is better |
+| Theil's U (U2 Statistic) | Measures forecasting accuracy relative to a naive benchmark. Values below 1.0 mean the model outperforms the baseline. | Lower is better |
+| Max Error | Captures the single largest absolute difference between predicted and actual values. | Lower is better |
+| Direction Accuracy | Measures how often the model correctly predicts the direction of change (up or down) between consecutive values. | Higher is better |
+
+#### Time-to-Event Prediction
+
+| Metric | Description | Sort Order |
+|--------|-------------|------------|
+| F1 Score | Balances precision and recall into a single metric. | Higher is better |
+| Concordance Index (C-Index) | Measures how well predicted risk scores agree with the observed ordering of event times. Standard for survival analysis. | Higher is better |
 
 ---
 

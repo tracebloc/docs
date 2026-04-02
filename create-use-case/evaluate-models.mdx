@@ -7,7 +7,7 @@ Navigate to the Leaderboard section of your use case to compare submitted models
 
 ## The Leaderboard
 
-Vendors are ranked by the score of their best performing model. Scores are calculated using the evaluation metric you selected when defining the use case (e.g. Accuracy, F1, mAP). See the full list of [supported metrics per data type and task](/create-use-case/define#supported-metrics-per-data-type-and-task).
+Vendors are ranked by the score of their best performing model. Scores are calculated using the evaluation metric you selected when [defining the use case](/create-use-case/define#supported-metrics-per-data-type-and-task) (e.g. Accuracy, F1, mAP).
 
 ![Leaderboard](/images/Breast-cancer-screening-use-case-the-leaderboard.avif)
 
@@ -36,77 +36,7 @@ From the use case view, you can:
 
 ## Supported Evaluation Metrics
 
-The table below lists all evaluation metrics available. When defining a use case, you select one of these metrics to score and rank submitted models. Each metric uses either ascending (lower is better) or descending (higher is better) sort order.
-
-| Metric | Description | Sort Order |
-|--------|-------------|------------|
-| F1 Score | Balances precision and recall into a single metric.<br>Especially useful for imbalanced datasets where accuracy alone can be misleading. | Descending |
-| Loss | Quantifies the error between predicted outputs and actual values.<br>Lower values indicate better performance. | Descending |
-| Recall | Measures the proportion of actual positives correctly identified.<br>Important when missing a positive instance is costly. | Descending |
-| Precision | Measures the proportion of predicted positives that are actually positive.<br>Important when false positives are costly. | Descending |
-| Accuracy | Proportion of predictions that exactly match the ground truth.<br>Can be misleading on imbalanced datasets. | Descending |
-| Mean Average<br>Precision (mAP) | Evaluates the quality of ranked predictions.<br>Commonly used in object detection and ranking tasks. | Descending |
-| Mean Absolute<br>Error (MAE) | Average magnitude of errors between predicted and actual values,<br>expressed in the same units as the target variable. | Descending |
-| Intersection over<br>Union (IoU) | Measures overlap between predicted and ground truth regions.<br>Used in object detection and segmentation for localization accuracy. | Descending |
-| Dice Coefficient | Measures similarity between predicted and ground truth segmentation regions.<br>Especially sensitive to small or thin structures. | Descending |
-| Matthews Correlation<br>Coefficient (MCC) | Classification quality using all parts of the confusion matrix.<br>Balanced even with highly imbalanced classes. Ranges from -1 to 1. | Descending |
-| Cohen's Kappa | Measures agreement between predicted and ground truth labels<br>while accounting for chance agreement. | Descending |
-| Specificity<br>(True Negative Rate) | Measures the proportion of actual negatives correctly identified.<br>Important when false positives must be minimized. | Descending |
-| AUC | Measures ability to distinguish between positive and negative classes<br>across all classification thresholds. | Descending |
-| PCK<br>(Percentage of Correct Keypoints) | Measures how accurately predicted keypoints fall<br>within a specified distance of ground truth. | Descending |
-| R²<br>(Coefficient of Determination) | Measures how well a regression model explains variance in the target.<br>A value of 1.0 indicates perfect prediction. | Descending |
-| Mean Squared<br>Error (MSE) | Average squared difference between predicted and actual values.<br>Penalizes larger errors more heavily due to squaring. | Descending |
-| Root Mean Squared<br>Error (RMSE) | Square root of MSE, expressing prediction error<br>in the same units as the target variable. | Ascending |
-| Mean Absolute<br>Percentage Error (MAPE) | Average percentage difference between predicted and actual values.<br>Easy to interpret and compare across different scales. | Descending |
-| Symmetric Mean Absolute<br>Percentage Error (SMAPE) | Symmetric variant of MAPE that reduces issues<br>when actual values are close to zero. | Descending |
-| Median Absolute<br>Percentage Error (MdAPE) | Uses the median instead of the mean of absolute percentage errors.<br>More robust to outliers and extreme prediction errors. | Descending |
-| Theil's U<br>(U2 Statistic) | Measures forecasting accuracy relative to a naive benchmark.<br>Values below 1.0 indicate the model outperforms the baseline. | Descending |
-| Max Error | Captures the single largest absolute difference<br>between predicted and actual values. | Descending |
-| Direction Accuracy | Measures how often the model correctly predicts the direction<br>of change (up or down) between consecutive values. | Descending |
-| Log Loss | Measures how well a model predicts probability estimates for each class.<br>Penalizes incorrect and overconfident predictions more strongly. | Descending |
-| AUC-PR | Measures precision-recall balance across different thresholds.<br>Especially useful for highly imbalanced datasets. | Descending |
-| AUC-ROC | Measures ability to distinguish between classes across all thresholds,<br>independent of any single decision threshold. | Descending |
-| Top-3 Accuracy | Measures how often the true class label appears<br>among the model's top three predictions. | Descending |
-| Top-5 Accuracy | Measures how often the true class label appears<br>among the model's top five predictions. | Descending |
-| Quadratic Weighted<br>Kappa (QWK) | Measures agreement between predicted and ground truth labels,<br>penalizing larger disagreements more heavily with quadratic weights. | Descending |
-| Brier Score | Mean squared difference between predicted probabilities<br>and actual outcomes. | Descending |
-| Balanced Accuracy | Averages recall across all classes, ensuring each class<br>contributes equally regardless of frequency. | Descending |
-| F-beta Score<br>(beta = 0.5) | Balances precision and recall with more emphasis on precision.<br>Suitable when false positives are more costly than false negatives. | Descending |
-| F-beta Score<br>(beta = 2) | Balances precision and recall with more emphasis on recall.<br>Suitable when missing positive instances is more costly. | Descending |
-| Hamming Loss | Measures the fraction of labels incorrectly predicted.<br>Commonly used in multi-label classification tasks. | Descending |
-| Jaccard Score | Measures similarity between predicted and ground truth labels<br>by comparing their intersection to their union. | Descending |
-| NPV<br>(Negative Predictive Value) | Measures the proportion of predicted negatives that are actually negative.<br>Important when confirming the absence of a condition matters. | Descending |
-| Micro F1 | Aggregates true positives, false positives, and false negatives across all classes,<br>treating every prediction equally. | Descending |
-| F1 Weighted | Weights each class's F1 Score by its support (number of true instances).<br>Suitable for imbalanced multi-class classification. | Descending |
-| Gini Coefficient | Measures discriminatory power between positive and negative classes.<br>Closely related to AUC-ROC. Common in credit scoring and risk modeling. | Descending |
-| Normalized Gini | Scales the Gini Coefficient relative to a perfect model,<br>enabling fair comparison across datasets. Ranges from -1 to 1. | Descending |
-| GIoU<br>(Generalized IoU) | Extends standard IoU by penalizing non-overlapping predictions<br>using the smallest enclosing box. Ranges from -1 to 1. | Descending |
-| Mean Average Precision<br>@ IoU 0.50 | Evaluates object detection requiring at least 50% overlap<br>between predicted and ground truth bounding boxes. | Descending |
-| Mean Average Precision<br>@ IoU 0.75 | Stricter variant requiring at least 75% overlap<br>between predicted and ground truth bounding boxes. | Descending |
-| Mean Average Recall<br>@ 1 Detection | Measures how well the model retrieves ground truth objects<br>when only the single top-scoring detection per image is allowed. | Descending |
-| Mean Average Recall<br>@ 10 Detections | Measures retrieval of ground truth objects<br>when up to 10 detections per image are allowed. | Descending |
-| mAP per Class | Reports Average Precision individually for each object class.<br>Helps identify which classes the model struggles with. | Descending |
-| Mean Per Joint<br>Position Error (MPJPE) | Average Euclidean distance between predicted<br>and ground truth joint positions. Standard for pose estimation. | Descending |
-| Object Keypoint<br>Similarity (OKS) | Measures similarity between predicted and ground truth keypoints,<br>accounting for object scale and localization uncertainty. | Descending |
-| Visibility Accuracy | Measures how correctly the model predicts the visibility status<br>of keypoints, independent of spatial localization. | Descending |
-| PCK@0.05 | Percentage of predicted keypoints within a normalized<br>distance threshold of 0.05 from ground truth. Strictest variant. | Descending |
-| PCK@0.10 | Percentage of predicted keypoints within a normalized<br>distance threshold of 0.10 from ground truth. | Descending |
-| PCK@0.20 | Percentage of predicted keypoints within a normalized<br>distance threshold of 0.20 from ground truth. | Descending |
-| PCK@0.30 | Percentage of predicted keypoints within a normalized<br>distance threshold of 0.30 from ground truth. | Descending |
-| PCK@0.50 | Percentage of predicted keypoints within a normalized<br>distance threshold of 0.50 from ground truth. Most lenient variant. | Descending |
-| Mean Intersection<br>over Union (mIoU) | Averages IoU across all classes in semantic segmentation,<br>evaluating how well a model predicts each class region. | Descending |
-| Frequency<br>Weighted IoU | Weights each class's IoU by its relative frequency in the ground truth,<br>giving more importance to dominant classes. | Descending |
-| Pixel Accuracy | Proportion of correctly classified pixels across the entire image.<br>Can be dominated by frequent classes. | Descending |
-| Mean Pixel Accuracy | Averages pixel accuracy per class,<br>giving equal importance to all classes regardless of frequency. | Descending |
-| Boundary IoU | Measures how well predicted segmentation boundaries<br>align with ground truth boundaries. Focuses on edge accuracy. | Descending |
-| Boundary F1 Score | Combines boundary precision and recall to evaluate<br>how accurately predicted boundaries match ground truth edges. | Descending |
-| Hausdorff Distance | Maximum distance between predicted and ground truth boundaries.<br>Captures the worst-case boundary mismatch. | Descending |
-| Average Surface<br>Distance (ASD) | Average distance between predicted and ground truth boundary points.<br>Provides a stable measure of overall boundary alignment. | Descending |
-| Root Mean Squared<br>Logarithmic Error (RMSLE) | Measures error on a logarithmic scale.<br>Useful when target values span several orders of magnitude. | Descending |
-| Median Absolute Error<br>(Median AE) | Uses the median of absolute errors instead of the mean.<br>Highly robust to outliers. | Descending |
-| Explained Variance | Measures how well the model captures the variance of the target,<br>independent of systematic bias. Ranges up to 1.0. | Descending |
-| Mean Bias Error<br>(MBE) | Measures the average bias in predictions.<br>Positive = systematic overestimation, negative = underestimation. | Descending |
-| Concordance Index<br>(C-Index) | Measures how well predicted risk scores agree with<br>the observed ordering of event times. Standard for survival analysis. | Descending |
+Scores on the leaderboard are calculated using the metric you selected when defining the use case. See the full list of [supported metrics per data type and task](/create-use-case/define#supported-metrics-per-data-type-and-task).
 
 ---
 
