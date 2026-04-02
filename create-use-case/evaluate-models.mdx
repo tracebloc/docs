@@ -36,77 +36,77 @@ From the use case view, you can:
 
 ## Supported Evaluation Metrics
 
-The table below lists all evaluation metrics available. When defining a use case, you select one of these metrics to score and rank submitted models. Each metric applies to specific dataset categories and uses either ascending (lower is better) or descending (higher is better) sort order.
+The table below lists all evaluation metrics available. When defining a use case, you select one of these metrics to score and rank submitted models. Each metric uses either ascending (lower is better) or descending (higher is better) sort order.
 
-| Metric | Description | Dataset Categories | Sort Order |
-|--------|-------------|--------------------|------------|
-| F1 Score | Balances precision and recall into a single metric. Especially useful for imbalanced datasets where accuracy alone can be misleading. | Image Classification, Keypoint Detection, Text Classification, Tabular Classification, Semantic Segmentation, Instance Segmentation, Time-to-Event Prediction | Descending |
-| Loss | Quantifies the error between predicted outputs and actual values. A core metric used during training and optimization — lower values indicate better performance. | Image Classification, Object Detection, Keypoint Detection, Text Classification, Tabular Classification, Semantic Segmentation, Instance Segmentation, Tabular Regression, Time Series Forecasting | Descending |
-| Recall | Measures the proportion of actual positives correctly identified by the model. Important when missing a positive instance is costly. | Image Classification, Keypoint Detection, Text Classification, Tabular Classification, Semantic Segmentation, Instance Segmentation | Descending |
-| Precision | Measures the proportion of predicted positives that are actually positive. Important when false positives are costly. | Image Classification, Keypoint Detection, Text Classification, Tabular Classification, Semantic Segmentation, Instance Segmentation | Descending |
-| Accuracy | Measures the proportion of predictions that exactly match the ground truth. Works for both binary and multi-class classification but can be misleading on imbalanced datasets. | Image Classification, Object Detection, Text Classification, Tabular Classification, Semantic Segmentation, Instance Segmentation, Tabular Regression, Time Series Forecasting | Descending |
-| Mean Average Precision (mAP) | Evaluates the quality of ranked predictions by measuring how well relevant items are ordered in the result list. Commonly used in object detection and ranking tasks. | Object Detection | Descending |
-| Mean Absolute Error (MAE) | Measures the average magnitude of errors between predicted and actual values, expressed in the same units as the target variable. | Keypoint Detection, Time Series Forecasting | Descending |
-| Intersection over Union (IoU) | Measures the overlap between predicted and ground truth regions. Commonly used in object detection and segmentation to evaluate localization accuracy. | Object Detection, Semantic Segmentation | Descending |
-| Dice Coefficient | Measures similarity between predicted and ground truth segmentation regions. Especially sensitive to small or thin structures. | Semantic Segmentation | Descending |
-| Matthews Correlation Coefficient (MCC) | Evaluates binary classification quality using all parts of the confusion matrix. Provides a balanced score even with highly imbalanced classes, ranging from -1 to 1. | Image Classification, Text Classification, Tabular Classification | Descending |
-| Cohen's Kappa | Measures agreement between predicted and ground truth labels while accounting for chance agreement. Useful when class distributions are imbalanced. | Image Classification, Text Classification, Tabular Classification | Descending |
-| Specificity (True Negative Rate) | Measures the proportion of actual negatives correctly identified. Important when false positives must be minimized. | Tabular Classification | Descending |
-| AUC | Measures a model's ability to distinguish between positive and negative classes across all classification thresholds. | Tabular Classification | Descending |
-| PCK (Percentage of Correct Keypoints) | Measures how accurately predicted keypoints fall within a specified distance of the ground truth. Standard metric for pose estimation tasks. | Keypoint Detection | Descending |
-| R² (Coefficient of Determination) | Measures how well a regression model explains the variance in the target variable. A value of 1.0 indicates perfect prediction. | Tabular Regression, Time Series Forecasting | Descending |
-| Mean Squared Error (MSE) | Measures the average squared difference between predicted and actual values. Penalizes larger errors more heavily due to squaring. | Tabular Regression, Time Series Forecasting | Descending |
-| Root Mean Squared Error (RMSE) | Square root of MSE, expressing prediction error in the same units as the target variable. Easier to interpret than MSE. | Tabular Regression, Time Series Forecasting | Ascending |
-| Mean Absolute Percentage Error (MAPE) | Measures the average percentage difference between predicted and actual values. Easy to interpret and compare across different scales. | Time Series Forecasting | Descending |
-| Symmetric Mean Absolute Percentage Error (SMAPE) | A symmetric variant of MAPE that reduces issues when actual values are close to zero by normalizing using the average of actual and predicted values. | Time Series Forecasting | Descending |
-| Median Absolute Percentage Error (MdAPE) | Uses the median instead of the mean of absolute percentage errors, making it more robust to outliers and extreme prediction errors. | Time Series Forecasting | Descending |
-| Theil's U (U2 Statistic) | Measures forecasting accuracy relative to a naive benchmark. Values below 1.0 indicate the model outperforms the baseline. | Time Series Forecasting | Descending |
-| Max Error | Captures the single largest absolute difference between predicted and actual values, highlighting the worst-case prediction. | Time Series Forecasting | Descending |
-| Direction Accuracy | Measures how often the model correctly predicts the direction of change (up or down) between consecutive values. | Time Series Forecasting | Descending |
-| Log Loss | Measures how well a model predicts probability estimates for each class. Penalizes incorrect and overconfident predictions more strongly. | Image Classification, Text Classification, Tabular Classification | Descending |
-| AUC-PR | Measures a model's precision-recall balance across different thresholds. Especially useful for highly imbalanced datasets. | Image Classification, Tabular Classification | Descending |
-| AUC-ROC | Measures a model's ability to distinguish between classes across all thresholds, independent of any single decision threshold. | Image Classification, Text Classification, Tabular Classification | Descending |
-| Top-3 Accuracy | Measures how often the true class label appears among the model's top three predictions. Useful for large label-space problems. | Image Classification | Descending |
-| Top-5 Accuracy | Measures how often the true class label appears among the model's top five predictions. Common in image classification benchmarks. | Image Classification | Descending |
-| Quadratic Weighted Kappa (QWK) | Measures agreement between predicted and ground truth labels, penalizing larger disagreements more heavily with quadratic weights. | Image Classification, Text Classification, Tabular Classification | Descending |
-| Brier Score | Measures the accuracy of probabilistic predictions by computing the mean squared difference between predicted probabilities and actual outcomes. | Image Classification, Text Classification, Tabular Classification | Descending |
-| Balanced Accuracy | Averages recall across all classes, ensuring each class contributes equally regardless of frequency. Designed for imbalanced datasets. | Tabular Classification | Descending |
-| F-beta Score (beta = 0.5) | Balances precision and recall with more emphasis on precision. Suitable when false positives are more costly than false negatives. | Tabular Classification | Descending |
-| F-beta Score (beta = 2) | Balances precision and recall with more emphasis on recall. Suitable when missing positive instances is more costly. | Tabular Classification | Descending |
-| Hamming Loss | Measures the fraction of labels incorrectly predicted. Commonly used in multi-label classification tasks. | Text Classification, Tabular Classification | Descending |
-| Jaccard Score | Measures the similarity between predicted and ground truth labels by comparing their intersection to their union. Also known as the Jaccard Index. | Text Classification, Tabular Classification | Descending |
-| NPV (Negative Predictive Value) | Measures the proportion of predicted negatives that are actually negative. Important when confirming the absence of a condition matters. | Tabular Classification | Descending |
-| Micro F1 | Aggregates true positives, false positives, and false negatives across all classes, treating every prediction equally. Suitable for multi-class and multi-label tasks. | Text Classification | Descending |
-| F1 Weighted | Weights each class's F1 Score by its support (number of true instances), making it suitable for imbalanced multi-class classification. | Text Classification | Descending |
-| Gini Coefficient | Measures a model's ability to distinguish between positive and negative classes. Closely related to AUC-ROC and commonly used in credit scoring and risk modeling. | Tabular Classification | Descending |
-| Normalized Gini | Scales the Gini Coefficient relative to a perfect model, enabling fair comparison across datasets. Ranges from -1 to 1. | Tabular Classification | Descending |
-| GIoU (Generalized IoU) | Extends standard IoU by penalizing non-overlapping predictions using the smallest enclosing box, providing meaningful feedback even when boxes don't intersect. | Object Detection | Descending |
-| Mean Average Precision @ IoU 0.50 | Evaluates object detection by requiring at least 50% overlap between predicted and ground truth bounding boxes for a correct detection. | Object Detection | Descending |
-| Mean Average Precision @ IoU 0.75 | A stricter variant requiring at least 75% overlap between predicted and ground truth bounding boxes. | Object Detection | Descending |
-| Mean Average Recall @ 1 Detection | Measures how well the model retrieves ground truth objects when only the single top-scoring detection per image is allowed. | Object Detection | Descending |
-| Mean Average Recall @ 10 Detections | Measures retrieval of ground truth objects when up to 10 detections per image are allowed. | Object Detection | Descending |
-| mAP per Class | Reports Average Precision individually for each object class, helping identify which classes the model struggles with. | Object Detection | Descending |
-| Mean Per Joint Position Error (MPJPE) | Measures the average Euclidean distance between predicted and ground truth joint positions. Standard metric for pose estimation. | Keypoint Detection | Descending |
-| Object Keypoint Similarity (OKS) | Measures similarity between predicted and ground truth keypoints, accounting for object scale and keypoint-specific localization uncertainty. | Keypoint Detection | Descending |
-| Visibility Accuracy | Measures how correctly the model predicts the visibility status (visible or not visible) of keypoints, independent of spatial localization. | Keypoint Detection | Descending |
-| PCK@0.05 | Percentage of predicted keypoints within a normalized distance threshold of 0.05 from ground truth. The strictest PCK variant. | Keypoint Detection | Descending |
-| PCK@0.10 | Percentage of predicted keypoints within a normalized distance threshold of 0.10 from ground truth. | Keypoint Detection | Descending |
-| PCK@0.20 | Percentage of predicted keypoints within a normalized distance threshold of 0.20 from ground truth. | Keypoint Detection | Descending |
-| PCK@0.30 | Percentage of predicted keypoints within a normalized distance threshold of 0.30 from ground truth. | Keypoint Detection | Descending |
-| PCK@0.50 | Percentage of predicted keypoints within a normalized distance threshold of 0.50 from ground truth. The most lenient PCK variant. | Keypoint Detection | Descending |
-| Mean Intersection over Union (mIoU) | Averages IoU across all classes in semantic segmentation, evaluating how well a model predicts each class region. | Semantic Segmentation | Descending |
-| Frequency Weighted IoU | Weights each class's IoU by its relative frequency in the ground truth, giving more importance to dominant classes. | Semantic Segmentation | Descending |
-| Pixel Accuracy | Measures the proportion of correctly classified pixels across the entire image. Simple but can be dominated by frequent classes. | Semantic Segmentation | Descending |
-| Mean Pixel Accuracy | Averages pixel accuracy per class, giving equal importance to all classes regardless of frequency. | Semantic Segmentation | Descending |
-| Boundary IoU | Measures how well predicted segmentation boundaries align with ground truth boundaries, focusing on edge accuracy rather than region overlap. | Semantic Segmentation | Descending |
-| Boundary F1 Score | Combines boundary precision and recall to evaluate how accurately predicted boundaries match ground truth edges. | Semantic Segmentation | Descending |
-| Hausdorff Distance | Measures the maximum distance between predicted and ground truth segmentation boundaries, capturing the worst-case boundary mismatch. | Semantic Segmentation | Descending |
-| Average Surface Distance (ASD) | Measures the average distance between predicted and ground truth boundary points, providing a stable measure of overall boundary alignment. | Semantic Segmentation | Descending |
-| Root Mean Squared Logarithmic Error (RMSLE) | Measures error on a logarithmic scale, useful when target values span several orders of magnitude and relative errors matter more. | Tabular Regression, Time Series Forecasting | Descending |
-| Median Absolute Error (Median AE) | Uses the median of absolute errors instead of the mean, making it highly robust to outliers. | Tabular Regression | Descending |
-| Explained Variance | Measures how well the model captures the variance structure of the target, independent of systematic bias. Ranges up to 1.0. | Tabular Regression | Descending |
-| Mean Bias Error (MBE) | Measures the average bias in predictions. A positive MBE indicates systematic overestimation, a negative MBE indicates underestimation. | Tabular Regression | Descending |
-| Concordance Index (C-Index) | Measures how well predicted risk scores agree with the observed ordering of event times. Standard metric for survival analysis. | Time-to-Event Prediction | Descending |
+| Metric | Description | Sort Order |
+|--------|-------------|------------|
+| F1 Score | Balances precision and recall. Useful for imbalanced datasets. | Descending |
+| Loss | Quantifies prediction error. Lower is better. | Descending |
+| Recall | Proportion of actual positives correctly identified. | Descending |
+| Precision | Proportion of predicted positives that are actually positive. | Descending |
+| Accuracy | Proportion of predictions that match ground truth. | Descending |
+| Mean Average Precision (mAP) | Quality of ranked predictions. Common in object detection. | Descending |
+| Mean Absolute Error (MAE) | Average error magnitude, in the same units as the target. | Descending |
+| Intersection over Union (IoU) | Overlap between predicted and ground truth regions. | Descending |
+| Dice Coefficient | Similarity between predicted and ground truth segmentation regions. | Descending |
+| Matthews Correlation Coefficient (MCC) | Classification quality using all parts of the confusion matrix. Ranges from -1 to 1. | Descending |
+| Cohen's Kappa | Agreement between predictions and ground truth, accounting for chance. | Descending |
+| Specificity (True Negative Rate) | Proportion of actual negatives correctly identified. | Descending |
+| AUC | Ability to distinguish between classes across all thresholds. | Descending |
+| PCK (Percentage of Correct Keypoints) | Proportion of keypoints within a specified distance of ground truth. | Descending |
+| R² (Coefficient of Determination) | Proportion of variance explained by the model. 1.0 = perfect fit. | Descending |
+| Mean Squared Error (MSE) | Average squared difference between predicted and actual values. | Descending |
+| Root Mean Squared Error (RMSE) | Square root of MSE. Same units as target variable. | Ascending |
+| Mean Absolute Percentage Error (MAPE) | Average percentage difference between predicted and actual values. | Descending |
+| Symmetric Mean Absolute Percentage Error (SMAPE) | Symmetric variant of MAPE. Handles values near zero better. | Descending |
+| Median Absolute Percentage Error (MdAPE) | Median of absolute percentage errors. Robust to outliers. | Descending |
+| Theil's U (U2 Statistic) | Forecast accuracy relative to a naive benchmark. Below 1.0 = better than baseline. | Descending |
+| Max Error | Largest absolute difference between predicted and actual values. | Descending |
+| Direction Accuracy | How often the model correctly predicts the direction of change. | Descending |
+| Log Loss | Quality of probability estimates. Penalizes overconfident wrong predictions. | Descending |
+| AUC-PR | Precision-recall balance across thresholds. Useful for imbalanced data. | Descending |
+| AUC-ROC | Class separation across all thresholds. | Descending |
+| Top-3 Accuracy | How often the true label is in the top 3 predictions. | Descending |
+| Top-5 Accuracy | How often the true label is in the top 5 predictions. | Descending |
+| Quadratic Weighted Kappa (QWK) | Agreement with quadratic penalty for larger disagreements. | Descending |
+| Brier Score | Mean squared difference between predicted probabilities and outcomes. | Descending |
+| Balanced Accuracy | Average recall across all classes. Each class weighted equally. | Descending |
+| F-beta Score (beta = 0.5) | Precision-recall balance, emphasizing precision. | Descending |
+| F-beta Score (beta = 2) | Precision-recall balance, emphasizing recall. | Descending |
+| Hamming Loss | Fraction of labels incorrectly predicted. | Descending |
+| Jaccard Score | Intersection over union of predicted and ground truth labels. | Descending |
+| NPV (Negative Predictive Value) | Proportion of predicted negatives that are actually negative. | Descending |
+| Micro F1 | F1 computed from globally aggregated TP, FP, and FN counts. | Descending |
+| F1 Weighted | F1 per class, weighted by class support. | Descending |
+| Gini Coefficient | Discriminatory power between classes. Related to AUC-ROC. | Descending |
+| Normalized Gini | Gini scaled relative to a perfect model. Ranges from -1 to 1. | Descending |
+| GIoU (Generalized IoU) | Extends IoU by penalizing non-overlapping predictions. Ranges from -1 to 1. | Descending |
+| Mean Average Precision @ IoU 0.50 | mAP requiring at least 50% bounding box overlap. | Descending |
+| Mean Average Precision @ IoU 0.75 | mAP requiring at least 75% bounding box overlap. | Descending |
+| Mean Average Recall @ 1 Detection | Recall using only the top detection per image. | Descending |
+| Mean Average Recall @ 10 Detections | Recall using up to 10 detections per image. | Descending |
+| mAP per Class | Average Precision reported individually per class. | Descending |
+| Mean Per Joint Position Error (MPJPE) | Average Euclidean distance between predicted and true joint positions. | Descending |
+| Object Keypoint Similarity (OKS) | Keypoint similarity accounting for scale and localization uncertainty. | Descending |
+| Visibility Accuracy | Correctness of predicted keypoint visibility status. | Descending |
+| PCK@0.05 | Keypoints within 5% normalized distance from ground truth. Strictest variant. | Descending |
+| PCK@0.10 | Keypoints within 10% normalized distance from ground truth. | Descending |
+| PCK@0.20 | Keypoints within 20% normalized distance from ground truth. | Descending |
+| PCK@0.30 | Keypoints within 30% normalized distance from ground truth. | Descending |
+| PCK@0.50 | Keypoints within 50% normalized distance from ground truth. Most lenient variant. | Descending |
+| Mean Intersection over Union (mIoU) | Average IoU across all segmentation classes. | Descending |
+| Frequency Weighted IoU | IoU per class, weighted by class frequency. | Descending |
+| Pixel Accuracy | Proportion of correctly classified pixels. | Descending |
+| Mean Pixel Accuracy | Per-class pixel accuracy averaged equally. | Descending |
+| Boundary IoU | IoU computed on boundary pixels only. | Descending |
+| Boundary F1 Score | F1 computed on boundary pixels only. | Descending |
+| Hausdorff Distance | Maximum distance between predicted and true boundaries. | Descending |
+| Average Surface Distance (ASD) | Average distance between predicted and true boundary points. | Descending |
+| Root Mean Squared Logarithmic Error (RMSLE) | Error on a log scale. Useful for targets spanning orders of magnitude. | Descending |
+| Median Absolute Error (Median AE) | Median of absolute errors. Robust to outliers. | Descending |
+| Explained Variance | Variance captured by the model, independent of bias. Up to 1.0. | Descending |
+| Mean Bias Error (MBE) | Average prediction bias. Positive = overestimation, negative = underestimation. | Descending |
+| Concordance Index (C-Index) | Agreement between predicted risk scores and observed event ordering. | Descending |
 
 ---
 
