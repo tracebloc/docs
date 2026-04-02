@@ -1,11 +1,9 @@
 ---
 title: "Prerequisites"
-description: "Supported data types, tasks, and requirements for creating a use case on Tracebloc."
+description: "Supported data types, tasks, and requirements for creating a use case on tracebloc."
 ---
 
-# Prerequisites
-
-Tracebloc is continually expanding supported data types and tasks to enable your use cases. In case your use case is not yet supported, please reach out to us at [support@tracebloc.io](mailto:support@tracebloc.io).
+tracebloc is continually expanding supported data types and tasks to enable your use cases. In case your use case is not yet supported, please reach out to us at [support@tracebloc.io](mailto:support@tracebloc.io).
 
 Before you can create a use case on the [tracebloc website](https://ai.tracebloc.io/my-use-cases), make sure the following requirements are met:
 
@@ -15,15 +13,15 @@ Before you can create a use case on the [tracebloc website](https://ai.tracebloc
 - You are familiar with the supported data types and tasks
 
 Once these requirements are met, proceed with:
-- Defining the use case
-- Preparing and ingesting the dataset
-- Setting evaluation metrics
-- Evaluating models
+- [Preparing and ingesting the dataset](/create-use-case/prepare-dataset)
+- [Defining the use case](/create-use-case/define)
+- [Setting evaluation metrics](/create-use-case/define#supported-metrics-per-data-type-and-task)
+- [Evaluating models](/create-use-case/evaluate-models)
 
 
 ## Supported Data Types and Tasks
 
-## Image Data
+### Image Data
 
 **Requirements for all image data tasks:** Uniform image sizes and uniform file types. For example all images as 256x256 rgb .jpg files. Convert files if necessary and in case your images do not fit the supported size, crop or resize accordingly.
 
@@ -33,10 +31,10 @@ For object detection, images and annotations are automatically up- or downsized 
 
 | Task                  | Input file type | Color mode                                                   | Supported image size | Label file type                   | Requirements                                 | Links    |
 |-----------------------|-----------------|--------------------------------------------------------------|----------------|-----------------------------------|----------------------------------------------|----------|
-| Classification        | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | height = width px   | CSV                               | Uniform image size and file type per dataset | [Detailed structure](#image-classification) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
-| Keypoint Detection    | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | height = width px   | CSV                              | Uniform image sizes <br></br> Same number of keypoints per image and class  | [Detailed structure](#image-keypoint-detection) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
-| Object Detection      | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | height = width px. Images and annotations will be resized to 448x448 px automatically | Pascal VOC                        | Uniform image sizes, one xml per image       | [Detailed structure](#image-object-detection-in-pascal-voc-format) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
-| Semantic Segmentation | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | height = width px   | PNG, JPG, JPEG | Uniform image and mask sizes                 | [Detailed structure](#image-semantic-segmentation) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
+| Classification        | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | Square (height = width)   | CSV                               | Uniform image size and file type per dataset | [Detailed structure](#image-classification) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
+| Keypoint Detection    | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | Square (height = width)   | CSV                              | Uniform image sizes <br></br> Same number of keypoints per image and class  | [Detailed structure](#image-keypoint-detection) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
+| Object Detection      | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | Square (height = width). Images and annotations will be resized to 448x448 px automatically | Pascal VOC                        | Uniform image sizes, one xml per image       | [Detailed structure](#image-object-detection) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
+| Semantic Segmentation | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | Square (height = width)   | PNG, JPG, JPEG | Uniform image and mask sizes                 | [Detailed structure](#image-semantic-segmentation) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
 
 ### Image Classification
 
@@ -124,6 +122,8 @@ test/
 </annotation>
 ```
 
+Each row represents one detected object, not one image. An image with multiple objects will have multiple rows.
+
 ``` labels.csv
 filename,label
 street01,car
@@ -166,7 +166,7 @@ image2,mask2,road,#FFFFFF
 
 
 
-## Tabular Data
+### Tabular Data
 
 **Requirements for all tabular data tasks:** Each dataset must be provided as a single CSV file with a header row. Every column must contain uniform data types, for example numeric values for features and a categorical or alphanumeric column for labels. Use UTF-8 encoding with comma separators and validate that your schema matches the expected types. Invalid rows are skipped by the ingestor.
 
@@ -176,7 +176,7 @@ image2,mask2,road,#FFFFFF
 
 ### Tabular Classification
 
-Include a header row with clear column names, using a dedicated column for the labels. An `id` row is recommended but not required.
+Include a header row with clear column names, using a dedicated column for the labels. An `id` column is recommended but not required.
 
 ``` csv
 id,feature1,feature2,feature3,label
@@ -186,7 +186,11 @@ id,feature1,feature2,feature3,label
 ...
 ```
 
-## Text Data
+### Regression
+
+Regression tasks are supported on the platform. Evaluation uses Mean Absolute Error (MAE). For details on supported metrics, see [Supported Metrics](/create-use-case/define#supported-metrics-per-data-type-and-task). Reach out to us at [support@tracebloc.io](mailto:support@tracebloc.io) for guidance on data format requirements for regression use cases.
+
+### Text Data
 
 | Task                  | Input files    | Label file type                       | Requirements                                                                                          | Links    |
 |-----------------------|----------------|-----------------------------------|---------------------------------------------------------------------------------------------------------|----------|
@@ -218,3 +222,15 @@ review02,negative
 # review01.txt
 This product is amazing! I love it.
 ```
+
+---
+
+## Next Steps
+
+- Prepare and ingest your dataset: [Prepare Data](/create-use-case/prepare-dataset)
+
+---
+
+## Need Help?
+
+- Email us at [support@tracebloc.io](mailto:support@tracebloc.io)

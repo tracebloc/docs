@@ -1,19 +1,45 @@
 ---
 title: "Evaluate models"
-description: "Evaluate and compare different models from your vendors once they have been submitted."
+description: "Compare vendor models side by side on the leaderboard."
 ---
 
-# Evaluate models
-
-Evaluate and compare different models of your vendors once they have been submitted. Navigate to the Leaderboard section of your use case, for example to the [Breast Cancer Screening Use Case](https://ai.tracebloc.io/explore/ai-breast-cancer-screening-and-image-classification?tab=leaderboard).
+Navigate to the Leaderboard section of your use case to compare submitted models, for example the [Breast Cancer Screening Use Case](https://ai.tracebloc.io/explore/ai-breast-cancer-screening-and-image-classification?tab=leaderboard).
 
 ## The Leaderboard
 
-Vendors are ranked by the score of their best performing model. Compare
+Vendors are ranked by the score of their best performing model. Scores are calculated using the evaluation metric you selected when defining the use case (e.g. Accuracy, F1, mAP). See the full list of [supported metrics per data type and task](/create-use-case/define#supported-metrics-per-data-type-and-task).
 
-- the final model score on your test data
-- model size
+![Leaderboard](/images/Breast-cancer-screening-use-case-the-leaderboard.avif)
 
-![Initialize](/images/Breast-cancer-screening-use-case-the-leaderboard.avif)
+### Leaderboard Columns
 
-The leaderboard provides insights over energy consumption, number of submissions and the remaining compute budget of each team as well.
+| Column | Description |
+|--------|-------------|
+| Rank | Position based on the best model score. Lower rank = better performance. |
+| Team / Vendor | The participant or team that submitted the model. |
+| Score | The model's evaluation result on your test data, using the metric you defined. |
+| Model Size | Size of the submitted model in parameters or MB. Useful for comparing efficiency. |
+| Energy Consumption | Compute resources consumed during training. Helps assess cost-efficiency. |
+| Submissions | Total number of models submitted by the team. |
+| Remaining Budget | How much of the allocated compute budget (in PFLOPs) the team has left. |
+
+### Actions You Can Take
+
+From the use case view, you can:
+
+- **Compare models** — Use the leaderboard to identify the best performing and most efficient models side by side.
+- **Stop or adjust training** — Reduce or revoke a team's remaining compute budget to control costs or end a round of evaluation.
+- **Contact participants** — Reach out to vendors or researchers directly to discuss results, request further iterations, or negotiate next steps.
+- **Select a winner** — Once evaluation is complete, choose the best model based on score, model size, and resource efficiency.
+
+---
+
+## Next Steps
+
+- Browse ready-made examples: [Templates](/create-use-case/templates)
+
+---
+
+## Need Help?
+
+- Email us at [support@tracebloc.io](mailto:support@tracebloc.io)

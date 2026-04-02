@@ -1,9 +1,7 @@
 ---
 title: "Prepare Data"
-description: "Learn how to prepare and ingest your datasets into Tracebloc using containerized data ingestors. Complete guide for CSV, image, and text data with Kubernetes deployment steps."
+description: "Learn how to prepare and ingest your datasets into tracebloc using containerized data ingestors. Complete guide for CSV, image, and text data with Kubernetes deployment steps."
 ---
-
-# Prepare Data
 
 ## Overview
 
@@ -24,7 +22,7 @@ Use this quick setup if you already have an ingestor configured and just want to
 
 ### Steps
 
-1. Pick a template script and edit it. E.g. `/templates/tablular_classification/tabular_classification.py`
+1. Pick a template script and edit it. E.g. `/templates/tabular_classification/tabular_classification.py`
 - Update csv options and data_path
 - Only for tabular data: Update schema
 - Set `schema` and `CSVIngestor()`parameters like category, intent, label_column, etc. to match data type, task and train/test purpose
@@ -54,13 +52,13 @@ docker buildx build --platform linux/amd64 -t <your-username>/<image-name>:<tag>
 - `PATH_TO_LOCAL_DATASET_FILE`: Path to your dataset file within the container
 - `SRC_PATH`: Root inside the container where your files are mounted
 
-3. Deploy to Kubernetes
+4. Deploy to Kubernetes
 ```bash
 `kubectl apply -f ingestor-job.yaml -n <namespace>`
 ```
 ## Detailed Setup
 
-## 1. Configure a Template
+### 1. Configure a Template
 
 This section walks you through the step-by-step setup of a data ingestor. You will clone the repository, select the right template for your data type, and customize it to match your task. Follow this guide if you are setting up an ingestor for the first time or need full control beyond the quick setup.
 
@@ -229,7 +227,7 @@ ingestor = CSVIngestor(
 Other data types work similarly, follow the same configuration pattern using the corresponding template scripts in the `templates/` folder.
 
 
-## 2. Build Docker Image
+### 2. Build Docker Image
 
 With your template configured, the next step is to package it into a Docker image so it can run inside the Kubernetes cluster.
 
@@ -280,7 +278,7 @@ docker buildx build --platform linux/amd64 -t <your-username>/<image-name>:<tag>
 ```
 
 
-## 3. Configure Kubernetes
+### 3. Configure Kubernetes
 
 With the image generated and pushed to the registry, edit `ingestor-job.yaml` with your settings:
 
@@ -321,7 +319,7 @@ spec:
         - name: SRC_PATH
           value: "/app" # Source folder path within the data ingestor
         - name: LABEL_FILE
-          value: <PATH_TO_DATASET_OR_LABELS_FILE_IN_DOCKER_CONTAIENR>  # Example: "/app/labels.csv"
+          value: <PATH_TO_DATASET_OR_LABELS_FILE_IN_DOCKER_CONTAINER>  # Example: "/app/labels.csv"
         - name: COMPANY
           value: <YOUR_COMPANY_OR_ORGANISATION_NAME>
         - name: TABLE_NAME
@@ -329,7 +327,7 @@ spec:
         - name: TITLE
           value: <DATASET_TITLE> # Optional
         - name: BATCH_SIZE
-          value: "4000"
+          value: "4000" # Number of entries per request. Depends on CPU memory, not data size. 5,000 is a safe default, tested up to 10,000.
         - name: LOG_LEVEL
           value: "DEBUG" # Set DEBUG, "WARNING", "INFO" or "ERROR"
       imagePullSecrets:
@@ -353,10 +351,10 @@ spec:
 - `PATH_TO_LOCAL_DATASET_FILE`, path to your dataset file within the container
 - `SRC_PATH`, root inside the container where your files are mounted
 - `YOUR_COMPANY_OR_ORGANISATION_NAME`, chose a suitable company or organisation name
-- `BATCH_SIZE` is the number of entries sent to the server per request. Keep it consistent across data types. It depends on available CPU memory, not for example image size. Too large can exhaust memory. It was tested up to 10,000, but 5,000 is a safe default for most systems.
+- `BATCH_SIZE`, number of entries sent per request. Depends on available CPU memory, not data size (e.g. image dimensions). Too large can exhaust memory. Tested up to 10,000, but 5,000 is a safe default for most systems.
 - `LOG_LEVEL`, "WARNING" for all warnings and errors, "INFO" for all logs, "ERROR" for errors only
 
-## 4. Deploy
+### 4. Deploy
 
 Run the ingestor as a Kubernetes Job:
 
@@ -369,6 +367,8 @@ kubectl logs -n <namespace> job/<INGESTOR_JOB_NAME>
 kubectl delete -n <namespace> job/<INGESTOR_JOB_NAME>
 ```
 This will start a pod, run the ingestion process once, and once complete you can delete the job.
+
+**IMPORTANT:** You must run this process twice — once for training data and once for test data. Use different `JOBNAME` and `TABLE_NAME` values for each run (e.g. `ingestor-job-train` / `ingestor-job-test`), and set `intent` to `TRAIN` or `TEST` accordingly in your template script.
 
 The data ingestor always runs a validation step before ingestion and moving files.
 
@@ -387,7 +387,7 @@ Look for "All records processed successfully" in the logs.
 
 ## Dataset Management Interface
 
-View your datasets at [tracebloc.io/data](http://tracebloc.io/data) after successful deployment.
+View your datasets at [ai.tracebloc.io/data](https://ai.tracebloc.io/data) after successful deployment.
 
 **Interface displays:**
 - Dataset name, ID, and record count
@@ -415,4 +415,14 @@ kubectl logs <pod-name>
 kubectl get pvc -n <namespace>
 ```
 
-For additional support, contact [support@tracebloc.io](mailto:support@tracebloc.io).
+---
+
+## Next Steps
+
+- Define and publish your use case: [Define Use Case](/create-use-case/define)
+
+---
+
+## Need Help?
+
+- Email us at [support@tracebloc.io](mailto:support@tracebloc.io)

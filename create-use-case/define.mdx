@@ -1,19 +1,17 @@
 ---
-title: "Define and Create AI Use Case on Tracebloc"
-description: "Step-by-step guide to creating and defining AI use cases on Tracebloc. Learn how to set up privacy, configure datasets, invite participants, and publish your model evaluation project."
+title: "Define Use Case"
+description: "Create, configure, and publish an AI use case on tracebloc in four steps."
 ---
 
-# Define Use Case
-
-This guide walks you through the 4 key steps to create, publish, and manage an AI use case on the tracebloc platform. Make sure, you have a [tracebloc client](/environment-setup/setup-guide) running and your data is ingested. Navigate to the [use cases section](https://ai.tracebloc.io/my-use-cases), click on the "+" on the top right corner and simply follow along. Use this documentation for context, clarification and examples when needed.
+This guide walks you through the 4 key steps to create, publish, and manage an AI use case on the tracebloc platform. Make sure you have a [tracebloc client](/environment-setup/setup-guide) running and your data is ingested. Navigate to the [use cases section](https://ai.tracebloc.io/my-use-cases), click on the "+" on the top right corner and simply follow along. Use this documentation for context, clarification and examples when needed.
 
 ## Step 1: Initialize and Set Privacy
 
-Objective: Define the basics and visibility of your AI use case. Set
+Objective: Define the basics and visibility of your AI use case.
 
 - Title
 - Cover Image (optional): JPG or PNG (max. 25MB)
-- Task: Select the task, e.g. "Image Classification", "Image Detection", "Tabular Classification", etc. In case your use case is not yet supported, please reach out to us at [support@tracebloc.io](mailto:support@tracebloc.io).
+- Task: Select the task, e.g. "Image Classification", "Object Detection", "Tabular Classification", etc. See the full list of [supported data types and tasks](/create-use-case/prerequisites#supported-data-types-and-tasks). In case your use case is not yet supported, please reach out to us at [support@tracebloc.io](mailto:support@tracebloc.io).
 - **Privacy Type:** Choose Public (visible to all users) or Private (invite-only visibility).
 
 ![Initialize](/images/Step-1-initialize-and-set-privacy.avif)
@@ -22,13 +20,13 @@ Preview your use case tile on the right side of the interface.
 
 ---
 
-## Step 2: Data & Evalation
+## Step 2: Data & Evaluation
 
 Objective: Attach datasets and define the benchmarking logic.
 
 ![Data & Evaluation](/images/Step-2-data-&-evalation.avif)
 
-- **Training and test metadataset**: Select the metadataset as a link to the real training and test dataset that you ingested in a previous step.
+- **Training and test metadataset**: A metadataset is a reference to an ingested dataset that stores summary information such as the number of samples and columns. Select the training and test metadatasets that correspond to the datasets you ingested in the [Prepare Data](/create-use-case/prepare-dataset) step.
 - **Score**: Define which benchmark to use for evaluation (e.g. Accuracy, F1, etc.). In case your evaluation metric is not yet supported, please reach out to us at [support@tracebloc.io](mailto:support@tracebloc.io).
 - **Upload EDA File (Optional)**: Attach a .ipynb EDA file to help participants understand the data context. Explore [template use cases](https://ai.tracebloc.io/explore) for inspiration.
 
@@ -45,9 +43,13 @@ Objective: Attach datasets and define the benchmarking logic.
 | Percentage of Correct Keypoints (PCK@0.2) | Keypoint Detection                      | Evaluates the accuracy of predicted keypoints. A keypoint is considered correct if its distance from ground truth is within the normalized distance threshold of 0.2              |
 | Mean Absolute Error (MAE)                 | Regression Tasks                        | Measures the average absolute difference between predicted and actual values. Lower values indicate better model performance.                                                     |
 
+---
+
 ## Step 3: Describe Your Use Case
 
-Describe your use case and objective in detail.
+Objective: Describe your use case and objective in detail.
+
+Provide a clear description that helps participants understand the problem, the data context, and the goal. Cover what the data represents, what a good model should achieve, and any domain-specific considerations participants should be aware of. Browse published use cases in the [Explore section](https://ai.tracebloc.io/explore) for examples of well-written descriptions.
 
 ![Describe](/images/Step-3-describe-your-use-case.avif)
 
@@ -57,7 +59,7 @@ Describe your use case and objective in detail.
 
 Objective: Set collaboration and resource constraints.
 
-Add emails of vendors, colleagues, or researchers. Invitations are sent once the use case is saved or published. For instructions for data scientists about how to join your use case, follow the Collaboration Guide.
+Add emails of vendors, colleagues, or researchers. Invitations are sent once the use case is saved or published. For instructions for data scientists about how to join your use case, follow the [join a use case guide](/join-use-case/join-use-case).
 
 ![Review & Submit](/images/Step-4-review-&-submit.avif)
 
@@ -81,7 +83,7 @@ Once your use case is published, reach out to external vendors, your colleagues 
 
 In the use case view, monitor
 
-- total resouce consumption
+- total resource consumption
 - daily submits and user activity
 - overall leaderboard and submissions
 
@@ -92,4 +94,3 @@ Once models have been submitted, you can [compare them in the leaderboard sectio
 ## Need Help?
 
 - Email us at [support@tracebloc.io](mailto:support@tracebloc.io)
-- Visit [docs.tracebloc.io](https://docs.tracebloc.io).
