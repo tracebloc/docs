@@ -1,0 +1,795 @@
+​[
+    {
+        "id": 67,
+        "formula": "{c_index}",
+        "formula_display": "Concordance Index (C-Index)",
+        "description": "<p>c_index</p>",
+        "code_block": "",
+        "applicable_dataset_categories": [
+            "time_to_event_prediction"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 66,
+        "formula": "{mbe}",
+        "formula_display": "Mean Bias Error (MBE)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Mean Bias Error (MBE) measures the average bias in a model’s predictions by computing the mean difference between predicted and actual values.</p>\r\n\r\n<p>It indicates whether a model tends to systematically <strong>overestimate</strong> or <strong>underestimate</strong> the target variable.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Mean Bias Error is calculated as the average of the prediction errors.</p>\r\n\r\n<p>\r\n  <code>Mean Bias Error = (1 / N) × Σ ( ŷᵢ − yᵢ )</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>yᵢ</strong> = Ground truth value</li>\r\n  <li><strong>ŷᵢ</strong> = Predicted value</li>\r\n  <li><strong>N</strong> = Number of samples</li>\r\n</ul>\r\n\r\n<p>A positive MBE indicates overestimation, while a negative MBE indicates underestimation.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the average prediction error across all samples is −1.5, then:</p>\r\n\r\n<p>\r\n  <code>Mean Bias Error = −1.5</code>\r\n</p>",
+        "code_block": "# NumPy / scikit-learn style implementation\r\nimport numpy as np\r\n\r\n# Ground truth values\r\ny_true = np.array([3, 5, 2.5, 7])\r\n\r\n# Predicted values\r\ny_pred = np.array([2.5, 4.5, 2.0, 6.0])\r\n\r\nmbe = np.mean(y_pred - y_true)\r\nprint(\"Mean Bias Error:\", mbe)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([3.0, 5.0, 2.5, 7.0])\r\ny_pred = torch.tensor([2.5, 4.5, 2.0, 6.0])\r\n\r\nmbe = torch.mean(y_pred - y_true)\r\nprint(\"Mean Bias Error:\", mbe.item())",
+        "applicable_dataset_categories": [
+            "tabular_regression"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 65,
+        "formula": "{explained_variance}",
+        "formula_display": "Explained Variance",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Explained Variance measures how well the model captures the <em>variance structure</em> of the target,&nbsp;independent of systematic bias.</p>\r\n\r\n<p>It indicates the proportion of variance explained by the model and helps assess how well the predictions follow the overall distribution of the ground truth values.</p>\r\n\r\n<hr />\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Explained Variance is computed by comparing the variance of prediction errors to the variance of the ground truth values.</p>\r\n\r\n<p><code>Explained Variance = 1 &minus; Var(y &minus; ŷ) / Var(y)</code></p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n\t<li><strong>y</strong> = Ground truth values</li>\r\n\t<li><strong>ŷ</strong> = Predicted values</li>\r\n\t<li><strong>Var(&middot;)</strong> = Variance</li>\r\n</ul>\r\n\r\n<p>The metric typically ranges from negative infinity to 1. A value of 1 indicates perfect prediction, while lower values indicate poorer performance.</p>\r\n\r\n<hr />\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model explains 85% of the variance present in the target variable, then:</p>\r\n\r\n<p><code>Explained Variance = 0.85</code></p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import explained_variance_score\r\nimport numpy as np\r\n\r\n# Ground truth values\r\ny_true = np.array([3, 5, 2.5, 7])\r\n\r\n# Predicted values\r\ny_pred = np.array([2.8, 5.1, 2.7, 6.8])\r\n\r\nev = explained_variance_score(y_true, y_pred)\r\nprint(\"Explained Variance:\", ev)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([3.0, 5.0, 2.5, 7.0])\r\ny_pred = torch.tensor([2.8, 5.1, 2.7, 6.8])\r\n\r\nvariance_error = torch.var(y_true - y_pred, unbiased=False)\r\nvariance_true = torch.var(y_true, unbiased=False)\r\n\r\nexplained_variance = 1 - (variance_error / variance_true)\r\nprint(\"Explained Variance:\", explained_variance.item())",
+        "applicable_dataset_categories": [
+            "tabular_regression"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 64,
+        "formula": "{median_ae}",
+        "formula_display": "Median Absolute Error (Median AE)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Median Absolute Error (Median AE) measures the median of the absolute differences between predicted and actual values.</p>\r\n\r\n<p>Unlike Mean Absolute Error, which averages errors, Median AE focuses on the typical error magnitude and is highly robust to outliers.</p>\r\n\r\n<hr />\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Median AE is computed by taking the median of the absolute errors across all predictions.</p>\r\n\r\n<p><code>Median AE = median( | yᵢ &minus; ŷᵢ | )</code></p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n\t<li><strong>yᵢ</strong> = Ground truth value</li>\r\n\t<li><strong>ŷᵢ</strong> = Predicted value</li>\r\n</ul>\r\n\r\n<p>Lower values indicate better predictive accuracy.</p>\r\n\r\n<hr />\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the absolute prediction errors are:</p>\r\n\r\n<ul>\r\n\t<li>0.5, 1.0, 1.2, 10.0</li>\r\n</ul>\r\n\r\n<p>Then:</p>\r\n\r\n<p><code>Median AE = 1.1</code></p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import median_absolute_error\r\nimport numpy as np\r\n\r\n# Ground truth values\r\ny_true = np.array([3, 5, 2.5, 7])\r\n\r\n# Predicted values\r\ny_pred = np.array([2.5, 6, 3.7, 17])\r\n\r\nmedian_ae = median_absolute_error(y_true, y_pred)\r\nprint(\"Median Absolute Error:\", median_ae)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([3.0, 5.0, 2.5, 7.0])\r\ny_pred = torch.tensor([2.5, 6.0, 3.7, 17.0])\r\n\r\nmedian_ae = torch.median(torch.abs(y_pred - y_true))\r\nprint(\"Median Absolute Error:\", median_ae.item())",
+        "applicable_dataset_categories": [
+            "tabular_regression"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 63,
+        "formula": "{rmsle}",
+        "formula_display": "Root Mean Squared Logarithmic Error (RMSLE)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Root Mean Squared Logarithmic Error (RMSLE) measures the average squared difference between the logarithms of predicted and actual values.</p>\r\n\r\n<p>It is particularly useful for regression problems where the target values span several orders of magnitude and where relative errors are more important than absolute errors.</p>\r\n\r\n<hr />\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>RMSLE is computed by taking the square root of the mean squared difference between the logarithms of predicted and true values.</p>\r\n\r\n<p><code>RMSLE = &radic;( (1 / N) &times; &Sigma; ( log(ŷᵢ + 1) &minus; log(yᵢ + 1) )&sup2; )</code></p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n\t<li><strong>yᵢ</strong> = Ground truth value</li>\r\n\t<li><strong>ŷᵢ</strong> = Predicted value</li>\r\n\t<li><strong>N</strong> = Number of samples</li>\r\n</ul>\r\n\r\n<p>RMSLE penalizes underestimation more heavily than overestimation and requires all values to be non-negative.</p>\r\n\r\n<hr />\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the average squared log-difference between predictions and ground truth values is 0.04, then:</p>\r\n\r\n<p><code>RMSLE = &radic;0.04 = 0.20</code></p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import mean_squared_log_error\r\nimport numpy as np\r\n\r\n# Ground truth values (non-negative)\r\ny_true = np.array([3, 5, 2.5, 7])\r\n\r\n# Predicted values (non-negative)\r\ny_pred = np.array([2.5, 5, 4, 8])\r\n\r\nrmsle = mean_squared_log_error(y_true, y_pred, squared=False)\r\nprint(\"RMSLE:\", rmsle)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([3.0, 5.0, 2.5, 7.0])\r\ny_pred = torch.tensor([2.5, 5.0, 4.0, 8.0])\r\n\r\nlog_diff = torch.log(y_pred + 1) - torch.log(y_true + 1)\r\nrmsle = torch.sqrt(torch.mean(log_diff ** 2))\r\n\r\nprint(\"RMSLE:\", rmsle.item())",
+        "applicable_dataset_categories": [
+            "tabular_regression",
+            "time_series_forecasting"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 62,
+        "formula": "{asd}",
+        "formula_display": "Average Surface Distance (ASD)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Average Surface Distance (ASD) measures the average distance between the surface (boundary) points of a predicted segmentation and the corresponding ground truth segmentation.</p>\r\n\r\n<p>Unlike Hausdorff Distance, which captures the worst-case error, ASD provides a more stable and representative measure of overall boundary alignment by averaging distances across all boundary points.</p>\r\n\r\n<hr />\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>ASD is computed by measuring the distance from each boundary point in one segmentation to the closest boundary point in the other segmentation, averaged in both directions.</p>\r\n\r\n<p><code>ASD(A, B) = (1 / (|A| + |B|)) &times; ( &Sigma;ₐ&isin;A minᵦ&isin;B ||a &minus; b|| + &Sigma;ᵦ&isin;B minₐ&isin;A ||b &minus; a|| ) </code></p>\r\n\r\n<p>Where <strong>A</strong> and <strong>B</strong> represent the sets of boundary points from the predicted and ground truth segmentations.</p>\r\n\r\n<p>Lower ASD values indicate better surface alignment.</p>\r\n\r\n<hr />\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the average distance between predicted and ground truth boundary points is 2.5 pixels, then:</p>\r\n\r\n<p><code>Average Surface Distance = 2.5</code></p>",
+        "code_block": "# NumPy / SciPy-style implementation\r\nimport numpy as np\r\nfrom scipy.spatial.distance import cdist\r\n\r\n# Boundary points of ground truth (N x 2)\r\nboundary_true = np.array([\r\n    [10, 10],\r\n    [10, 20],\r\n    [20, 20],\r\n    [20, 10]\r\n])\r\n\r\n# Boundary points of prediction (M x 2)\r\nboundary_pred = np.array([\r\n    [12, 11],\r\n    [12, 22],\r\n    [22, 22],\r\n    [22, 11]\r\n])\r\n\r\n# Compute pairwise distances\r\ndist_matrix = cdist(boundary_true, boundary_pred)\r\n\r\n# Average surface distance\r\nasd_true_to_pred = np.mean(np.min(dist_matrix, axis=1))\r\nasd_pred_to_true = np.mean(np.min(dist_matrix, axis=0))\r\n\r\nasd = (asd_true_to_pred + asd_pred_to_true) / 2\r\nprint(\"Average Surface Distance:\", asd)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\nboundary_true = torch.tensor([\r\n    [10., 10.],\r\n    [10., 20.],\r\n    [20., 20.],\r\n    [20., 10.]\r\n])\r\n\r\nboundary_pred = torch.tensor([\r\n    [12., 11.],\r\n    [12., 22.],\r\n    [22., 22.],\r\n    [22., 11.]\r\n])\r\n\r\ndist_matrix = torch.cdist(boundary_true, boundary_pred)\r\n\r\nasd_true_to_pred = torch.mean(torch.min(dist_matrix, dim=1).values)\r\nasd_pred_to_true = torch.mean(torch.min(dist_matrix, dim=0).values)\r\n\r\nasd = (asd_true_to_pred + asd_pred_to_true) / 2\r\nprint(\"Average Surface Distance:\", asd.item())",
+        "applicable_dataset_categories": [
+            "semantic_segmentation"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 61,
+        "formula": "{hausdorff_distance}",
+        "formula_display": "Hausdorff Distance",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Hausdorff Distance measures the maximum distance between the boundary points of a predicted segmentation and the corresponding ground truth segmentation.</p>\r\n\r\n<p>It captures the worst-case boundary mismatch, making it particularly useful for evaluating how far predicted object edges deviate from the true edges.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Hausdorff Distance is defined as the maximum of the minimum distances from each point on one boundary to the closest point on the other boundary.</p>\r\n\r\n<p>\r\n  <code>Hausdorff Distance(A, B) = max( maxₐ∈A minᵦ∈B ||a − b|| , maxᵦ∈B minₐ∈A ||b − a|| )</code>\r\n</p>\r\n\r\n<p>Where <strong>A</strong> and <strong>B</strong> represent the sets of boundary points from the predicted and ground truth segmentations.</p>\r\n\r\n<p>Lower values indicate better boundary alignment.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the largest deviation between predicted and ground truth boundaries is 12 pixels, then:</p>\r\n\r\n<p>\r\n  <code>Hausdorff Distance = 12</code>\r\n</p>",
+        "code_block": "# NumPy / SciPy-style implementation\r\nimport numpy as np\r\nfrom scipy.spatial.distance import directed_hausdorff\r\n\r\n# Boundary points of ground truth (N x 2)\r\nboundary_true = np.array([\r\n    [10, 10],\r\n    [10, 20],\r\n    [20, 20],\r\n    [20, 10]\r\n])\r\n\r\n# Boundary points of prediction (M x 2)\r\nboundary_pred = np.array([\r\n    [12, 11],\r\n    [12, 22],\r\n    [22, 22],\r\n    [22, 11]\r\n])\r\n\r\n# Compute directed Hausdorff distances\r\nd1 = directed_hausdorff(boundary_true, boundary_pred)[0]\r\nd2 = directed_hausdorff(boundary_pred, boundary_true)[0]\r\n\r\nhausdorff_distance = max(d1, d2)\r\nprint(\"Hausdorff Distance:\", hausdorff_distance)\r\n\r\n\r\n# PyTorch (conceptual implementation)\r\nimport torch\r\n\r\nboundary_true = torch.tensor([\r\n    [10., 10.],\r\n    [10., 20.],\r\n    [20., 20.],\r\n    [20., 10.]\r\n])\r\n\r\nboundary_pred = torch.tensor([\r\n    [12., 11.],\r\n    [12., 22.],\r\n    [22., 22.],\r\n    [22., 11.]\r\n])\r\n\r\n# Pairwise distances\r\ndist_matrix = torch.cdist(boundary_true, boundary_pred)\r\n\r\nd1 = torch.min(dist_matrix, dim=1).values.max()\r\nd2 = torch.min(dist_matrix, dim=0).values.max()\r\n\r\nhausdorff_distance = torch.max(d1, d2)\r\nprint(\"Hausdorff Distance:\", hausdorff_distance.item())",
+        "applicable_dataset_categories": [
+            "semantic_segmentation"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 60,
+        "formula": "{boundary_f1}",
+        "formula_display": "Boundary F1 Score",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Boundary F1 Score measures how accurately the predicted segmentation boundaries match the ground truth boundaries by combining boundary precision and boundary recall.</p>\r\n\r\n<p>It focuses specifically on edge alignment rather than region overlap, making it especially useful for tasks where precise boundary localization is critical.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Boundary F1 Score is computed by first extracting boundary pixels from both predicted and ground truth masks, then calculating precision and recall on these boundary pixels.</p>\r\n\r\n<p>\r\n  <code>Boundary F1 = 2 × (Boundary Precision × Boundary Recall) / (Boundary Precision + Boundary Recall)</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>Boundary Precision</strong> = Correctly predicted boundary pixels / Predicted boundary pixels</li>\r\n  <li><strong>Boundary Recall</strong> = Correctly predicted boundary pixels / Ground truth boundary pixels</li>\r\n</ul>\r\n\r\n<p>Boundary pixels are typically defined as pixels within a fixed tolerance distance from the object boundary.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a segmentation model achieves a boundary precision of 0.80 and a boundary recall of 0.70, then:</p>\r\n\r\n<p>\r\n  <code>Boundary F1 ≈ 0.75</code>\r\n</p>",
+        "code_block": "# NumPy-style implementation (simplified)\r\nimport numpy as np\r\nfrom scipy.ndimage import binary_erosion\r\n\r\n# Ground truth segmentation\r\ny_true = np.array([\r\n    [0, 1, 1],\r\n    [0, 1, 1],\r\n    [0, 1, 1]\r\n])\r\n\r\n# Predicted segmentation\r\ny_pred = np.array([\r\n    [0, 1, 0],\r\n    [0, 1, 1],\r\n    [0, 1, 1]\r\n])\r\n\r\ndef extract_boundary(mask):\r\n    return mask ^ binary_erosion(mask)\r\n\r\nboundary_true = extract_boundary(y_true == 1)\r\nboundary_pred = extract_boundary(y_pred == 1)\r\n\r\ntp = np.logical_and(boundary_true, boundary_pred).sum()\r\nfp = np.logical_and(~boundary_true, boundary_pred).sum()\r\nfn = np.logical_and(boundary_true, ~boundary_pred).sum()\r\n\r\nprecision = tp / (tp + fp) if (tp + fp) > 0 else 0\r\nrecall = tp / (tp + fn) if (tp + fn) > 0 else 0\r\n\r\nboundary_f1 = (\r\n    2 * precision * recall / (precision + recall)\r\n    if (precision + recall) > 0 else 0\r\n)\r\n\r\nprint(\"Boundary F1 Score:\", boundary_f1)\r\n\r\n\r\n# PyTorch (conceptual)\r\nimport torch\r\n\r\ny_true = torch.tensor([\r\n    [0, 1, 1],\r\n    [0, 1, 1],\r\n    [0, 1, 1]\r\n])\r\n\r\ny_pred = torch.tensor([\r\n    [0, 1, 0],\r\n    [0, 1, 1],\r\n    [0, 1, 1]\r\n])\r\n\r\ndef boundary(mask):\r\n    return mask ^ torch.nn.functional.max_pool2d(\r\n        mask.unsqueeze(0).unsqueeze(0).float(),\r\n        kernel_size=3,\r\n        stride=1,\r\n        padding=1\r\n    ).squeeze().bool()\r\n\r\nboundary_true = boundary(y_true == 1)\r\nboundary_pred = boundary(y_pred == 1)\r\n\r\ntp = torch.logical_and(boundary_true, boundary_pred).sum().float()\r\nfp = torch.logical_and(~boundary_true, boundary_pred).sum().float()\r\nfn = torch.logical_and(boundary_true, ~boundary_pred).sum().float()\r\n\r\nprecision = tp / (tp + fp) if (tp + fp) > 0 else torch.tensor(0.0)\r\nrecall = tp / (tp + fn) if (tp + fn) > 0 else torch.tensor(0.0)\r\n\r\nboundary_f1 = (\r\n    2 * precision * recall / (precision + recall)\r\n    if (precision + recall) > 0 else torch.tensor(0.0)\r\n)\r\n\r\nprint(\"Boundary F1 Score:\", boundary_f1.item())",
+        "applicable_dataset_categories": [
+            "semantic_segmentation"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 59,
+        "formula": "{boundary_iou}",
+        "formula_display": "Boundary Intersection over Union",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Boundary Intersection over Union (Boundary IoU) measures how well the predicted segmentation boundaries align with the ground truth boundaries.</p>\r\n\r\n<p>Unlike standard IoU, which evaluates region overlap, Boundary IoU focuses specifically on the accuracy of object edges, making it especially useful for tasks where precise boundary localization is critical.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Boundary IoU is computed by first extracting boundary pixels from both predicted and ground truth segmentation masks. IoU is then calculated using only these boundary regions.</p>\r\n\r\n<p>\r\n  <code>Boundary IoU = (Intersection of boundary pixels) / (Union of boundary pixels)</code>\r\n</p>\r\n\r\n<p>Boundary pixels are typically defined as pixels within a fixed distance (or thickness) from the object boundary.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the predicted segmentation correctly aligns with most of the ground truth object edges, the Boundary IoU will be high even if small interior regions differ.</p>\r\n\r\n<p>\r\n  <code>Boundary IoU ≈ 0.78</code>\r\n</p>",
+        "code_block": "# NumPy-style implementation (simplified)\r\nimport numpy as np\r\nfrom scipy.ndimage import binary_erosion\r\n\r\n# Ground truth segmentation\r\ny_true = np.array([\r\n    [0, 1, 1],\r\n    [0, 1, 1],\r\n    [0, 1, 1]\r\n])\r\n\r\n# Predicted segmentation\r\ny_pred = np.array([\r\n    [0, 1, 0],\r\n    [0, 1, 1],\r\n    [0, 1, 1]\r\n])\r\n\r\n# Extract boundaries (difference between mask and eroded mask)\r\ndef extract_boundary(mask):\r\n    return mask ^ binary_erosion(mask)\r\n\r\nboundary_true = extract_boundary(y_true == 1)\r\nboundary_pred = extract_boundary(y_pred == 1)\r\n\r\nintersection = np.logical_and(boundary_true, boundary_pred).sum()\r\nunion = np.logical_or(boundary_true, boundary_pred).sum()\r\n\r\nboundary_iou = intersection / union if union > 0 else 0\r\nprint(\"Boundary IoU:\", boundary_iou)\r\n\r\n\r\n# PyTorch (conceptual – boundary extraction logic simplified)\r\nimport torch\r\n\r\ny_true = torch.tensor([\r\n    [0, 1, 1],\r\n    [0, 1, 1],\r\n    [0, 1, 1]\r\n])\r\n\r\ny_pred = torch.tensor([\r\n    [0, 1, 0],\r\n    [0, 1, 1],\r\n    [0, 1, 1]\r\n])\r\n\r\n# Approximate boundary using differences\r\ndef boundary(mask):\r\n    return mask ^ torch.nn.functional.max_pool2d(\r\n        mask.unsqueeze(0).unsqueeze(0).float(),\r\n        kernel_size=3,\r\n        stride=1,\r\n        padding=1\r\n    ).squeeze().bool()\r\n\r\nboundary_true = boundary(y_true == 1)\r\nboundary_pred = boundary(y_pred == 1)\r\n\r\nintersection = torch.logical_and(boundary_true, boundary_pred).sum().float()\r\nunion = torch.logical_or(boundary_true, boundary_pred).sum().float()\r\n\r\nboundary_iou = intersection / union if union > 0 else torch.tensor(0.0)\r\nprint(\"Boundary IoU:\", boundary_iou.item())",
+        "applicable_dataset_categories": [
+            "semantic_segmentation"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 58,
+        "formula": "{mpa}",
+        "formula_display": "Mean Pixel Accuracy",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Mean Pixel Accuracy measures the average pixel classification accuracy computed separately for each class.</p>\r\n\r\n<p>Unlike overall Pixel Accuracy, which can be dominated by frequent classes, Mean Pixel Accuracy gives equal importance to all classes, making it more informative for imbalanced segmentation datasets.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>For each class, pixel accuracy is calculated as the ratio of correctly predicted pixels to the total number of pixels belonging to that class. Mean Pixel Accuracy is then obtained by averaging these values across all classes.</p>\r\n\r\n<p>\r\n  <code>Mean Pixel Accuracy = (1 / C) × Σ (Correctᵢ / Totalᵢ)</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>Correctᵢ</strong> = Number of correctly predicted pixels for class <em>i</em></li>\r\n  <li><strong>Totalᵢ</strong> = Total number of ground truth pixels for class <em>i</em></li>\r\n  <li><strong>C</strong> = Total number of classes</li>\r\n</ul>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a segmentation model produces the following per-class pixel accuracies:</p>\r\n\r\n<ul>\r\n  <li>Class 1: 0.95</li>\r\n  <li>Class 2: 0.70</li>\r\n  <li>Class 3: 0.85</li>\r\n</ul>\r\n\r\n<p>Then:</p>\r\n\r\n<p>\r\n  <code>Mean Pixel Accuracy = (0.95 + 0.70 + 0.85) / 3 ≈ 0.83</code>\r\n</p>",
+        "code_block": "# NumPy-style implementation\r\nimport numpy as np\r\n\r\n# Ground truth segmentation (H x W)\r\ny_true = np.array([\r\n    [0, 1, 1],\r\n    [0, 2, 2],\r\n    [0, 2, 2]\r\n])\r\n\r\n# Predicted segmentation\r\ny_pred = np.array([\r\n    [0, 1, 0],\r\n    [0, 2, 2],\r\n    [0, 2, 1]\r\n])\r\n\r\nclasses = np.unique(y_true)\r\npixel_accuracies = []\r\n\r\nfor cls in classes:\r\n    correct = np.sum((y_true == cls) & (y_pred == cls))\r\n    total = np.sum(y_true == cls)\r\n    acc = correct / total if total > 0 else 0\r\n    pixel_accuracies.append(acc)\r\n\r\nmean_pixel_accuracy = np.mean(pixel_accuracies)\r\nprint(\"Mean Pixel Accuracy:\", mean_pixel_accuracy)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([\r\n    [0, 1, 1],\r\n    [0, 2, 2],\r\n    [0, 2, 2]\r\n])\r\n\r\ny_pred = torch.tensor([\r\n    [0, 1, 0],\r\n    [0, 2, 2],\r\n    [0, 2, 1]\r\n])\r\n\r\nclasses = torch.unique(y_true)\r\npixel_accuracies = []\r\n\r\nfor cls in classes:\r\n    correct = ((y_true == cls) & (y_pred == cls)).sum().float()\r\n    total = (y_true == cls).sum().float()\r\n    acc = correct / total if total > 0 else torch.tensor(0.0)\r\n    pixel_accuracies.append(acc)\r\n\r\nmean_pixel_accuracy = torch.mean(torch.stack(pixel_accuracies))\r\nprint(\"Mean Pixel Accuracy:\", mean_pixel_accuracy.item())",
+        "applicable_dataset_categories": [
+            "semantic_segmentation"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 57,
+        "formula": "{pixel_accuracy}",
+        "formula_display": "Pixel Accuracy",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Pixel Accuracy measures the proportion of pixels that are correctly classified across the entire image.</p>\r\n\r\n<p>It is one of the simplest evaluation metrics for semantic segmentation and provides an overall measure of how many pixels are predicted with the correct class label.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Pixel Accuracy is computed by dividing the number of correctly classified pixels by the total number of pixels.</p>\r\n\r\n<p>\r\n  <code>Pixel Accuracy = (Number of correctly predicted pixels) / (Total number of pixels)</code>\r\n</p>\r\n\r\n<p>This metric treats all pixels equally, regardless of class frequency.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a segmentation model correctly classifies 900 pixels out of 1,000 total pixels, then:</p>\r\n\r\n<p>\r\n  <code>Pixel Accuracy = 900 / 1000 = 0.90</code>\r\n</p>",
+        "code_block": "# NumPy-style implementation\r\nimport numpy as np\r\n\r\n# Ground truth segmentation (H x W)\r\ny_true = np.array([\r\n    [0, 1, 1],\r\n    [0, 2, 2],\r\n    [0, 2, 2]\r\n])\r\n\r\n# Predicted segmentation\r\ny_pred = np.array([\r\n    [0, 1, 0],\r\n    [0, 2, 2],\r\n    [0, 2, 1]\r\n])\r\n\r\npixel_accuracy = np.mean(y_true == y_pred)\r\nprint(\"Pixel Accuracy:\", pixel_accuracy)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([\r\n    [0, 1, 1],\r\n    [0, 2, 2],\r\n    [0, 2, 2]\r\n])\r\n\r\ny_pred = torch.tensor([\r\n    [0, 1, 0],\r\n    [0, 2, 2],\r\n    [0, 2, 1]\r\n])\r\n\r\npixel_accuracy = (y_true == y_pred).float().mean()\r\nprint(\"Pixel Accuracy:\", pixel_accuracy.item())",
+        "applicable_dataset_categories": [
+            "semantic_segmentation"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 56,
+        "formula": "{frequency_weighted_iou}",
+        "formula_display": "Frequency Weighted Intersection over Union",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Frequency Weighted Intersection over Union (Frequency Weighted IoU or FWIoU) measures segmentation performance by weighting each class’s IoU by its relative frequency in the ground truth.</p>\r\n\r\n<p>Unlike Mean IoU, which treats all classes equally, FWIoU gives more importance to classes that appear more frequently, making it useful when class distribution is highly imbalanced.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>For each class, IoU is computed and then weighted by the proportion of pixels belonging to that class in the ground truth.</p>\r\n\r\n<p>\r\n  <code>Frequency Weighted IoU = Σ ( (nᵢ / N) × IoUᵢ )</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>IoUᵢ</strong> = Intersection over Union for class <em>i</em></li>\r\n  <li><strong>nᵢ</strong> = Number of ground truth pixels belonging to class <em>i</em></li>\r\n  <li><strong>N</strong> = Total number of pixels across all classes</li>\r\n</ul>\r\n\r\n<p>Higher FWIoU values indicate better segmentation performance, with greater emphasis on dominant classes.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a segmentation model produces the following IoU values and class frequencies:</p>\r\n\r\n<ul>\r\n  <li>Class A: IoU = 0.80, Frequency = 60%</li>\r\n  <li>Class B: IoU = 0.60, Frequency = 30%</li>\r\n  <li>Class C: IoU = 0.50, Frequency = 10%</li>\r\n</ul>\r\n\r\n<p>Then:</p>\r\n\r\n<p>\r\n  <code>FWIoU = (0.6 × 0.80) + (0.3 × 0.60) + (0.1 × 0.50) = 0.71</code>\r\n</p>",
+        "code_block": "# NumPy-style implementation\r\nimport numpy as np\r\n\r\n# Ground truth segmentation (H x W)\r\ny_true = np.array([\r\n    [0, 1, 1],\r\n    [0, 2, 2],\r\n    [0, 2, 2]\r\n])\r\n\r\n# Predicted segmentation\r\ny_pred = np.array([\r\n    [0, 1, 0],\r\n    [0, 2, 2],\r\n    [0, 2, 1]\r\n])\r\n\r\nclasses = np.unique(y_true)\r\ntotal_pixels = y_true.size\r\n\r\nfwiou = 0.0\r\n\r\nfor cls in classes:\r\n    gt_mask = (y_true == cls)\r\n    pred_mask = (y_pred == cls)\r\n\r\n    intersection = np.logical_and(gt_mask, pred_mask).sum()\r\n    union = np.logical_or(gt_mask, pred_mask).sum()\r\n\r\n    iou = intersection / union if union > 0 else 0\r\n    class_freq = gt_mask.sum() / total_pixels\r\n\r\n    fwiou += class_freq * iou\r\n\r\nprint(\"Frequency Weighted IoU:\", fwiou)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([\r\n    [0, 1, 1],\r\n    [0, 2, 2],\r\n    [0, 2, 2]\r\n])\r\n\r\ny_pred = torch.tensor([\r\n    [0, 1, 0],\r\n    [0, 2, 2],\r\n    [0, 2, 1]\r\n])\r\n\r\nclasses = torch.unique(y_true)\r\ntotal_pixels = y_true.numel()\r\n\r\nfwiou = 0.0\r\n\r\nfor cls in classes:\r\n    gt_mask = (y_true == cls)\r\n    pred_mask = (y_pred == cls)\r\n\r\n    intersection = torch.logical_and(gt_mask, pred_mask).sum().float()\r\n    union = torch.logical_or(gt_mask, pred_mask).sum().float()\r\n\r\n    iou = intersection / union if union > 0 else torch.tensor(0.0)\r\n    class_freq = gt_mask.sum().float() / total_pixels\r\n\r\n    fwiou += class_freq * iou\r\n\r\nprint(\"Frequency Weighted IoU:\", fwiou.item())",
+        "applicable_dataset_categories": [
+            "semantic_segmentation"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 55,
+        "formula": "{mean_iou}",
+        "formula_display": "Mean Intersection over Union",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Mean Intersection over Union (Mean IoU or mIoU) measures the average overlap between predicted regions and ground truth regions across all classes.</p>\r\n\r\n<p>It is commonly used in semantic segmentation and multi-class segmentation tasks to evaluate how well a model predicts each class region.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>For each class, IoU is computed as the ratio of the intersection between predicted and ground truth pixels to their union. Mean IoU is then calculated by averaging IoU values across all classes.</p>\r\n\r\n<p>\r\n  <code>Mean IoU = (1 / C) × Σ IoUᵢ</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>IoUᵢ</strong> = Intersection over Union for class <em>i</em></li>\r\n  <li><strong>C</strong> = Total number of classes</li>\r\n</ul>\r\n\r\n<p>Mean IoU ranges from 0 to 1, where higher values indicate better segmentation performance.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a segmentation model produces the following IoU values:</p>\r\n\r\n<ul>\r\n  <li>Class 1: IoU = 0.75</li>\r\n  <li>Class 2: IoU = 0.60</li>\r\n  <li>Class 3: IoU = 0.90</li>\r\n</ul>\r\n\r\n<p>Then:</p>\r\n\r\n<p>\r\n  <code>Mean IoU = (0.75 + 0.60 + 0.90) / 3 ≈ 0.75</code>\r\n</p>",
+        "code_block": "# scikit-learn / NumPy style implementation\r\nimport numpy as np\r\n\r\n# Ground truth segmentation (H x W)\r\ny_true = np.array([\r\n    [0, 1, 1],\r\n    [0, 2, 2],\r\n    [0, 2, 2]\r\n])\r\n\r\n# Predicted segmentation\r\ny_pred = np.array([\r\n    [0, 1, 0],\r\n    [0, 2, 2],\r\n    [0, 2, 1]\r\n])\r\n\r\nclasses = np.unique(y_true)\r\nious = []\r\n\r\nfor cls in classes:\r\n    intersection = np.logical_and(y_true == cls, y_pred == cls).sum()\r\n    union = np.logical_or(y_true == cls, y_pred == cls).sum()\r\n    iou = intersection / union if union > 0 else 0\r\n    ious.append(iou)\r\n\r\nmean_iou = np.mean(ious)\r\nprint(\"Mean IoU:\", mean_iou)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([\r\n    [0, 1, 1],\r\n    [0, 2, 2],\r\n    [0, 2, 2]\r\n])\r\n\r\ny_pred = torch.tensor([\r\n    [0, 1, 0],\r\n    [0, 2, 2],\r\n    [0, 2, 1]\r\n])\r\n\r\nclasses = torch.unique(y_true)\r\nious = []\r\n\r\nfor cls in classes:\r\n    intersection = torch.logical_and(y_true == cls, y_pred == cls).sum().float()\r\n    union = torch.logical_or(y_true == cls, y_pred == cls).sum().float()\r\n    iou = intersection / union if union > 0 else torch.tensor(0.0)\r\n    ious.append(iou)\r\n\r\nmean_iou = torch.mean(torch.stack(ious))\r\nprint(\"Mean IoU:\", mean_iou.item())",
+        "applicable_dataset_categories": [
+            "semantic_segmentation"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 54,
+        "formula": "{pck@0.5}",
+        "formula_display": "PCK@0.50 (Percentage of Correct Keypoints at 0.50)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>PCK@0.50 (Percentage of Correct Keypoints at 0.50) measures the proportion of predicted keypoints that fall within a normalized distance threshold of 0.50 from their corresponding ground truth keypoints.</p>\r\n\r\n<p>The threshold corresponds to 50% of a reference length (such as bounding box size, head size, or image dimension), making this metric highly tolerant to localization error and suitable for very coarse pose estimation evaluation.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>A keypoint is considered correct if the Euclidean distance between the predicted and ground truth keypoint is less than or equal to 50% of the chosen reference length.</p>\r\n\r\n<p>\r\n  <code>PCK@0.50 = (Number of correct keypoints within 0.50 × reference length) / (Total number of keypoints)</code>\r\n</p>\r\n\r\n<p>This metric is typically used to estimate an upper bound on pose localization performance under relaxed accuracy constraints.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a pose estimation model predicts 100 keypoints and 99 of them lie within 50% of the reference length from the ground truth positions, then:</p>\r\n\r\n<p>\r\n  <code>PCK@0.50 = 99 / 100 = 0.99</code>\r\n</p>",
+        "code_block": "# NumPy-style implementation\r\nimport numpy as np\r\n\r\n# Ground truth keypoints (N, K, 2)\r\ny_true = np.array([\r\n    [[100, 100], [200, 200]],\r\n    [[120, 120], [220, 220]]\r\n])\r\n\r\n# Predicted keypoints (N, K, 2)\r\ny_pred = np.array([\r\n    [[120, 115], [180, 230]],\r\n    [[150, 145], [260, 255]]\r\n])\r\n\r\n# Reference length (e.g., bounding box width per sample)\r\nref_length = np.array([100, 100])[:, None]\r\n\r\nthreshold = 0.50  # PCK@0.50\r\n\r\n# Compute distances\r\ndistances = np.linalg.norm(y_pred - y_true, axis=2)\r\n\r\npck_050 = np.mean(distances <= threshold * ref_length)\r\nprint(\"PCK@0.50:\", pck_050)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([\r\n    [[100., 100.], [200., 200.]],\r\n    [[120., 120.], [220., 220.]]\r\n])\r\n\r\ny_pred = torch.tensor([\r\n    [[120., 115.], [180., 230.]],\r\n    [[150., 145.], [260., 255.]]\r\n])\r\n\r\nref_length = torch.tensor([100., 100.]).unsqueeze(1)\r\nthreshold = 0.50\r\n\r\ndistances = torch.norm(y_pred - y_true, dim=2)\r\npck_050 = (distances <= threshold * ref_length).float().mean()\r\n\r\nprint(\"PCK@0.50:\", pck_050.item())",
+        "applicable_dataset_categories": [
+            "keypoint_detection"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 53,
+        "formula": "{pck@0.3}",
+        "formula_display": "PCK@0.30 (Percentage of Correct Keypoints at 0.30)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>PCK@0.30 (Percentage of Correct Keypoints at 0.30) measures the proportion of predicted keypoints that fall within a normalized distance threshold of 0.30 from their corresponding ground truth keypoints.</p>\r\n\r\n<p>The threshold corresponds to 30% of a reference length (such as bounding box size, head size, or image dimension), making this metric highly tolerant to localization error and useful for coarse pose estimation evaluation.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>A keypoint is considered correct if the Euclidean distance between the predicted and ground truth keypoint is less than or equal to 30% of the chosen reference length.</p>\r\n\r\n<p>\r\n  <code>PCK@0.30 = (Number of correct keypoints within 0.30 × reference length) / (Total number of keypoints)</code>\r\n</p>\r\n\r\n<p>This metric is often reported to understand upper-bound localization performance under relaxed tolerance conditions.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a pose estimation model predicts 100 keypoints and 98 of them lie within 30% of the reference length from the ground truth positions, then:</p>\r\n\r\n<p>\r\n  <code>PCK@0.30 = 98 / 100 = 0.98</code>\r\n</p>",
+        "code_block": "# NumPy-style implementation\r\nimport numpy as np\r\n\r\n# Ground truth keypoints (N, K, 2)\r\ny_true = np.array([\r\n    [[100, 100], [200, 200]],\r\n    [[120, 120], [220, 220]]\r\n])\r\n\r\n# Predicted keypoints (N, K, 2)\r\ny_pred = np.array([\r\n    [[115, 110], [185, 220]],\r\n    [[140, 138], [250, 245]]\r\n])\r\n\r\n# Reference length (e.g., bounding box width per sample)\r\nref_length = np.array([100, 100])[:, None]\r\n\r\nthreshold = 0.30  # PCK@0.30\r\n\r\n# Compute distances\r\ndistances = np.linalg.norm(y_pred - y_true, axis=2)\r\n\r\npck_030 = np.mean(distances <= threshold * ref_length)\r\nprint(\"PCK@0.30:\", pck_030)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([\r\n    [[100., 100.], [200., 200.]],\r\n    [[120., 120.], [220., 220.]]\r\n])\r\n\r\ny_pred = torch.tensor([\r\n    [[115., 110.], [185., 220.]],\r\n    [[140., 138.], [250., 245.]]\r\n])\r\n\r\nref_length = torch.tensor([100., 100.]).unsqueeze(1)\r\nthreshold = 0.30\r\n\r\ndistances = torch.norm(y_pred - y_true, dim=2)\r\npck_030 = (distances <= threshold * ref_length).float().mean()\r\n\r\nprint(\"PCK@0.30:\", pck_030.item())",
+        "applicable_dataset_categories": [
+            "keypoint_detection"
+        ],
+        "sort_order": "descending"
+    },
+
+    {
+        "id": 52,
+        "formula": "{pck@0.2}",
+        "formula_display": "PCK@0.20 (Percentage of Correct Keypoints at 0.20)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>PCK@0.20 (Percentage of Correct Keypoints at 0.20) measures the proportion of predicted keypoints that fall within a normalized distance threshold of 0.20 from their corresponding ground truth keypoints.</p>\r\n\r\n<p>The threshold corresponds to 20% of a reference length (such as bounding box size, head size, or image dimension), making this metric more tolerant to localization errors and useful for coarse pose estimation analysis.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>A keypoint is considered correct if the Euclidean distance between the predicted and ground truth keypoint is less than or equal to 20% of the chosen reference length.</p>\r\n\r\n<p>\r\n  <code>PCK@0.20 = (Number of correct keypoints within 0.20 × reference length) / (Total number of keypoints)</code>\r\n</p>\r\n\r\n<p>This metric is often reported alongside stricter thresholds to understand how localization accuracy improves as tolerance increases.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a pose estimation model predicts 100 keypoints and 95 of them lie within 20% of the reference length from the ground truth positions, then:</p>\r\n\r\n<p>\r\n  <code>PCK@0.20 = 95 / 100 = 0.95</code>\r\n</p>",
+        "code_block": "# NumPy-style implementation\r\nimport numpy as np\r\n\r\n# Ground truth keypoints (N, K, 2)\r\ny_true = np.array([\r\n    [[100, 100], [200, 200]],\r\n    [[120, 120], [220, 220]]\r\n])\r\n\r\n# Predicted keypoints (N, K, 2)\r\ny_pred = np.array([\r\n    [[110, 108], [190, 215]],\r\n    [[135, 132], [240, 235]]\r\n])\r\n\r\n# Reference length (e.g., bounding box width per sample)\r\nref_length = np.array([100, 100])[:, None]\r\n\r\nthreshold = 0.20  # PCK@0.20\r\n\r\n# Compute distances\r\ndistances = np.linalg.norm(y_pred - y_true, axis=2)\r\n\r\npck_020 = np.mean(distances <= threshold * ref_length)\r\nprint(\"PCK@0.20:\", pck_020)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([\r\n    [[100., 100.], [200., 200.]],\r\n    [[120., 120.], [220., 220.]]\r\n])\r\n\r\ny_pred = torch.tensor([\r\n    [[110., 108.], [190., 215.]],\r\n    [[135., 132.], [240., 235.]]\r\n])\r\n\r\nref_length = torch.tensor([100., 100.]).unsqueeze(1)\r\nthreshold = 0.20\r\n\r\ndistances = torch.norm(y_pred - y_true, dim=2)\r\npck_020 = (distances <= threshold * ref_length).float().mean()\r\n\r\nprint(\"PCK@0.20:\", pck_020.item())",
+        "applicable_dataset_categories": [
+            "keypoint_detection"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 51,
+        "formula": "{pck@0.1}",
+        "formula_display": "PCK@0.10 (Percentage of Correct Keypoints at 0.10)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>PCK@0.10 (Percentage of Correct Keypoints at 0.10) measures the proportion of predicted keypoints that fall within a normalized distance threshold of 0.10 from their corresponding ground truth keypoints.</p>\r\n\r\n<p>The threshold corresponds to 10% of a reference length (such as bounding box size, head size, or image dimension), making this metric scale-invariant and more tolerant than stricter PCK thresholds.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>A keypoint is considered correct if the Euclidean distance between the predicted and ground truth keypoint is less than or equal to 10% of the chosen reference length.</p>\r\n\r\n<p>\r\n  <code>PCK@0.10 = (Number of correct keypoints within 0.10 × reference length) / (Total number of keypoints)</code>\r\n</p>\r\n\r\n<p>This metric is often used alongside stricter thresholds (such as PCK@0.05) to analyze localization performance at different tolerance levels.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a pose estimation model predicts 100 keypoints and 88 of them lie within 10% of the reference length from the ground truth positions, then:</p>\r\n\r\n<p>\r\n  <code>PCK@0.10 = 88 / 100 = 0.88</code>\r\n</p>",
+        "code_block": "# NumPy-style implementation\r\nimport numpy as np\r\n\r\n# Ground truth keypoints (N, K, 2)\r\ny_true = np.array([\r\n    [[100, 100], [200, 200]],\r\n    [[120, 120], [220, 220]]\r\n])\r\n\r\n# Predicted keypoints (N, K, 2)\r\ny_pred = np.array([\r\n    [[106, 105], [195, 210]],\r\n    [[130, 128], [230, 225]]\r\n])\r\n\r\n# Reference length (e.g., bounding box width per sample)\r\nref_length = np.array([100, 100])[:, None]\r\n\r\nthreshold = 0.10  # PCK@0.10\r\n\r\n# Compute distances\r\ndistances = np.linalg.norm(y_pred - y_true, axis=2)\r\n\r\npck_010 = np.mean(distances <= threshold * ref_length)\r\nprint(\"PCK@0.10:\", pck_010)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([\r\n    [[100., 100.], [200., 200.]],\r\n    [[120., 120.], [220., 220.]]\r\n])\r\n\r\ny_pred = torch.tensor([\r\n    [[106., 105.], [195., 210.]],\r\n    [[130., 128.], [230., 225.]]\r\n])\r\n\r\nref_length = torch.tensor([100., 100.]).unsqueeze(1)\r\nthreshold = 0.10\r\n\r\ndistances = torch.norm(y_pred - y_true, dim=2)\r\npck_010 = (distances <= threshold * ref_length).float().mean()\r\n\r\nprint(\"PCK@0.10:\", pck_010.item())",
+        "applicable_dataset_categories": [
+            "keypoint_detection"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 50,
+        "formula": "{pck@0.05}",
+        "formula_display": "PCK@0.05 (Percentage of Correct Keypoints at 0.05)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>PCK@0.05 (Percentage of Correct Keypoints at 0.05) measures the proportion of predicted keypoints that fall within a normalized distance threshold of 0.05 from their corresponding ground truth keypoints.</p>\r\n\r\n<p>The threshold is defined as a fraction of a reference length (such as bounding box size, head size, or image dimension), making this metric scale-invariant and suitable for pose estimation tasks.</p>\r\n\r\n<hr />\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>A keypoint is considered correct if the Euclidean distance between the predicted and ground truth keypoint is less than or equal to 5% of the chosen reference length.</p>\r\n\r\n<p><code>PCK@0.05 = (Number of correct keypoints within 0.05 &times; reference length) / (Total number of keypoints)</code></p>\r\n\r\n<p>The reference length is commonly defined as the bounding box size, head size, or image diagonal, depending on the dataset.</p>\r\n\r\n<hr />\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a pose estimation model predicts 100 keypoints and 72 of them lie within 5% of the reference length from the ground truth positions, then:</p>\r\n\r\n<p><code>PCK@0.05 = 72 / 100 = 0.72</code></p>",
+        "code_block": "# NumPy-style implementation\r\nimport numpy as np\r\n\r\n# Ground truth keypoints (N, K, 2)\r\ny_true = np.array([\r\n    [[100, 100], [200, 200]],\r\n    [[120, 120], [220, 220]]\r\n])\r\n\r\n# Predicted keypoints (N, K, 2)\r\ny_pred = np.array([\r\n    [[104, 103], [198, 205]],\r\n    [[125, 123], [225, 218]]\r\n])\r\n\r\n# Reference length (e.g., bounding box width per sample)\r\nref_length = np.array([100, 100])[:, None]\r\n\r\nthreshold = 0.05  # PCK@0.05\r\n\r\n# Compute distances\r\ndistances = np.linalg.norm(y_pred - y_true, axis=2)\r\n\r\npck_005 = np.mean(distances <= threshold * ref_length)\r\nprint(\"PCK@0.05:\", pck_005)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([\r\n    [[100., 100.], [200., 200.]],\r\n    [[120., 120.], [220., 220.]]\r\n])\r\n\r\ny_pred = torch.tensor([\r\n    [[104., 103.], [198., 205.]],\r\n    [[125., 123.], [225., 218.]]\r\n])\r\n\r\nref_length = torch.tensor([100., 100.]).unsqueeze(1)\r\nthreshold = 0.05\r\n\r\ndistances = torch.norm(y_pred - y_true, dim=2)\r\npck_005 = (distances <= threshold * ref_length).float().mean()\r\n\r\nprint(\"PCK@0.05:\", pck_005.item())",
+        "applicable_dataset_categories": [
+            "keypoint_detection"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 49,
+        "formula": "{visibility_accuracy}",
+        "formula_display": "Visibility Accuracy",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Visibility Accuracy measures how correctly a model predicts the visibility status of keypoints or landmarks.</p>\r\n\r\n<p>It evaluates whether each keypoint is correctly classified as visible or not visible, independent of its spatial localization accuracy. This metric is commonly used in pose estimation and keypoint detection tasks.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Visibility Accuracy is computed as the proportion of keypoints whose predicted visibility status matches the ground truth visibility.</p>\r\n\r\n<p>\r\n  <code>Visibility Accuracy = (Number of correctly predicted visibilities) / (Total number of keypoints)</code>\r\n</p>\r\n\r\n<p>The metric treats visibility prediction as a binary classification problem.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model correctly predicts the visibility of 85 out of 100 keypoints, then:</p>\r\n\r\n<p>\r\n  <code>Visibility Accuracy = 85 / 100 = 0.85</code>\r\n</p>",
+        "code_block": "# NumPy / scikit-learn style implementation\r\nimport numpy as np\r\n\r\n# Ground truth visibility (1 = visible, 0 = not visible)\r\ny_true = np.array([1, 1, 0, 1, 0, 1])\r\n\r\n# Predicted visibility\r\ny_pred = np.array([1, 0, 0, 1, 0, 1])\r\n\r\nvisibility_accuracy = np.mean(y_true == y_pred)\r\nprint(\"Visibility Accuracy:\", visibility_accuracy)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([1, 1, 0, 1, 0, 1])\r\ny_pred = torch.tensor([1, 0, 0, 1, 0, 1])\r\n\r\nvisibility_accuracy = (y_true == y_pred).float().mean()\r\nprint(\"Visibility Accuracy:\", visibility_accuracy.item())",
+        "applicable_dataset_categories": [
+            "keypoint_detection"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 48,
+        "formula": "{oks}",
+        "formula_display": "Object Keypoint Similarity (OKS)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Object Keypoint Similarity (OKS) measures the similarity between predicted and ground truth keypoints by accounting for object scale and keypoint-specific localization uncertainty.</p>\r\n\r\n<p>It is widely used in pose estimation benchmarks such as COCO and serves as the keypoint-based analogue of Intersection over Union (IoU) for object detection.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>OKS is computed by comparing the distance between predicted and ground truth keypoints, normalized by object scale and per-keypoint variance.</p>\r\n\r\n<p>\r\n  <code>OKS = (1 / K) × Σ exp( − dᵢ² / (2 × s² × kᵢ²) )</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>K</strong> = Number of visible keypoints</li>\r\n  <li><strong>dᵢ</strong> = Euclidean distance between predicted and true keypoint <em>i</em></li>\r\n  <li><strong>s</strong> = Object scale (e.g., square root of bounding box area)</li>\r\n  <li><strong>kᵢ</strong> = Keypoint-specific constant controlling localization tolerance</li>\r\n</ul>\r\n\r\n<p>OKS values range from 0 to 1, where higher values indicate better keypoint alignment.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a pose estimation model predicts keypoints that closely match the ground truth locations for a person, normalized by body size, the OKS value will be high.</p>\r\n\r\n<p>\r\n  <code>OKS ≈ 0.85</code>\r\n</p>",
+        "code_block": "# NumPy-style implementation (simplified OKS computation)\r\nimport numpy as np\r\n\r\n# Ground truth keypoints (K, 2)\r\ngt_kpts = np.array([\r\n    [100, 100],\r\n    [120, 150],\r\n    [140, 200]\r\n])\r\n\r\n# Predicted keypoints (K, 2)\r\npred_kpts = np.array([\r\n    [102, 98],\r\n    [118, 148],\r\n    [145, 205]\r\n])\r\n\r\n# Keypoint visibility (1 = visible)\r\nvisible = np.array([1, 1, 1])\r\n\r\n# Keypoint sigmas (COCO-style)\r\nsigmas = np.array([0.26, 0.25, 0.35])\r\n\r\n# Object scale (e.g., sqrt of bounding box area)\r\nscale = 200.0\r\n\r\n# Compute squared distances\r\nd2 = np.sum((pred_kpts - gt_kpts) ** 2, axis=1)\r\n\r\n# Compute OKS\r\noks = np.sum(\r\n    np.exp(-d2 / (2 * (scale ** 2) * (sigmas ** 2))) * visible\r\n) / np.sum(visible)\r\n\r\nprint(\"OKS:\", oks)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ngt_kpts = torch.tensor([[100., 100.],\r\n                        [120., 150.],\r\n                        [140., 200.]])\r\n\r\npred_kpts = torch.tensor([[102., 98.],\r\n                          [118., 148.],\r\n                          [145., 205.]])\r\n\r\nvisible = torch.tensor([1., 1., 1.])\r\nsigmas = torch.tensor([0.26, 0.25, 0.35])\r\nscale = 200.0\r\n\r\nd2 = torch.sum((pred_kpts - gt_kpts) ** 2, dim=1)\r\n\r\noks = torch.sum(\r\n    torch.exp(-d2 / (2 * (scale ** 2) * (sigmas ** 2))) * visible\r\n) / torch.sum(visible)\r\n\r\nprint(\"OKS:\", oks.item())",
+        "applicable_dataset_categories": [
+            "keypoint_detection"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 47,
+        "formula": "{mpjpe}",
+        "formula_display": "Mean Per Joint Position Error (MPJPE)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Mean Per Joint Position Error (MPJPE) measures the average Euclidean distance between predicted and ground truth joint positions.</p>\r\n\r\n<p>It is a standard evaluation metric for human pose estimation tasks and reflects how accurately a model predicts the spatial locations of body joints.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>MPJPE is computed by calculating the Euclidean distance between each predicted joint and its corresponding ground truth joint, then averaging across all joints and samples.</p>\r\n\r\n<p>\r\n  <code>MPJPE = (1 / (N × J)) × Σ || P̂ᵢⱼ − Pᵢⱼ ||₂</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>N</strong> = Number of samples</li>\r\n  <li><strong>J</strong> = Number of joints per sample</li>\r\n  <li><strong>P̂ᵢⱼ</strong> = Predicted position of joint <em>j</em> in sample <em>i</em></li>\r\n  <li><strong>Pᵢⱼ</strong> = Ground truth position of joint <em>j</em> in sample <em>i</em></li>\r\n</ul>\r\n\r\n<p>Lower MPJPE values indicate more accurate joint localization.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the average distance between predicted and true joint locations across all joints is 35 millimeters, then:</p>\r\n\r\n<p>\r\n  <code>MPJPE = 35 mm</code>\r\n</p>",
+        "code_block": "# NumPy / scikit-learn style implementation\r\nimport numpy as np\r\n\r\n# Ground truth joint positions (N, J, 3)\r\ny_true = np.array([\r\n    [[0, 0, 0], [1, 1, 1]],\r\n    [[2, 2, 2], [3, 3, 3]]\r\n])\r\n\r\n# Predicted joint positions (N, J, 3)\r\ny_pred = np.array([\r\n    [[0.1, -0.1, 0.0], [1.2, 0.9, 1.1]],\r\n    [[2.1, 1.9, 2.0], [2.9, 3.1, 3.2]]\r\n])\r\n\r\n# Compute MPJPE\r\nmpjpe = np.linalg.norm(y_pred - y_true, axis=2).mean()\r\nprint(\"MPJPE:\", mpjpe)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([\r\n    [[0., 0., 0.], [1., 1., 1.]],\r\n    [[2., 2., 2.], [3., 3., 3.]]\r\n])\r\n\r\ny_pred = torch.tensor([\r\n    [[0.1, -0.1, 0.0], [1.2, 0.9, 1.1]],\r\n    [[2.1, 1.9, 2.0], [2.9, 3.1, 3.2]]\r\n])\r\n\r\nmpjpe = torch.norm(y_pred - y_true, dim=2).mean()\r\nprint(\"MPJPE:\", mpjpe.item())",
+        "applicable_dataset_categories": [
+            "keypoint_detection"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 46,
+        "formula": "{map_per_class}",
+        "formula_display": "mAP per Class",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Mean Average Precision per Class (mAP per Class) reports the Average Precision (AP) value individually for each object class instead of averaging across all classes.</p>\r\n\r\n<p>It provides detailed insight into how well an object detection model performs for each class, helping identify classes that are well-detected versus those that require improvement.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>For each class, detections are evaluated independently. Precision and recall are computed across confidence thresholds using a fixed IoU criterion, and the Average Precision (AP) is calculated as the area under the Precision–Recall curve.</p>\r\n\r\n<p>\r\n  <code>AP(class i) = Area under the Precision–Recall curve for class i</code>\r\n</p>\r\n\r\n<p>The final output is a set of AP values, one for each class.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a detector produces the following AP values:</p>\r\n\r\n<ul>\r\n  <li>Person: AP = 0.82</li>\r\n  <li>Car: AP = 0.75</li>\r\n  <li>Bicycle: AP = 0.68</li>\r\n</ul>\r\n\r\n<p>Then the mAP per Class result reports these values individually rather than averaging them.</p>",
+        "code_block": "# PyTorch\r\nfrom torchmetrics.detection.mean_ap import MeanAveragePrecision\r\n\r\nmetric = MeanAveragePrecision(class_metrics=True)\r\nmetric.update(preds, targets)\r\nresults = metric.compute()\r\n\r\nmap_per_class = results[\"map_per_class\"]\r\nprint(\"mAP per class:\", map_per_class)\r\n\r\n\r\n# scikit-learn style (COCO API)\r\ncoco_eval.evaluate()\r\ncoco_eval.accumulate()\r\n\r\nmap_per_class = coco_eval.eval[\"precision\"].mean(axis=(0, 1, 3, 4))\r\nprint(\"mAP per class:\", map_per_class)",
+        "applicable_dataset_categories": [
+            "object_detection"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 45,
+        "formula": "{mar_10}",
+        "formula_display": "Mean Average Recall @ 10 Detections",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Mean Average Recall at 10 Detections (mAR@10) measures how effectively an object detection model retrieves ground truth objects when up to 10 detections per image are allowed.</p>\r\n\r\n<p>It evaluates the model’s ability to recall objects as more predictions are permitted, providing insight into how recall improves beyond the top-ranked detections.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>For each image, the top 10 highest-confidence detections are evaluated. A ground truth object is considered recalled if at least one of these detections overlaps with it at or above a predefined IoU threshold.</p>\r\n\r\n<p>\r\n  <code>mAR@10 = Mean recall using at most 10 detections per image</code>\r\n</p>\r\n\r\n<p>The recall is computed for each image and then averaged across all images.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If an object detector correctly recalls objects in 85 out of 100 images when restricted to the top 10 detections per image, then:</p>\r\n\r\n<p>\r\n  <code>mAR@10 = 85 / 100 = 0.85</code>\r\n</p>",
+        "code_block": "# NOTE:\r\n# mAR@10 is typically computed using COCO-style evaluation in torchvision.\r\n# Below is a simplified illustration using torchvision.ops.\r\n\r\nimport torch\r\nfrom torchvision.ops import box_iou\r\n\r\n# Ground truth boxes per image\r\ngt_boxes = [torch.tensor([[50., 50., 150., 150.]])]\r\n\r\n# Predicted boxes per image (sorted by confidence)\r\npred_boxes = [torch.tensor([\r\n    [48., 48., 152., 152.],\r\n    [60., 60., 140., 140.],\r\n    [30., 30., 100., 100.]\r\n])]\r\n\r\niou_threshold = 0.50\r\ncorrect = []\r\n\r\nfor gt, preds in zip(gt_boxes, pred_boxes):\r\n    # Use top-10 detections (or fewer if less available)\r\n    top_preds = preds[:10]\r\n\r\n    iou = box_iou(top_preds, gt)\r\n    recalled = (iou >= iou_threshold).any().item()\r\n    correct.append(recalled)\r\n\r\nmAR_10 = sum(correct) / len(correct)\r\nprint(\"mAR@10:\", mAR_10)",
+        "applicable_dataset_categories": [
+            "object_detection"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 44,
+        "formula": "{mar_1}",
+        "formula_display": "Mean Average Recall @ 1 Detection",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Mean Average Recall at 1 Detection (mAR@1) measures how well an object detection model retrieves ground truth objects when only the top-scoring detection per image is considered.</p>\r\n\r\n<p>It evaluates the model’s ability to find objects under strict detection limits and is especially useful for assessing recall when prediction budgets are constrained.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>For each image, only the single highest-confidence detection is evaluated. A ground truth object is considered correctly recalled if its IoU with the predicted box meets or exceeds a predefined threshold.</p>\r\n\r\n<p>\r\n  <code>mAR@1 = Mean recall using at most 1 detection per image</code>\r\n</p>\r\n\r\n<p>The recall is computed across all images and then averaged.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If an object detector correctly recalls objects in 70 out of 100 images when restricted to one detection per image, then:</p>\r\n\r\n<p>\r\n  <code>mAR@1 = 70 / 100 = 0.70</code>\r\n</p>",
+        "code_block": "# NOTE:\r\n# mAR@1 is typically computed using COCO-style evaluation with torchvision.\r\n# Below is a simplified illustration using torchvision.ops.\r\n\r\nimport torch\r\nfrom torchvision.ops import box_iou\r\n\r\n# Ground truth boxes per image\r\ngt_boxes = [torch.tensor([[50., 50., 150., 150.]])]\r\n\r\n# Predicted boxes per image (sorted by confidence)\r\npred_boxes = [torch.tensor([[52., 52., 148., 148.]])]\r\npred_scores = [torch.tensor([0.9])]\r\n\r\niou_threshold = 0.50\r\ncorrect = []\r\n\r\nfor gt, preds in zip(gt_boxes, pred_boxes):\r\n    # Use only top-1 detection\r\n    top_pred = preds[:1]\r\n\r\n    iou = box_iou(top_pred, gt)\r\n    recalled = (iou >= iou_threshold).any().item()\r\n    correct.append(recalled)\r\n\r\nmAR_1 = sum(correct) / len(correct)\r\nprint(\"mAR@1:\", mAR_1)",
+        "applicable_dataset_categories": [
+            "object_detection"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 43,
+        "formula": "{map_75}",
+        "formula_display": "Mean Average Precision @ IoU 0.75",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Mean Average Precision at IoU 0.75 (mAP@0.75) measures object detection performance by evaluating how accurately predicted bounding boxes match ground truth boxes at a stricter IoU threshold of 0.75.</p>\r\n\r\n<p>A detection is considered correct only if the Intersection over Union (IoU) between the predicted and ground truth bounding boxes is at least 0.75 and the predicted class label is correct.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>For each class, precision and recall are computed across different confidence thresholds using detections that satisfy IoU ≥ 0.75. The Average Precision (AP) is calculated as the area under the Precision–Recall curve.</p>\r\n\r\n<p>\r\n  <code>mAP@0.75 = Mean of AP values across all classes (IoU ≥ 0.75)</code>\r\n</p>\r\n\r\n<p>This metric places stronger emphasis on precise localization compared to mAP@0.50 and is commonly used to evaluate high-quality object detectors.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a detector achieves the following AP values at IoU ≥ 0.75:</p>\r\n\r\n<ul>\r\n  <li>Class A: AP = 0.68</li>\r\n  <li>Class B: AP = 0.72</li>\r\n  <li>Class C: AP = 0.75</li>\r\n</ul>\r\n\r\n<p>Then:</p>\r\n\r\n<p>\r\n  <code>mAP@0.75 = (0.68 + 0.72 + 0.75) / 3 ≈ 0.72</code>\r\n</p>",
+        "code_block": "# NOTE:\r\n# mAP@0.75 is typically computed using torchvision's COCO-style evaluation.\r\n# Below is a minimal example using torchvision.ops and torchmetrics-style logic.\r\n\r\nimport torch\r\nfrom torchvision.ops import box_iou\r\n\r\n# Ground truth boxes and labels\r\ngt_boxes = torch.tensor([[50., 50., 150., 150.]])\r\ngt_labels = torch.tensor([1])\r\n\r\n# Predicted boxes, labels, and confidence scores\r\npred_boxes = torch.tensor([[52., 52., 148., 148.]])\r\npred_labels = torch.tensor([1])\r\npred_scores = torch.tensor([0.9])\r\n\r\n# Compute IoU between predictions and ground truth\r\niou = box_iou(pred_boxes, gt_boxes)\r\n\r\n# IoU threshold for mAP@0.75\r\niou_threshold = 0.75\r\n\r\n# Check if detection is correct\r\nis_correct = (iou >= iou_threshold) & (pred_labels.unsqueeze(1) == gt_labels)\r\n\r\nprint(\"Detection correct at IoU 0.75:\", bool(is_correct.any()))",
+        "applicable_dataset_categories": [
+            "object_detection"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 42,
+        "formula": "{map_50}",
+        "formula_display": "Mean Average Precision @ IoU 0.50",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Mean Average Precision at IoU 0.50 (mAP@0.50) measures object detection performance by evaluating how accurately predicted bounding boxes match ground truth boxes at a fixed IoU threshold of 0.50.</p>\r\n\r\n<p>A detection is considered correct if the Intersection over Union (IoU) between the predicted and ground truth bounding boxes is at least 0.50 and the predicted class label is correct.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>For each class, precision and recall are computed across confidence thresholds using detections with IoU ≥ 0.50. The Average Precision (AP) is then calculated as the area under the Precision–Recall curve.</p>\r\n\r\n<p>\r\n  <code>mAP@0.50 = Mean of AP values across all classes (IoU ≥ 0.50)</code>\r\n</p>\r\n\r\n<p>This metric focuses on localization accuracy at a single, commonly used IoU threshold.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a detector achieves the following Average Precision values at IoU ≥ 0.50:</p>\r\n\r\n<ul>\r\n  <li>Class A: AP = 0.82</li>\r\n  <li>Class B: AP = 0.78</li>\r\n  <li>Class C: AP = 0.90</li>\r\n</ul>\r\n\r\n<p>Then:</p>\r\n\r\n<p>\r\n  <code>mAP@0.50 = (0.82 + 0.78 + 0.90) / 3 = 0.83</code>\r\n</p>",
+        "code_block": "# NOTE:\r\n# mAP@0.50 is typically computed using specialized object detection libraries\r\n# such as COCO API, torchvision, or third-party evaluation scripts.\r\n# Below is a simplified conceptual example.\r\n\r\n# PyTorch / torchvision-style example\r\nimport torch\r\nfrom torchvision.ops import box_iou\r\n\r\n# Ground truth boxes and labels\r\ngt_boxes = torch.tensor([[50, 50, 150, 150]])\r\ngt_labels = torch.tensor([1])\r\n\r\n# Predicted boxes, labels, and confidence scores\r\npred_boxes = torch.tensor([[48, 48, 152, 152]])\r\npred_labels = torch.tensor([1])\r\npred_scores = torch.tensor([0.9])\r\n\r\n# Compute IoU\r\niou = box_iou(pred_boxes, gt_boxes)\r\n\r\n# Check IoU threshold and label match\r\nis_correct = (iou >= 0.50) & (pred_labels.unsqueeze(1) == gt_labels)\r\n\r\nprint(\"Detection correct at IoU 0.50:\", bool(is_correct.any()))",
+        "applicable_dataset_categories": [
+            "object_detection"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 41,
+        "formula": "{giou}",
+        "formula_display": "GIoU (Generalized IoU)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Generalized Intersection over Union (GIoU) extends the standard IoU metric by penalizing predictions that do not overlap with the ground truth.</p>\r\n\r\n<p>Unlike IoU, which becomes zero when bounding boxes do not intersect, GIoU provides meaningful feedback by considering the smallest enclosing box that contains both the predicted and ground truth boxes.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>GIoU is computed by subtracting a penalty term from the standard IoU that accounts for the area outside the union but inside the smallest enclosing box.</p>\r\n\r\n<p>\r\n  <code>GIoU = IoU − (|C − (A ∪ B)| / |C|)</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>A</strong> = Ground truth bounding box</li>\r\n  <li><strong>B</strong> = Predicted bounding box</li>\r\n  <li><strong>C</strong> = Smallest enclosing box covering both A and B</li>\r\n</ul>\r\n\r\n<p>GIoU ranges from −1 to 1, where higher values indicate better localization.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If two bounding boxes do not overlap but are close to each other, IoU would be 0, while GIoU would return a negative value that reflects how far apart they are.</p>\r\n\r\n<p>\r\n  <code>GIoU ≈ −0.20</code>\r\n</p>",
+        "code_block": "# NumPy / scikit-learn style implementation\r\nimport numpy as np\r\n\r\n# Bounding boxes: [x_min, y_min, x_max, y_max]\r\nbox_true = np.array([50, 50, 150, 150])\r\nbox_pred = np.array([100, 100, 200, 200])\r\n\r\n# Intersection\r\nxi1 = max(box_true[0], box_pred[0])\r\nyi1 = max(box_true[1], box_pred[1])\r\nxi2 = min(box_true[2], box_pred[2])\r\nyi2 = min(box_true[3], box_pred[3])\r\n\r\ninter_area = max(0, xi2 - xi1) * max(0, yi2 - yi1)\r\n\r\n# Areas\r\narea_true = (box_true[2] - box_true[0]) * (box_true[3] - box_true[1])\r\narea_pred = (box_pred[2] - box_pred[0]) * (box_pred[3] - box_pred[1])\r\nunion = area_true + area_pred - inter_area\r\n\r\niou = inter_area / union if union > 0 else 0\r\n\r\n# Smallest enclosing box\r\nxc1 = min(box_true[0], box_pred[0])\r\nyc1 = min(box_true[1], box_pred[1])\r\nxc2 = max(box_true[2], box_pred[2])\r\nyc2 = max(box_true[3], box_pred[3])\r\n\r\narea_c = (xc2 - xc1) * (yc2 - yc1)\r\n\r\ngiou = iou - (area_c - union) / area_c\r\nprint(\"GIoU:\", giou)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\nbox_true = torch.tensor([50., 50., 150., 150.])\r\nbox_pred = torch.tensor([100., 100., 200., 200.])\r\n\r\n# Intersection\r\nxi1 = torch.max(box_true[0], box_pred[0])\r\nyi1 = torch.max(box_true[1],_",
+        "applicable_dataset_categories": [
+            "object_detection"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 40,
+        "formula": "{normalized_gini}",
+        "formula_display": "Normalized Gini",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Normalized Gini measures a model&rsquo;s discriminatory power relative to the best possible (perfect) model on the same dataset.</p>\r\n\r\n<p>It scales the Gini Coefficient to a range between &minus;1 and 1 by dividing the model&rsquo;s Gini by the Gini of a perfect ranking, enabling fair comparison across datasets.</p>\r\n\r\n<hr />\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Normalized Gini is computed by dividing the model&rsquo;s Gini Coefficient by the Gini Coefficient of a perfect model.</p>\r\n\r\n<p><code>Normalized Gini = Gini(model) / Gini(perfect model)</code></p>\r\n\r\n<p>The perfect model ranks all positive samples ahead of all negative samples.</p>\r\n\r\n<hr />\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model has a Gini Coefficient of 0.80 and the perfect model for the dataset has a Gini of 0.90, then:</p>\r\n\r\n<p><code>Normalized Gini = 0.80 / 0.90 &asymp; 0.89</code></p>",
+        "code_block": "# scikit-learn / NumPy style implementation\r\nimport numpy as np\r\nfrom sklearn.metrics import roc_auc_score\r\n\r\n# Ground truth labels\r\ny_true = np.array([0, 0, 1, 1, 1])\r\n\r\n# Model predicted scores\r\ny_scores = np.array([0.1, 0.4, 0.35, 0.8, 0.9])\r\n\r\n# Gini for model\r\nauc_model = roc_auc_score(y_true, y_scores)\r\ngini_model = 2 * auc_model - 1\r\n\r\n# Perfect model scores (rank positives highest)\r\ny_scores_perfect = y_true.copy()\r\nauc_perfect = roc_auc_score(y_true, y_scores_perfect)\r\ngini_perfect = 2 * auc_perfect - 1\r\n\r\nnormalized_gini = gini_model / gini_perfect\r\nprint(\"Normalized Gini:\", normalized_gini)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([0., 0., 1., 1., 1.])\r\ny_scores = torch.tensor([0.1, 0.4, 0.35, 0.8, 0.9])\r\n\r\n# Sort by model scores\r\nsorted_idx = torch.argsort(y_scores, descending=True)\r\ny_sorted = y_true[sorted_idx]\r\n\r\nP = y_true.sum()\r\nN = (1 - y_true).sum()\r\n\r\ntp = torch.cumsum(y_sorted, dim=0)\r\nfp = torch.cumsum(1 - y_sorted, dim=0)\r\n\r\ntpr = tp / P\r\nfpr = fp / N\r\n\r\nauc_model = torch.trapz(tpr, fpr)\r\ngini_model = 2 * auc_model - 1\r\n\r\n# Perfect model\r\nsorted_idx_perfect = torch.argsort(y_true, descending=True)\r\ny_perfect = y_true[sorted_idx_perfect]\r\n\r\ntp_p = torch.cumsum(y_perfect, dim=0)\r\nfp_p = torch.cumsum(1 - y_perfect, dim=0)\r\n\r\ntpr_p = tp_p / P\r\nfpr_p = fp_p / N\r\n\r\nauc_perfect = torch.trapz(tpr_p, fpr_p)\r\ngini_perfect = 2 * auc_perfect - 1\r\n\r\nnormalized_gini = gini_model / gini_perfect\r\nprint(\"Normalized Gini:\", normalized_gini.item())",
+        "applicable_dataset_categories": [
+            "tabular_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 39,
+        "formula": "{gini}",
+        "formula_display": "Gini Coefficient",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Gini Coefficient measures a classification model’s ability to distinguish between positive and negative classes.</p>\r\n\r\n<p>It is closely related to AUC-ROC and is commonly used in credit scoring, risk modeling, and ranking problems. Higher Gini values indicate better class separation.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>The Gini Coefficient is derived directly from the AUC-ROC value.</p>\r\n\r\n<p>\r\n  <code>Gini = 2 × AUC-ROC − 1</code>\r\n</p>\r\n\r\n<p>A Gini value of 0 indicates no discriminatory power, while a value of 1 indicates perfect separation.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model achieves an AUC-ROC score of 0.90, then:</p>\r\n\r\n<p>\r\n  <code>Gini = 2 × 0.90 − 1 = 0.80</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import roc_auc_score\r\n\r\n# Ground truth labels\r\ny_true = [0, 0, 1, 1]\r\n\r\n# Predicted probabilities or scores for the positive class\r\ny_scores = [0.1, 0.4, 0.35, 0.8]\r\n\r\nauc = roc_auc_score(y_true, y_scores)\r\ngini = 2 * auc - 1\r\n\r\nprint(\"Gini Coefficient:\", gini)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([0, 0, 1, 1], dtype=torch.float)\r\n\r\n# Predicted scores\r\ny_scores = torch.tensor([0.1, 0.4, 0.35, 0.8], dtype=torch.float)\r\n\r\n# Sort by score (descending)\r\nsorted_indices = torch.argsort(y_scores, descending=True)\r\ny_true_sorted = y_true[sorted_indices]\r\n\r\nP = y_true.sum()\r\nN = (1 - y_true).sum()\r\n\r\ntp = torch.cumsum(y_true_sorted, dim=0)\r\nfp = torch.cumsum(1 - y_true_sorted, dim=0)\r\n\r\ntpr = tp / P\r\nfpr = fp / N\r\n\r\n# AUC via trapezoidal integration\r\nauc = torch.trapz(tpr, fpr)\r\ngini = 2 * auc - 1\r\n\r\nprint(\"Gini Coefficient:\", gini.item())",
+        "applicable_dataset_categories": [
+            "tabular_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 38,
+        "formula": "{f1_weighted}",
+        "formula_display": "F1 Weighted",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>F1 Weighted Score measures the balance between precision and recall across all classes, while accounting for the number of true samples in each class.</p>\r\n\r\n<p>Each class’s F1 Score is weighted by its support (number of true instances), making this metric suitable for imbalanced multi-class and multi-label classification tasks.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>F1 Weighted Score is computed as the weighted average of per-class F1 Scores, using class support as weights.</p>\r\n\r\n<p>\r\n  <code>F1 Weighted = Σ (F1ᵢ × Supportᵢ) / Σ Supportᵢ</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>F1ᵢ</strong> = F1 Score for class <em>i</em></li>\r\n  <li><strong>Supportᵢ</strong> = Number of true samples in class <em>i</em></li>\r\n</ul>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a dataset contains classes with different sample counts and the model achieves higher F1 Scores on frequent classes, the F1 Weighted Score will reflect this by giving more importance to those classes.</p>\r\n\r\n<p>\r\n  <code>F1 Weighted ≈ 0.82</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import f1_score\r\n\r\n# Ground truth labels (multi-class)\r\ny_true = [0, 1, 2, 1, 0, 2, 2]\r\ny_pred = [0, 2, 2, 1, 0, 1, 2]\r\n\r\nf1_weighted = f1_score(y_true, y_pred, average=\"weighted\")\r\nprint(\"F1 Weighted Score:\", f1_weighted)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([0, 1, 2, 1, 0, 2, 2])\r\ny_pred = torch.tensor([0, 2, 2, 1, 0, 1, 2])\r\n\r\n# Compute per-class F1\r\nnum_classes = int(torch.max(torch.cat([y_true, y_pred]))) + 1\r\nf1_scores = []\r\nsupports = []\r\n\r\nfor cls in range(num_classes):\r\n    tp = ((y_pred == cls) & (y_true == cls)).sum().float()\r\n    fp = ((y_pred == cls) & (y_true != cls)).sum().float()\r\n    fn = ((y_pred != cls) & (y_true == cls)).sum().float()\r\n\r\n    precision = tp / (tp + fp) if (tp + fp) > 0 else torch.tensor(0.0)\r\n    recall = tp / (tp + fn) if (tp + fn) > 0 else torch.tensor(0.0)\r\n\r\n    f1 = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else torch.tensor(0.0)\r\n    support = (y_true == cls).sum().float()\r\n\r\n    f1_scores.append(f1)\r\n    supports.append(support)\r\n\r\nf1_scores = torch.stack(f1_scores)\r\nsupports = torch.stack(supports)\r\n\r\nf1_weighted = torch.sum(f1_scores * supports) / torch.sum(supports)\r\nprint(\"F1 Weighted Score:\", f1_weighted.item())",
+        "applicable_dataset_categories": [
+            "text_classification"
+        ],
+        "sort_order": "descending"
+    },
+
+    {
+        "id": 37,
+        "formula": "{f1_micro}",
+        "formula_display": "Micro F1",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Micro F1 Score measures the overall balance between precision and recall by aggregating true positives, false positives, and false negatives across all classes.</p>\r\n\r\n<p>It treats every individual prediction equally, making it especially suitable for multi-class and multi-label classification tasks where class imbalance exists.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Micro F1 Score is computed by first summing true positives, false positives, and false negatives over all classes, and then calculating the F1 Score using these aggregated values.</p>\r\n\r\n<p>\r\n  <code>Micro F1 = 2 × (Total Precision × Total Recall) / (Total Precision + Total Recall)</code>\r\n</p>\r\n\r\n<p>In practice, Micro F1 is equivalent to computing F1 Score using globally aggregated counts.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model makes predictions across multiple classes and achieves an overall precision of 0.78 and recall of 0.78 when counts are aggregated globally, then:</p>\r\n\r\n<p>\r\n  <code>Micro F1 = 0.78</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import f1_score\r\n\r\n# Ground truth labels (multi-class or multi-label)\r\ny_true = [0, 1, 2, 1, 0, 2]\r\ny_pred = [0, 2, 2, 1, 0, 1]\r\n\r\nmicro_f1 = f1_score(y_true, y_pred, average=\"micro\")\r\nprint(\"Micro F1 Score:\", micro_f1)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([0, 1, 2, 1, 0, 2])\r\ny_pred = torch.tensor([0, 2, 2, 1, 0, 1])\r\n\r\n# Compute global counts\r\ntp = (y_true == y_pred).sum().float()\r\nfp = (y_true != y_pred).sum().float()\r\nfn = fp  # In micro-averaging, FP and FN are equal in count\r\n\r\nprecision = tp / (tp + fp)\r\nrecall = tp / (tp + fn)\r\n\r\nmicro_f1 = 2 * (precision * recall) / (precision + recall)\r\nprint(\"Micro F1 Score:\", micro_f1.item())",
+        "applicable_dataset_categories": [
+            "text_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 36,
+        "formula": "{npv}",
+        "formula_display": "NPV (Negative Predictive Value)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Negative Predictive Value (NPV) measures the proportion of predicted negative samples that are actually negative.</p>\r\n\r\n<p>It focuses on the reliability of negative predictions and is especially important in scenarios where false negatives are costly or where confirming the absence of a condition is critical.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>NPV is computed as the number of correctly predicted negative samples divided by the total number of samples predicted as negative.</p>\r\n\r\n<p>\r\n  <code>NPV = TN / (TN + FN)</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>TN</strong> = True Negatives (correctly predicted negative samples)</li>\r\n  <li><strong>FN</strong> = False Negatives (positive samples incorrectly predicted as negative)</li>\r\n</ul>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model predicts 50 samples as negative and 45 of them are actually negative, then:</p>\r\n\r\n<p>\r\n  <code>NPV = 45 / 50 = 0.90</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import confusion_matrix\r\n\r\n# Ground truth labels\r\ny_true = [0, 0, 1, 1, 0, 1]\r\n\r\n# Model predictions\r\ny_pred = [0, 0, 0, 1, 0, 1]\r\n\r\ntn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()\r\nnpv = tn / (tn + fn)\r\n\r\nprint(\"NPV:\", npv)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([0, 0, 1, 1, 0, 1])\r\ny_pred = torch.tensor([0, 0, 0, 1, 0, 1])\r\n\r\ntn = ((y_pred == 0) & (y_true == 0)).sum().float()\r\nfn = ((y_pred == 0) & (y_true == 1)).sum().float()\r\n\r\nnpv = tn / (tn + fn)\r\nprint(\"NPV:\", npv.item())",
+        "applicable_dataset_categories": [
+            "tabular_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 35,
+        "formula": "{jaccard_score}",
+        "formula_display": "Jaccard Score",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Jaccard Score measures the similarity between predicted labels and ground truth labels by comparing their intersection to their union.</p>\r\n\r\n<p>It is commonly used in multi-label classification and image segmentation tasks, and is also known as the Jaccard Index or Intersection over Union (IoU).</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Jaccard Score is computed as the ratio of the number of correctly predicted positive labels to the total number of labels present in either the prediction or the ground truth.</p>\r\n\r\n<p>\r\n  <code>Jaccard Score = Intersection / Union</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>Intersection</strong> = Number of labels correctly predicted as positive</li>\r\n  <li><strong>Union</strong> = Total number of labels predicted as positive or actually positive</li>\r\n</ul>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the predicted labels are {A, B, C} and the ground truth labels are {B, C, D}, then:</p>\r\n\r\n<p>\r\n  <code>Jaccard Score = 2 / 4 = 0.50</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import jaccard_score\r\n\r\n# Ground truth labels (binary or multi-label)\r\ny_true = [1, 1, 0, 0, 1, 0, 1]\r\n\r\n# Model predictions\r\ny_pred = [1, 0, 0, 0, 1, 1, 1]\r\n\r\njaccard = jaccard_score(y_true, y_pred)\r\nprint(\"Jaccard Score:\", jaccard)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([1, 1, 0, 0, 1, 0, 1], dtype=torch.bool)\r\n\r\n# Model predictions\r\ny_pred = torch.tensor([1, 0, 0, 0, 1, 1, 1], dtype=torch.bool)\r\n\r\nintersection = (y_true & y_pred).sum().float()\r\nunion = (y_true | y_pred).sum().float()\r\n\r\njaccard = intersection / union\r\nprint(\"Jaccard Score:\", jaccard.item())",
+        "applicable_dataset_categories": [
+            "text_classification",
+            "tabular_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 34,
+        "formula": "{hamming_loss}",
+        "formula_display": "Hamming Loss",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Hamming Loss measures the fraction of labels that are incorrectly predicted.</p>\r\n\r\n<p>It is commonly used in multi-label classification tasks and evaluates how many individual label predictions differ from the ground truth, regardless of whether the error is a false positive or a false negative.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Hamming Loss is computed as the total number of incorrect label predictions divided by the total number of labels.</p>\r\n\r\n<p>\r\n  <code>Hamming Loss = (Number of incorrect labels) / (Total number of labels)</code>\r\n</p>\r\n\r\n<p>Lower Hamming Loss values indicate better model performance.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model predicts 3 incorrect labels out of 20 total label predictions, then:</p>\r\n\r\n<p>\r\n  <code>Hamming Loss = 3 / 20 = 0.15</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import hamming_loss\r\n\r\n# Ground truth labels (multi-label)\r\ny_true = [[1, 0, 1], [0, 1, 1]]\r\n\r\n# Model predictions\r\ny_pred = [[1, 1, 1], [0, 0, 1]]\r\n\r\nloss = hamming_loss(y_true, y_pred)\r\nprint(\"Hamming Loss:\", loss)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([[1, 0, 1],\r\n                       [0, 1, 1]])\r\n\r\n# Model predictions\r\ny_pred = torch.tensor([[1, 1, 1],\r\n                       [0, 0, 1]])\r\n\r\nhamming_loss = torch.mean((y_true != y_pred).float())\r\nprint(\"Hamming Loss:\", hamming_loss.item())",
+        "applicable_dataset_categories": [
+            "text_classification",
+            "tabular_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 33,
+        "formula": "{f_beta_2}",
+        "formula_display": "F-β Score (β = 2)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>F-β Score measures the balance between precision and recall, with β controlling the relative importance of recall compared to precision.</p>\r\n\r\n<p>When β = 2, the metric places more emphasis on <strong>recall</strong> than precision, making it suitable for scenarios where missing positive instances is more costly than producing false positives.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>The F-β Score is computed as a weighted harmonic mean of precision and recall.</p>\r\n\r\n<p>\r\n  <code>F-β = (1 + β²) × (Precision × Recall) / (β² × Precision + Recall)</code>\r\n</p>\r\n\r\n<p>For β = 2, recall is weighted four times more than precision.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model has a precision of 0.50 and a recall of 0.80, then:</p>\r\n\r\n<p>\r\n  <code>F-2 ≈ 0.71</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import fbeta_score\r\n\r\n# Ground truth labels\r\ny_true = [1, 0, 1, 1, 0, 0]\r\n\r\n# Model predictions\r\ny_pred = [1, 1, 1, 0, 0, 1]\r\n\r\nf2 = fbeta_score(y_true, y_pred, beta=2)\r\nprint(\"F-2 Score:\", f2)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([1, 0, 1, 1, 0, 0])\r\ny_pred = torch.tensor([1, 1, 1, 0, 0, 1])\r\n\r\ntp = ((y_pred == 1) & (y_true == 1)).sum().float()\r\nfp = ((y_pred == 1) & (y_true == 0)).sum().float()\r\nfn = ((y_pred == 0) & (y_true == 1)).sum().float()\r\n\r\nprecision = tp / (tp + fp)\r\nrecall = tp / (tp + fn)\r\n\r\nbeta = 2\r\nf2 = (1 + beta**2) * (precision * recall) / ((beta**2 * precision) + recall)\r\n\r\nprint(\"F-2 Score:\", f2.item())",
+        "applicable_dataset_categories": [
+            "tabular_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 32,
+        "formula": "{f_beta_0.5}",
+        "formula_display": "F-β Score (β = 0.5)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>F-β Score measures the balance between precision and recall, with β controlling the relative importance of recall compared to precision.</p>\r\n\r\n<p>When β = 0.5, the metric places more emphasis on <strong>precision</strong> than recall, making it suitable for scenarios where false positives are more costly than false negatives.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>The F-β Score is computed as a weighted harmonic mean of precision and recall.</p>\r\n\r\n<p>\r\n  <code>F-β = (1 + β²) × (Precision × Recall) / (β² × Precision + Recall)</code>\r\n</p>\r\n\r\n<p>For β = 0.5, precision is weighted four times more than recall.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model has a precision of 0.80 and a recall of 0.50, then:</p>\r\n\r\n<p>\r\n  <code>F-0.5 ≈ 0.71</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import fbeta_score\r\n\r\n# Ground truth labels\r\ny_true = [1, 0, 1, 1, 0, 0]\r\n\r\n# Model predictions\r\ny_pred = [1, 1, 1, 0, 0, 1]\r\n\r\nf05 = fbeta_score(y_true, y_pred, beta=0.5)\r\nprint(\"F-0.5 Score:\", f05)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([1, 0, 1, 1, 0, 0])\r\ny_pred = torch.tensor([1, 1, 1, 0, 0, 1])\r\n\r\ntp = ((y_pred == 1) & (y_true == 1)).sum().float()\r\nfp = ((y_pred == 1) & (y_true == 0)).sum().float()\r\nfn = ((y_pred == 0) & (y_true == 1)).sum().float()\r\n\r\nprecision = tp / (tp + fp)\r\nrecall = tp / (tp + fn)\r\n\r\nbeta = 0.5\r\nf05 = (1 + beta**2) * (precision * recall) / ((beta**2 * precision) + recall)\r\n\r\nprint(\"F-0.5 Score:\", f05.item())",
+        "applicable_dataset_categories": [
+            "tabular_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 31,
+        "formula": "{balanced_accuracy}",
+        "formula_display": "Balanced Accuracy",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Balanced Accuracy measures the average of recall obtained on each class.</p>\r\n\r\n<p>It is designed for classification problems with imbalanced class distributions, ensuring that each class contributes equally to the final score regardless of its frequency.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Balanced Accuracy is computed as the mean of the recall values calculated separately for each class.</p>\r\n\r\n<p>\r\n  <code>Balanced Accuracy = (Recall₁ + Recall₂ + … + Recallₖ) / K</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>Recallᵢ</strong> = Recall for class <em>i</em></li>\r\n  <li><strong>K</strong> = Total number of classes</li>\r\n</ul>\r\n\r\n<p>For binary classification, Balanced Accuracy is equivalent to the average of sensitivity (recall) and specificity.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a binary classifier has a recall of 0.80 for the positive class and a recall of 0.70 for the negative class, then:</p>\r\n\r\n<p>\r\n  <code>Balanced Accuracy = (0.80 + 0.70) / 2 = 0.75</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import balanced_accuracy_score\r\n\r\n# Ground truth labels\r\ny_true = [0, 0, 1, 1, 1, 0]\r\n\r\n# Model predictions\r\ny_pred = [0, 1, 1, 1, 0, 0]\r\n\r\nbalanced_acc = balanced_accuracy_score(y_true, y_pred)\r\nprint(\"Balanced Accuracy:\", balanced_acc)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([0, 0, 1, 1, 1, 0])\r\ny_pred = torch.tensor([0, 1, 1, 1, 0, 0])\r\n\r\n# Recall for positive class\r\ntp = ((y_pred == 1) & (y_true == 1)).sum().float()\r\nfn = ((y_pred == 0) & (y_true == 1)).sum().float()\r\nrecall_pos = tp / (tp + fn)\r\n\r\n# Recall for negative class (specificity)\r\ntn = ((y_pred == 0) & (y_true == 0)).sum().float()\r\nfp = ((y_pred == 1) & (y_true == 0)).sum().float()\r\nrecall_neg = tn / (tn + fp)\r\n\r\nbalanced_acc = (recall_pos + recall_neg) / 2\r\nprint(\"Balanced Accuracy:\", balanced_acc.item())",
+        "applicable_dataset_categories": [
+            "tabular_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 30,
+        "formula": "{brier_score}",
+        "formula_display": "Brier Score",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Brier Score measures the accuracy of probabilistic predictions by computing the mean squared difference between predicted probabilities and actual outcomes.</p>\r\n\r\n<p>It evaluates both the calibration and refinement of probability estimates, making it useful for assessing how well predicted probabilities reflect true likelihoods.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Brier Score is computed as the average squared difference between predicted probabilities and the true binary outcomes.</p>\r\n\r\n<p>\r\n  <code>Brier Score = (1 / N) × Σ (p − y)²</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>p</strong> = Predicted probability for the positive class</li>\r\n  <li><strong>y</strong> = True label (0 or 1)</li>\r\n  <li><strong>N</strong> = Total number of samples</li>\r\n</ul>\r\n\r\n<p>Lower Brier Score values indicate better probabilistic predictions.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the true labels are [1, 0, 1] and the predicted probabilities are [0.8, 0.3, 0.6], then:</p>\r\n\r\n<p>\r\n  <code>Brier Score = ((0.8−1)² + (0.3−0)² + (0.6−1)²) / 3 ≈ 0.097</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import brier_score_loss\r\n\r\n# Ground truth labels\r\ny_true = [1, 0, 1]\r\n\r\n# Predicted probabilities for the positive class\r\ny_prob = [0.8, 0.3, 0.6]\r\n\r\nbrier = brier_score_loss(y_true, y_prob)\r\nprint(\"Brier Score:\", brier)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([1.0, 0.0, 1.0])\r\n\r\n# Predicted probabilities\r\ny_prob = torch.tensor([0.8, 0.3, 0.6])\r\n\r\nbrier = torch.mean((y_prob - y_true) ** 2)\r\nprint(\"Brier Score:\", brier.item())",
+        "applicable_dataset_categories": [
+            "image_classification",
+            "text_classification",
+            "tabular_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 29,
+        "formula": "{qwk}",
+        "formula_display": "Quadratic Weighted Kappa (QWK)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Quadratic Weighted Kappa (QWK) measures the level of agreement between predicted labels and ground truth labels while accounting for the degree of disagreement.</p>\r\n\r\n<p>Unlike standard Cohen’s Kappa, QWK penalizes larger disagreements more heavily by applying quadratic weights. It is commonly used in ordinal classification tasks where class labels have a natural order, such as ratings or scores.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>QWK compares the observed agreement with the expected agreement due to chance, using quadratic weights based on the distance between class labels.</p>\r\n\r\n<p>\r\n  <code>QWK = 1 − (Weighted Observed Disagreement / Weighted Expected Disagreement)</code>\r\n</p>\r\n\r\n<p>The quadratic weighting increases the penalty as the difference between predicted and true labels grows.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model predicts ratings that are mostly close to the true ratings, with few large errors, it will achieve a high QWK score.</p>\r\n\r\n<p>\r\n  <code>QWK ≈ 0.85</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import cohen_kappa_score\r\n\r\n# Ground truth labels (ordinal scale)\r\ny_true = [0, 1, 2, 2, 3, 4]\r\n\r\n# Model predictions\r\ny_pred = [0, 2, 2, 3, 3, 4]\r\n\r\nqwk = cohen_kappa_score(y_true, y_pred, weights=\"quadratic\")\r\nprint(\"Quadratic Weighted Kappa:\", qwk)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth and predictions\r\ny_true = torch.tensor([0, 1, 2, 2, 3, 4])\r\ny_pred = torch.tensor([0, 2, 2, 3, 3, 4])\r\n\r\nnum_classes = int(max(y_true.max(), y_pred.max()).item()) + 1\r\n\r\n# Confusion matrix\r\nconf_mat = torch.zeros((num_classes, num_classes))\r\nfor t, p in zip(y_true, y_pred):\r\n    conf_mat[t, p] += 1\r\n\r\n# Weight matrix (quadratic)\r\nW = torch.zeros((num_classes, num_classes))\r\nfor i in range(num_classes):\r\n    for j in range(num_classes):\r\n        W[i, j] = ((i - j) ** 2) / ((num_classes - 1) ** 2)\r\n\r\n# Normalize confusion matrix\r\nO = conf_mat / conf_mat.sum()\r\n\r\n# Expected matrix\r\nrow_marginals = conf_mat.sum(dim=1)\r\ncol_marginals = conf_mat.sum(dim=0)\r\nE = torch.outer(row_marginals, col_marginals) / conf_mat.sum()**2\r\n\r\nqwk = 1 - (torch.sum(W * O) / torch.sum(W * E))\r\nprint(\"Quadratic Weighted Kappa:\", qwk.item())",
+        "applicable_dataset_categories": [
+            "image_classification",
+            "text_classification",
+            "tabular_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 28,
+        "formula": "{top_5_accuracy}",
+        "formula_display": "Top-5 Accuracy",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Top-5 Accuracy measures how often the true class label appears among the model’s top five predicted classes.</p>\r\n\r\n<p>It is commonly used in multi-class classification tasks with a large number of possible labels, such as image classification and recommendation systems.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>A prediction is considered correct if the true label is included in the top five predicted class scores.</p>\r\n\r\n<p>\r\n  <code>Top-5 Accuracy = (Number of samples where true label is in top 5 predictions) / (Total number of samples)</code>\r\n</p>\r\n\r\n<p>The top predictions are selected based on the highest predicted probabilities or scores.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model correctly includes the true label within its top five predictions for 92 out of 100 samples, then:</p>\r\n\r\n<p>\r\n  <code>Top-5 Accuracy = 92 / 100 = 0.92</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import top_k_accuracy_score\r\nimport numpy as np\r\n\r\n# Ground truth labels\r\ny_true = [2, 0, 1, 3]\r\n\r\n# Predicted class probabilities (num_samples × num_classes)\r\ny_scores = np.array([\r\n    [0.05, 0.15, 0.30, 0.50],\r\n    [0.60, 0.20, 0.10, 0.10],\r\n    [0.10, 0.50, 0.30, 0.10],\r\n    [0.20, 0.25, 0.30, 0.25]\r\n])\r\n\r\ntop5_acc = top_k_accuracy_score(y_true, y_scores, k=5)\r\nprint(\"Top-5 Accuracy:\", top5_acc)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([2, 0, 1, 3])\r\n\r\n# Predicted class scores\r\ny_scores = torch.tensor([\r\n    [0.05, 0.15, 0.30, 0.50],\r\n    [0.60, 0.20, 0.10, 0.10],\r\n    [0.10, 0.50, 0.30, 0.10],\r\n    [0.20, 0.25, 0.30, 0.25]\r\n])\r\n\r\n# Get top-5 predicted class indices\r\ntop5_preds = torch.topk(y_scores, k=5, dim=1).indices\r\n\r\n# Check if true label is in top-5 predictions\r\ntop5_acc = (top5_preds == y_true.unsqueeze(1)).any(dim=1).float().mean()\r\n\r\nprint(\"Top-5 Accuracy:\", top5_acc.item())",
+        "applicable_dataset_categories": [
+            "image_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 27,
+        "formula": "{top_3_accuracy}",
+        "formula_display": "Top-3 Accuracy",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Top-3 Accuracy measures how often the true class label appears among the model’s top three predicted classes.</p>\r\n\r\n<p>It is commonly used in multi-class classification tasks where multiple predictions are acceptable, such as image classification, recommendation systems, and large label-space problems.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>A prediction is considered correct if the true label is included in the top three predicted class scores.</p>\r\n\r\n<p>\r\n  <code>Top-3 Accuracy = (Number of samples where true label is in top 3 predictions) / (Total number of samples)</code>\r\n</p>\r\n\r\n<p>The top predictions are selected based on the highest predicted probabilities or scores.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model correctly includes the true label within its top three predictions for 85 out of 100 samples, then:</p>\r\n\r\n<p>\r\n  <code>Top-3 Accuracy = 85 / 100 = 0.85</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import top_k_accuracy_score\r\nimport numpy as np\r\n\r\n# Ground truth labels\r\ny_true = [2, 0, 1, 2]\r\n\r\n# Predicted class probabilities (num_samples × num_classes)\r\ny_scores = np.array([\r\n    [0.1, 0.3, 0.6],\r\n    [0.7, 0.2, 0.1],\r\n    [0.2, 0.6, 0.2],\r\n    [0.4, 0.3, 0.3]\r\n])\r\n\r\ntop3_acc = top_k_accuracy_score(y_true, y_scores, k=3)\r\nprint(\"Top-3 Accuracy:\", top3_acc)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([2, 0, 1, 2])\r\n\r\n# Predicted class scores\r\ny_scores = torch.tensor([\r\n    [0.1, 0.3, 0.6],\r\n    [0.7, 0.2, 0.1],\r\n    [0.2, 0.6, 0.2],\r\n    [0.4, 0.3, 0.3]\r\n])\r\n\r\n# Get top-3 predicted class indices\r\ntop3_preds = torch.topk(y_scores, k=3, dim=1).indices\r\n\r\n# Check if true label is in top-3 predictions\r\ntop3_acc = (top3_preds == y_true.unsqueeze(1)).any(dim=1).float().mean()\r\n\r\nprint(\"Top-3 Accuracy:\", top3_acc.item())",
+        "applicable_dataset_categories": [
+            "image_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 26,
+        "formula": "{auc_roc}",
+        "formula_display": "AUC-ROC",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>AUC-ROC (Area Under the Receiver Operating Characteristic Curve) measures a model’s ability to distinguish between positive and negative classes across all possible classification thresholds.</p>\r\n\r\n<p>It evaluates how well the model ranks positive samples higher than negative samples, independent of any specific decision threshold.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>AUC-ROC is calculated as the area under the ROC curve, which plots the True Positive Rate (Recall) against the False Positive Rate.</p>\r\n\r\n<p>\r\n  <code>AUC-ROC = Area under the ROC curve</code>\r\n</p>\r\n\r\n<p>An AUC-ROC value of 1.0 indicates perfect class separation, while a value of 0.5 indicates performance equivalent to random guessing.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model consistently assigns higher prediction scores to positive samples than to negative samples, it will achieve a high AUC-ROC score.</p>\r\n\r\n<p>\r\n  <code>AUC-ROC ≈ 0.90</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import roc_auc_score\r\n\r\n# Ground truth labels\r\ny_true = [0, 0, 1, 1]\r\n\r\n# Predicted probabilities or scores for the positive class\r\ny_scores = [0.1, 0.4, 0.35, 0.8]\r\n\r\nauc_roc = roc_auc_score(y_true, y_scores)\r\nprint(\"AUC-ROC:\", auc_roc)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([0, 0, 1, 1], dtype=torch.float)\r\n\r\n# Predicted scores\r\ny_scores = torch.tensor([0.1, 0.4, 0.35, 0.8], dtype=torch.float)\r\n\r\n# Sort by score (descending)\r\nsorted_indices = torch.argsort(y_scores, descending=True)\r\ny_true_sorted = y_true[sorted_indices]\r\n\r\n# Count positives and negatives\r\nP = y_true.sum()\r\nN = (1 - y_true).sum()\r\n\r\n# Cumulative true positives and false positives\r\ntp = torch.cumsum(y_true_sorted, dim=0)\r\nfp = torch.cumsum(1 - y_true_sorted, dim=0)\r\n\r\ntpr = tp / P\r\nfpr = fp / N\r\n\r\n# Trapezoidal integration\r\nauc_roc = torch.trapz(tpr, fpr)\r\nprint(\"AUC-ROC:\", auc_roc.item())",
+        "applicable_dataset_categories": [
+            "image_classification",
+            "text_classification",
+            "tabular_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 25,
+        "formula": "{auc_pr}",
+        "formula_display": "AUC-PR",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>AUC-PR (Area Under the Precision–Recall Curve) measures a model’s ability to balance precision and recall across different classification thresholds.</p>\r\n\r\n<p>It focuses on performance for the positive class and is especially useful for highly imbalanced datasets, where ROC-AUC may provide an overly optimistic view.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>AUC-PR is calculated as the area under the Precision–Recall curve, which plots precision against recall for varying decision thresholds.</p>\r\n\r\n<p>\r\n  <code>AUC-PR = Area under the Precision–Recall curve</code>\r\n</p>\r\n\r\n<p>Higher AUC-PR values indicate better performance, with greater emphasis on correctly identifying positive samples.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model maintains high precision while recall increases across thresholds, it will achieve a high AUC-PR score.</p>\r\n\r\n<p>\r\n  <code>AUC-PR ≈ 0.85</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import average_precision_score\r\n\r\n# Ground truth labels\r\ny_true = [0, 0, 1, 1, 1]\r\n\r\n# Predicted probabilities or scores for the positive class\r\ny_scores = [0.1, 0.4, 0.35, 0.8, 0.9]\r\n\r\nauc_pr = average_precision_score(y_true, y_scores)\r\nprint(\"AUC-PR:\", auc_pr)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([0, 0, 1, 1, 1], dtype=torch.float)\r\n\r\n# Predicted scores\r\ny_scores = torch.tensor([0.1, 0.4, 0.35, 0.8, 0.9], dtype=torch.float)\r\n\r\n# Sort by score (descending)\r\nsorted_indices = torch.argsort(y_scores, descending=True)\r\ny_true_sorted = y_true[sorted_indices]\r\n\r\ntp = torch.cumsum(y_true_sorted, dim=0)\r\nfp = torch.cumsum(1 - y_true_sorted, dim=0)\r\n\r\nprecision = tp / (tp + fp)\r\nrecall = tp / y_true.sum()\r\n\r\n# Trapezoidal integration over recall\r\nauc_pr = torch.trapz(precision, recall)\r\nprint(\"AUC-PR:\", auc_pr.item())",
+        "applicable_dataset_categories": [
+            "image_classification",
+            "tabular_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 24,
+        "formula": "{log_loss}",
+        "formula_display": "Log Loss",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Log Loss, also known as Logarithmic Loss or Cross-Entropy Loss, measures how well a classification model predicts probability estimates for each class.</p>\r\n\r\n<p>It penalizes incorrect and overconfident predictions more strongly than less confident ones, making it a sensitive metric for evaluating probabilistic classification models.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Log Loss is computed using the predicted probabilities assigned to the true class labels.</p>\r\n\r\n<p>\r\n  <code>Log Loss = −( y × log(p) + (1 − y) × log(1 − p) )</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>y</strong> = True label (0 or 1)</li>\r\n  <li><strong>p</strong> = Predicted probability for the positive class</li>\r\n</ul>\r\n\r\n<p>For multi-class classification, Log Loss is calculated across all classes and averaged over all samples.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the true label is 1 and the predicted probability is 0.90, then:</p>\r\n\r\n<p>\r\n  <code>Log Loss = −log(0.90) ≈ 0.105</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import log_loss\r\n\r\n# Ground truth labels\r\ny_true = [1, 0, 1, 0]\r\n\r\n# Predicted probabilities for the positive class\r\ny_prob = [0.9, 0.2, 0.8, 0.1]\r\n\r\nloss = log_loss(y_true, y_prob)\r\nprint(\"Log Loss:\", loss)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([1.0, 0.0, 1.0, 0.0])\r\n\r\n# Predicted probabilities\r\ny_prob = torch.tensor([0.9, 0.2, 0.8, 0.1])\r\n\r\nloss_fn = torch.nn.BCELoss()\r\nloss = loss_fn(y_prob, y_true)\r\n\r\nprint(\"Log Loss:\", loss.item())",
+        "applicable_dataset_categories": [
+            "image_classification",
+            "text_classification",
+            "tabular_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 23,
+        "formula": "{da}",
+        "formula_display": "Direction Accuracy",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Direction Accuracy measures how often a model correctly predicts the direction of change between consecutive values.</p>\r\n\r\n<p>It evaluates whether the model correctly identifies upward or downward movement, rather than the exact magnitude of the prediction error. This metric is commonly used in time-series forecasting and financial modeling.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Direction Accuracy is computed as the proportion of times the predicted change direction matches the actual change direction.</p>\r\n\r\n<p>\r\n  <code>Direction Accuracy = (Number of Correct Directions) / (Total Number of Direction Comparisons)</code>\r\n</p>\r\n\r\n<p>The direction is typically determined by comparing the difference between consecutive values.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the actual values change direction correctly in 8 out of 10 consecutive time steps, then:</p>\r\n\r\n<p>\r\n  <code>Direction Accuracy = 8 / 10 = 0.80</code>\r\n</p>",
+        "code_block": "# NumPy / scikit-learn style implementation\r\nimport numpy as np\r\n\r\n# Ground truth time series values\r\ny_true = np.array([100.0, 105.0, 102.0, 108.0, 110.0])\r\n\r\n# Model predictions\r\ny_pred = np.array([102.0, 103.0, 104.0, 107.0, 111.0])\r\n\r\n# Compute direction of change\r\ntrue_direction = np.sign(np.diff(y_true))\r\npred_direction = np.sign(np.diff(y_pred))\r\n\r\ndirection_accuracy = np.mean(true_direction == pred_direction)\r\nprint(\"Direction Accuracy:\", direction_accuracy)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([100.0, 105.0, 102.0, 108.0, 110.0])\r\ny_pred = torch.tensor([102.0, 103.0, 104.0, 107.0, 111.0])\r\n\r\ntrue_direction = torch.sign(y_true[1:] - y_true[:-1])\r\npred_direction = torch.sign(y_pred[1:] - y_pred[:-1])\r\n\r\ndirection_accuracy = (true_direction == pred_direction).float().mean()\r\nprint(\"Direction Accuracy:\", direction_accuracy.item())",
+        "applicable_dataset_categories": [
+            "time_series_forecasting"
+        ],
+        "sort_order": "descending"
+    },
+
+    {
+        "id": 22,
+        "formula": "{me}",
+        "formula_display": "Max Error",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Max Error measures the maximum absolute difference between predicted values and actual values.</p>\r\n\r\n<p>It captures the single worst prediction made by the model, highlighting the largest error regardless of how well the model performs on average.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Max Error is computed as the maximum of the absolute differences between predicted values and actual values.</p>\r\n\r\n<p>\r\n  <code>Max Error = max( |y − ŷ| )</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>y</strong> = Actual value</li>\r\n  <li><strong>ŷ</strong> = Predicted value</li>\r\n</ul>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the actual values are [3, −1, 2] and the predicted values are [2, 0, 2], then the absolute errors are [1, 1, 0].</p>\r\n\r\n<p>\r\n  <code>Max Error = 1</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import max_error\r\n\r\n# Ground truth values\r\ny_true = [3.0, -1.0, 2.0]\r\n\r\n# Model predictions\r\ny_pred = [2.0, 0.0, 2.0]\r\n\r\nmax_err = max_error(y_true, y_pred)\r\nprint(\"Max Error:\", max_err)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth values\r\ny_true = torch.tensor([3.0, -1.0, 2.0])\r\n\r\n# Model predictions\r\ny_pred = torch.tensor([2.0, 0.0, 2.0])\r\n\r\nmax_err = torch.max(torch.abs(y_true - y_pred))\r\nprint(\"Max Error:\", max_err.item())",
+        "applicable_dataset_categories": [
+            "time_series_forecasting"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 21,
+        "formula": "{theils_u}",
+        "formula_display": "Theil's U (U2 Statistic)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Theil&rsquo;s U (U2 Statistic) measures the relative accuracy of a forecasting model compared to a naive benchmark, typically a random walk or no-change forecast.</p>\r\n\r\n<p>It indicates whether a model performs better or worse than the baseline. A U2 value less than 1.0 means the model outperforms the naive forecast, while a value greater than 1.0 indicates worse performance.</p>\r\n\r\n<hr />\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Theil&rsquo;s U2 is computed as the ratio of the Root Mean Squared Error (RMSE) of the model to the RMSE of a naive forecast.</p>\r\n\r\n<p><code>Theil&rsquo;s U = RMSE(model) / RMSE(naive forecast)</code></p>\r\n\r\n<p>The naive forecast is commonly defined as predicting the previous observed value for each time step.</p>\r\n\r\n<hr />\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a forecasting model has an RMSE of 5.0 and the naive forecast has an RMSE of 10.0, then:</p>\r\n\r\n<p><code>Theil&rsquo;s U = 5.0 / 10.0 = 0.50</code></p>",
+        "code_block": "# scikit-learn / NumPy style implementation\r\nimport numpy as np\r\n\r\n# Ground truth time series values\r\ny_true = np.array([100.0, 105.0, 110.0, 120.0])\r\n\r\n# Model predictions\r\ny_pred = np.array([102.0, 107.0, 108.0, 118.0])\r\n\r\n# Naive forecast (previous value)\r\ny_naive = np.roll(y_true, 1)\r\ny_naive[0] = y_true[0]\r\n\r\n# RMSE for model\r\nrmse_model = np.sqrt(np.mean((y_true - y_pred) ** 2))\r\n\r\n# RMSE for naive forecast\r\nrmse_naive = np.sqrt(np.mean((y_true - y_naive) ** 2))\r\n\r\ntheils_u = rmse_model / rmse_naive\r\nprint(\"Theil's U (U2):\", theils_u)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([100.0, 105.0, 110.0, 120.0])\r\ny_pred = torch.tensor([102.0, 107.0, 108.0, 118.0])\r\n\r\n# Naive forecast\r\ny_naive = torch.roll(y_true, shifts=1)\r\ny_naive[0] = y_true[0]\r\n\r\nrmse_model = torch.sqrt(torch.mean((y_true - y_pred) ** 2))\r\nrmse_naive = torch.sqrt(torch.mean((y_true - y_naive) ** 2))\r\n\r\ntheils_u = rmse_model / rmse_naive\r\nprint(\"Theil's U (U2):\", theils_u.item())",
+        "applicable_dataset_categories": [
+            "time_series_forecasting"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 20,
+        "formula": "{mdape}",
+        "formula_display": "Median Absolute Percentage Error",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Median Absolute Percentage Error (MdAPE) measures the median of the absolute percentage differences between predicted values and actual values.</p>\r\n\r\n<p>By using the median instead of the mean, MdAPE is more robust to outliers and extreme prediction errors, providing a more stable view of typical model performance.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>MdAPE is computed by taking the median of the absolute percentage errors across all samples.</p>\r\n\r\n<p>\r\n  <code>MdAPE = median( |(y − ŷ) / y| ) × 100</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>y</strong> = Actual value</li>\r\n  <li><strong>ŷ</strong> = Predicted value</li>\r\n</ul>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the actual values are [100, 200, 300] and the predicted values are [90, 210, 330], then the absolute percentage errors are [10%, 5%, 10%].</p>\r\n\r\n<p>\r\n  <code>MdAPE = median(10%, 5%, 10%) = 10%</code>\r\n</p>",
+        "code_block": "# scikit-learn style implementation (MdAPE is not built-in)\r\nimport numpy as np\r\n\r\n# Ground truth values\r\ny_true = np.array([100.0, 200.0, 300.0])\r\n\r\n# Model predictions\r\ny_pred = np.array([90.0, 210.0, 330.0])\r\n\r\nmdape = np.median(np.abs((y_true - y_pred) / y_true)) * 100\r\nprint(\"MdAPE (%):\", mdape)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth values\r\ny_true = torch.tensor([100.0, 200.0, 300.0])\r\ny_pred = torch.tensor([90.0, 210.0, 330.0])\r\n\r\nmdape = torch.median(torch.abs((y_true - y_pred) / y_true)) * 100\r\nprint(\"MdAPE (%):\", mdape.item())",
+        "applicable_dataset_categories": [
+            "time_series_forecasting"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 19,
+        "formula": "{smape}",
+        "formula_display": "Symmetric Mean Absolute Percentage Error",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Symmetric Mean Absolute Percentage Error (SMAPE) measures the average percentage difference between predicted values and actual values using a symmetric formulation.</p>\r\n\r\n<p>Unlike MAPE, SMAPE reduces issues when actual values are close to zero by normalizing the error using the average of the absolute actual and predicted values.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>SMAPE is computed as the average of the absolute differences between predicted and actual values divided by the average magnitude of those values.</p>\r\n\r\n<p>\r\n  <code>SMAPE = (100 / N) × Σ ( |y − ŷ| / (|y| + |ŷ|) ) × 2</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>y</strong> = Actual value</li>\r\n  <li><strong>ŷ</strong> = Predicted value</li>\r\n  <li><strong>N</strong> = Total number of samples</li>\r\n</ul>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the actual values are [100, 200] and the predicted values are [110, 180], then:</p>\r\n\r\n<p>\r\n  <code>SMAPE = (|100−110|/(100+110) + |200−180|/(200+180)) × 100 ≈ 9.52%</code>\r\n</p>",
+        "code_block": "# scikit-learn style implementation (SMAPE is not built-in)\r\nimport numpy as np\r\n\r\n# Ground truth values\r\ny_true = np.array([100.0, 200.0])\r\n\r\n# Model predictions\r\ny_pred = np.array([110.0, 180.0])\r\n\r\nsmape = np.mean(\r\n    2 * np.abs(y_pred - y_true) / (np.abs(y_true) + np.abs(y_pred))\r\n) * 100\r\n\r\nprint(\"SMAPE (%):\", smape)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth values\r\ny_true = torch.tensor([100.0, 200.0])\r\ny_pred = torch.tensor([110.0, 180.0])\r\n\r\nsmape = torch.mean(\r\n    2 * torch.abs(y_pred - y_true) / (torch.abs(y_true) + torch.abs(y_pred))\r\n) * 100\r\n\r\nprint(\"SMAPE (%):\", smape.item())",
+        "applicable_dataset_categories": [
+            "time_series_forecasting"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 18,
+        "formula": "{mape}",
+        "formula_display": "Mean Absolute Percentage Error",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Mean Absolute Percentage Error (MAPE) measures the average percentage difference between predicted values and actual values.</p>\r\n\r\n<p>It expresses prediction error as a percentage, making it easy to interpret and compare model performance across different scales.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>MAPE is computed as the average of the absolute percentage errors between predicted values and actual values.</p>\r\n\r\n<p>\r\n  <code>MAPE = (100 / N) × Σ | (y − ŷ) / y |</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>y</strong> = Actual value</li>\r\n  <li><strong>ŷ</strong> = Predicted value</li>\r\n  <li><strong>N</strong> = Total number of samples</li>\r\n</ul>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the actual values are [100, 200, 300] and the predicted values are [90, 210, 330], then:</p>\r\n\r\n<p>\r\n  <code>MAPE = (|100−90|/100 + |200−210|/200 + |300−330|/300) × 100 / 3 ≈ 8.33%</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import mean_absolute_percentage_error\r\n\r\n# Ground truth values\r\ny_true = [100.0, 200.0, 300.0]\r\n\r\n# Model predictions\r\ny_pred = [90.0, 210.0, 330.0]\r\n\r\nmape = mean_absolute_percentage_error(y_true, y_pred) * 100\r\nprint(\"MAPE (%):\", mape)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth values\r\ny_true = torch.tensor([100.0, 200.0, 300.0])\r\n\r\n# Model predictions\r\ny_pred = torch.tensor([90.0, 210.0, 330.0])\r\n\r\nmape = torch.mean(torch.abs((y_true - y_pred) / y_true)) * 100\r\nprint(\"MAPE (%):\", mape.item())",
+        "applicable_dataset_categories": [
+            "time_series_forecasting"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 17,
+        "formula": "{rmse}",
+        "formula_display": "Root Mean Squared Error",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Root Mean Squared Error (RMSE) measures the square root of the average squared difference between predicted values and actual values.</p>\r\n\r\n<p>By taking the square root of the Mean Squared Error, RMSE expresses the prediction error in the same units as the target variable, making it easier to interpret.</p>\r\n\r\n<hr />\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>RMSE is computed as the square root of the average of the squared differences between predicted values and actual values.</p>\r\n\r\n<p><code>RMSE = &radic;( (1 / N) &times; &Sigma; (y &minus; ŷ)&sup2; )</code></p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n\t<li><strong>y</strong> = Actual value</li>\r\n\t<li><strong>ŷ</strong> = Predicted value</li>\r\n\t<li><strong>N</strong> = Total number of samples</li>\r\n</ul>\r\n\r\n<hr />\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the actual values are [3, &minus;1, 2] and the predicted values are [2, 0, 2], then:</p>\r\n\r\n<p><code>RMSE = &radic;(((3 &minus; 2)&sup2; + (&minus;1 &minus; 0)&sup2; + (2 &minus; 2)&sup2;) / 3) &asymp; 0.82</code></p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import mean_squared_error\r\nimport math\r\n\r\n# Ground truth values\r\ny_true = [3.0, -1.0, 2.0]\r\n\r\n# Model predictions\r\ny_pred = [2.0, 0.0, 2.0]\r\n\r\nrmse = math.sqrt(mean_squared_error(y_true, y_pred))\r\nprint(\"RMSE:\", rmse)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth values\r\ny_true = torch.tensor([3.0, -1.0, 2.0])\r\n\r\n# Model predictions\r\ny_pred = torch.tensor([2.0, 0.0, 2.0])\r\n\r\nrmse = torch.sqrt(torch.mean((y_true - y_pred) ** 2))\r\nprint(\"RMSE:\", rmse.item())",
+        "applicable_dataset_categories": [
+            "tabular_regression",
+            "time_series_forecasting"
+        ],
+        "sort_order": "ascending"
+    },
+    {
+        "id": 16,
+        "formula": "{mse}",
+        "formula_display": "Mean Squared Error",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Mean Squared Error (MSE) measures the average squared difference between predicted values and actual values.</p>\r\n\r\n<p>It penalizes larger errors more heavily than smaller ones due to the squaring operation, making it particularly sensitive to outliers.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>MSE is computed as the average of the squared differences between predicted values and actual values.</p>\r\n\r\n<p>\r\n  <code>MSE = (1 / N) × Σ (y − ŷ)²</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>y</strong> = Actual value</li>\r\n  <li><strong>ŷ</strong> = Predicted value</li>\r\n  <li><strong>N</strong> = Total number of samples</li>\r\n</ul>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the actual values are [3, −1, 2] and the predicted values are [2, 0, 2], then:</p>\r\n\r\n<p>\r\n  <code>MSE = ((3 − 2)² + (−1 − 0)² + (2 − 2)²) / 3 ≈ 0.67</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import mean_squared_error\r\n\r\n# Ground truth values\r\ny_true = [3.0, -1.0, 2.0]\r\n\r\n# Model predictions\r\ny_pred = [2.0, 0.0, 2.0]\r\n\r\nmse = mean_squared_error(y_true, y_pred)\r\nprint(\"MSE:\", mse)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth values\r\ny_true = torch.tensor([3.0, -1.0, 2.0])\r\n\r\n# Model predictions\r\ny_pred = torch.tensor([2.0, 0.0, 2.0])\r\n\r\nmse = torch.mean((y_true - y_pred) ** 2)\r\nprint(\"MSE:\", mse.item())",
+        "applicable_dataset_categories": [
+            "tabular_regression",
+            "time_series_forecasting"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 15,
+        "formula": "{r2}",
+        "formula_display": "R² (Coefficient of Determination)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>R² (Coefficient of Determination) measures how well a regression model explains the variance in the target variable.</p>\r\n\r\n<p>It indicates the proportion of variability in the actual values that can be explained by the model’s predictions.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>R² is computed by comparing the prediction errors of the model to the variance of the actual data.</p>\r\n\r\n<p>\r\n  <code>R² = 1 − (Residual Sum of Squares / Total Sum of Squares)</code>\r\n</p>\r\n\r\n<p>An R² value of 1.0 indicates a perfect fit, while an R² value of 0.0 indicates that the model performs no better than predicting the mean of the target values.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a regression model explains 85% of the variance in the target variable, then:</p>\r\n\r\n<p>\r\n  <code>R² = 0.85</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import r2_score\r\n\r\n# Ground truth values\r\ny_true = [3.0, -0.5, 2.0, 7.0]\r\n\r\n# Model predictions\r\ny_pred = [2.5, 0.0, 2.0, 8.0]\r\n\r\nr2 = r2_score(y_true, y_pred)\r\nprint(\"R²:\", r2)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth values\r\ny_true = torch.tensor([3.0, -0.5, 2.0, 7.0])\r\n\r\n# Model predictions\r\ny_pred = torch.tensor([2.5, 0.0, 2.0, 8.0])\r\n\r\n# Residual Sum of Squares\r\nss_res = torch.sum((y_true - y_pred) ** 2)\r\n\r\n# Total Sum of Squares\r\nss_tot = torch.sum((y_true - torch.mean(y_true)) ** 2)\r\n\r\nr2 = 1 - (ss_res / ss_tot)\r\nprint(\"R²:\", r2.item())",
+        "applicable_dataset_categories": [
+            "tabular_regression",
+            "time_series_forecasting"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 14,
+        "formula": "{pck}",
+        "formula_display": "PCK (Percentage of Correct Keypoints)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Percentage of Correct Keypoints (PCK) measures how accurately a model predicts keypoint locations by checking whether predicted keypoints fall within a specified distance of the ground truth.</p>\r\n\r\n<p>It is commonly used in pose estimation and keypoint detection tasks, where the goal is to localize specific points such as joints or landmarks.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>A keypoint is considered correct if the distance between the predicted and ground truth keypoint is within a defined threshold.</p>\r\n\r\n<p>\r\n  <code>PCK = (Number of Correct Keypoints) / (Total Number of Keypoints)</code>\r\n</p>\r\n\r\n<p>The distance threshold is typically defined as a fraction of a reference length, such as the bounding box size or head size.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model predicts 100 keypoints and 85 of them fall within the allowed distance threshold, then:</p>\r\n\r\n<p>\r\n  <code>PCK = 85 / 100 = 0.85</code>\r\n</p>",
+        "code_block": "# Example: assuming the user selects a bounding-box based threshold\r\n\r\n# NumPy / scikit-learn style implementation\r\nimport numpy as np\r\n\r\n# Ground truth keypoints (N, K, 2)\r\ny_true = np.array([\r\n    [[100, 100], [200, 200]],\r\n    [[120, 120], [220, 220]]\r\n])\r\n\r\n# Predicted keypoints (N, K, 2)\r\ny_pred = np.array([\r\n    [[105, 102], [198, 205]],\r\n    [[130, 125], [240, 210]]\r\n])\r\n\r\nthreshold = 0.1  # 10% of bounding box width\r\n\r\n# Compute distances\r\ndistances = np.linalg.norm(y_true - y_pred, axis=2)\r\n\r\n# Bounding box width as reference\r\nbbox_width = y_true[:, :, 0].max(axis=1) - y_true[:, :, 0].min(axis=1)\r\nbbox_width = bbox_width[:, None]\r\n\r\npck = (distances <= threshold * bbox_width).mean()\r\nprint(\"PCK:\", pck)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\ny_true = torch.tensor([\r\n    [[100., 100.], [200., 200.]],\r\n    [[120., 120.], [220., 220.]]\r\n])\r\n\r\ny_pred = torch.tensor([\r\n    [[105., 102.], [198., 205.]],\r\n    [[130., 125.], [240., 210.]]\r\n])\r\n\r\nthreshold = 0.1  # 10% of bounding box width\r\n\r\ndistances = torch.linalg.norm(y_true - y_pred, dim=2)\r\nbbox_width = y_true[:, :, 0].amax(dim=1) - y_true[:, :, 0].amin(dim=1)\r\nbbox_width = bbox_width.unsqueeze(1)\r\n\r\npck = (distances <= threshold * bbox_width).float().mean()\r\nprint(\"PCK:\", pck.item())",
+        "applicable_dataset_categories": [
+            "keypoint_detection"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 13,
+        "formula": "{auc}",
+        "formula_display": "AUC",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>AUC (Area Under the ROC Curve) measures a model’s ability to distinguish between positive and negative classes across all possible classification thresholds.</p>\r\n\r\n<p>It evaluates how well the model ranks positive samples higher than negative samples, independent of any single decision threshold.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>AUC is calculated as the area under the Receiver Operating Characteristic (ROC) curve, which plots the True Positive Rate against the False Positive Rate.</p>\r\n\r\n<p>\r\n  <code>AUC = Area under the ROC curve</code>\r\n</p>\r\n\r\n<p>An AUC value of 1.0 indicates perfect class separation, while an AUC value of 0.5 indicates performance equivalent to random guessing.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model consistently assigns higher prediction scores to positive samples than to negative samples, it will achieve a high AUC score.</p>\r\n\r\n<p>\r\n  <code>AUC ≈ 0.90</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import roc_auc_score\r\n\r\n# Ground truth labels\r\ny_true = [0, 0, 1, 1]\r\n\r\n# Predicted probabilities or scores for the positive class\r\ny_scores = [0.1, 0.4, 0.35, 0.8]\r\n\r\nauc = roc_auc_score(y_true, y_scores)\r\nprint(\"AUC:\", auc)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([0, 0, 1, 1], dtype=torch.float)\r\n\r\n# Predicted scores\r\ny_scores = torch.tensor([0.1, 0.4, 0.35, 0.8], dtype=torch.float)\r\n\r\n# Sort by score (descending)\r\nsorted_indices = torch.argsort(y_scores, descending=True)\r\ny_true_sorted = y_true[sorted_indices]\r\n\r\n# Count positives and negatives\r\nP = y_true.sum()\r\nN = (1 - y_true).sum()\r\n\r\n# True positives and false positives cumulatively\r\ntp = torch.cumsum(y_true_sorted, dim=0)\r\nfp = torch.cumsum(1 - y_true_sorted, dim=0)\r\n\r\ntpr = tp / P\r\nfpr = fp / N\r\n\r\n# Trapezoidal integration\r\nauc = torch.trapz(tpr, fpr)\r\nprint(\"AUC:\", auc.item())",
+        "applicable_dataset_categories": [
+            "tabular_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 12,
+        "formula": "{specificity}",
+        "formula_display": "Specificity (True Negative Rate)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Specificity, also known as the True Negative Rate, measures the proportion of actual negative samples that are correctly identified by the model.</p>\r\n\r\n<p>It focuses on how well the model avoids false positive predictions and is especially important in scenarios where incorrectly predicting a positive outcome is costly.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Specificity is computed as the number of correctly predicted negative samples divided by the total number of actual negative samples.</p>\r\n\r\n<p>\r\n  <code>Specificity = TN / (TN + FP)</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>TN</strong> = True Negatives (correctly identified negative samples)</li>\r\n  <li><strong>FP</strong> = False Positives (negative samples incorrectly predicted as positive)</li>\r\n</ul>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a dataset contains 100 actual negative samples and the model correctly identifies 90 of them, then:</p>\r\n\r\n<p>\r\n  <code>Specificity = 90 / 100 = 0.90</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import confusion_matrix\r\n\r\n# Ground truth labels\r\ny_true = [0, 0, 1, 1, 0, 1]\r\n\r\n# Model predictions\r\ny_pred = [0, 1, 1, 1, 0, 0]\r\n\r\ntn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()\r\nspecificity = tn / (tn + fp)\r\n\r\nprint(\"Specificity:\", specificity)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([0, 0, 1, 1, 0, 1])\r\ny_pred = torch.tensor([0, 1, 1, 1, 0, 0])\r\n\r\ntn = ((y_pred == 0) & (y_true == 0)).sum().float()\r\nfp = ((y_pred == 1) & (y_true == 0)).sum().float()\r\n\r\nspecificity = tn / (tn + fp)\r\nprint(\"Specificity:\", specificity.item())",
+        "applicable_dataset_categories": [
+            "tabular_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 11,
+        "formula": "{cohen_kappa}",
+        "formula_display": "Cohen’s Kappa",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Cohen’s Kappa measures the level of agreement between predicted labels and ground truth labels while accounting for agreement that could occur by chance.</p>\r\n\r\n<p>It is commonly used to evaluate classification models when class distributions are imbalanced or when simple accuracy may overestimate model performance.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Cohen’s Kappa compares the observed agreement with the expected agreement due to chance.</p>\r\n\r\n<p>\r\n  <code>Kappa = (Observed Agreement − Expected Agreement) / (1 − Expected Agreement)</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>Observed Agreement</strong> = Proportion of samples where prediction matches ground truth</li>\r\n  <li><strong>Expected Agreement</strong> = Agreement expected by random chance based on class frequencies</li>\r\n</ul>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model achieves an observed agreement of 0.90 and the expected agreement by chance is 0.50, then:</p>\r\n\r\n<p>\r\n  <code>Kappa = (0.90 − 0.50) / (1 − 0.50) = 0.80</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import cohen_kappa_score\r\n\r\n# Ground truth labels\r\ny_true = [1, 0, 1, 1, 0, 0]\r\n\r\n# Model predictions\r\ny_pred = [1, 1, 1, 0, 0, 1]\r\n\r\nkappa = cohen_kappa_score(y_true, y_pred)\r\nprint(\"Cohen's Kappa:\", kappa)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([1, 0, 1, 1, 0, 0])\r\ny_pred = torch.tensor([1, 1, 1, 0, 0, 1])\r\n\r\n# Confusion matrix components\r\ntp = ((y_pred == 1) & (y_true == 1)).sum().float()\r\ntn = ((y_pred == 0) & (y_true == 0)).sum().float()\r\nfp = ((y_pred == 1) & (y_true == 0)).sum().float()\r\nfn = ((y_pred == 0) & (y_true == 1)).sum().float()\r\n\r\ntotal = tp + tn + fp + fn\r\n\r\n# Observed agreement\r\npo = (tp + tn) / total\r\n\r\n# Expected agreement\r\npe = ((tp + fp) * (tp + fn) + (fn + tn) * (fp + tn)) / (total * total)\r\n\r\nkappa = (po - pe) / (1 - pe)\r\nprint(\"Cohen's Kappa:\", kappa.item())",
+        "applicable_dataset_categories": [
+            "image_classification",
+            "text_classification",
+            "tabular_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 10,
+        "formula": "{mcc}",
+        "formula_display": "Matthews Correlation Coefficient",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Matthews Correlation Coefficient (MCC) measures the overall quality of binary classification predictions by taking into account all parts of the confusion matrix.</p>\r\n\r\n<p>It provides a balanced evaluation even when class distributions are highly imbalanced. MCC returns a value between −1 and 1, where 1 indicates perfect prediction, 0 indicates random prediction, and −1 indicates complete disagreement.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>MCC is computed using true positives, true negatives, false positives, and false negatives.</p>\r\n\r\n<p>\r\n  <code>MCC = (TP × TN − FP × FN) / √((TP + FP)(TP + FN)(TN + FP)(TN + FN))</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>TP</strong> = True Positives</li>\r\n  <li><strong>TN</strong> = True Negatives</li>\r\n  <li><strong>FP</strong> = False Positives</li>\r\n  <li><strong>FN</strong> = False Negatives</li>\r\n</ul>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model produces the following values:</p>\r\n\r\n<ul>\r\n  <li>TP = 40</li>\r\n  <li>TN = 50</li>\r\n  <li>FP = 5</li>\r\n  <li>FN = 5</li>\r\n</ul>\r\n\r\n<p>Then:</p>\r\n\r\n<p>\r\n  <code>MCC ≈ 0.80</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import matthews_corrcoef\r\n\r\n# Ground truth labels\r\ny_true = [1, 0, 1, 1, 0, 0, 1]\r\n\r\n# Model predictions\r\ny_pred = [1, 1, 1, 0, 0, 1, 1]\r\n\r\nmcc = matthews_corrcoef(y_true, y_pred)\r\nprint(\"MCC:\", mcc)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([1, 0, 1, 1, 0, 0, 1])\r\ny_pred = torch.tensor([1, 1, 1, 0, 0, 1, 1])\r\n\r\ntp = ((y_pred == 1) & (y_true == 1)).sum().float()\r\ntn = ((y_pred == 0) & (y_true == 0)).sum().float()\r\nfp = ((y_pred == 1) & (y_true == 0)).sum().float()\r\nfn = ((y_pred == 0) & (y_true == 1)).sum().float()\r\n\r\nnumerator = (tp * tn) - (fp * fn)\r\ndenominator = torch.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))\r\n\r\nmcc = numerator / denominator\r\nprint(\"MCC:\", mcc.item())",
+        "applicable_dataset_categories": [
+            "image_classification",
+            "text_classification",
+            "tabular_classification"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 9,
+        "formula": "{dice}",
+        "formula_display": "Dice Coefficient",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Dice Coefficient measures the similarity between predicted and ground truth regions.</p>\r\n\r\n<p>It is commonly used in image segmentation tasks to evaluate how well a model’s predicted regions overlap with the actual regions, and it is especially sensitive to small or thin structures.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Dice Coefficient is computed as twice the area of overlap divided by the total number of pixels in both the predicted and ground truth regions.</p>\r\n\r\n<p>\r\n  <code>Dice = (2 × Intersection) / (Predicted + Ground Truth)</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>Intersection</strong> = Overlapping area between prediction and ground truth</li>\r\n  <li><strong>Predicted</strong> = Area of the predicted region</li>\r\n  <li><strong>Ground Truth</strong> = Area of the actual region</li>\r\n</ul>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the overlapping area between a predicted region and the ground truth is 40 pixels, and the total area of both regions combined is 110 pixels, then:</p>\r\n\r\n<p>\r\n  <code>Dice = (2 × 40) / 110 ≈ 0.73</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import f1_score\r\n\r\n# Ground truth mask (1 = object, 0 = background)\r\ny_true = [1, 1, 0, 0, 1, 0, 1]\r\n\r\n# Predicted mask\r\ny_pred = [1, 0, 0, 0, 1, 1, 1]\r\n\r\n# Dice is equivalent to F1 score for binary masks\r\ndice = f1_score(y_true, y_pred)\r\nprint(\"Dice Coefficient:\", dice)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth mask\r\ny_true = torch.tensor([1, 1, 0, 0, 1, 0, 1], dtype=torch.float)\r\n\r\n# Predicted mask\r\ny_pred = torch.tensor([1, 0, 0, 0, 1, 1, 1], dtype=torch.float)\r\n\r\nintersection = (y_true * y_pred).sum()\r\ndice = (2 * intersection) / (y_true.sum() + y_pred.sum())\r\n\r\nprint(\"Dice Coefficient:\", dice.item())",
+        "applicable_dataset_categories": [
+            "semantic_segmentation"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 8,
+        "formula": "{iou}",
+        "formula_display": "Intersection over Union (IoU)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Intersection over Union (IoU) measures the overlap between predicted and ground truth regions.</p>\r\n\r\n<p>It is commonly used in object detection and image segmentation tasks to evaluate how accurately a model predicts the location and shape of objects.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>IoU is computed as the ratio of the intersection area to the union area of the predicted and ground truth regions.</p>\r\n\r\n<p>\r\n  <code>IoU = Intersection / Union</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>Intersection</strong> = Overlapping area between prediction and ground truth</li>\r\n  <li><strong>Union</strong> = Total area covered by both prediction and ground truth</li>\r\n</ul>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the overlapping area between a predicted region and the ground truth is 40 pixels, and the total combined area is 70 pixels, then:</p>\r\n\r\n<p>\r\n  <code>IoU = 40 / 70 ≈ 0.57</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import jaccard_score\r\n\r\n# Ground truth mask (1 = object, 0 = background)\r\ny_true = [1, 1, 0, 0, 1, 0, 1]\r\n\r\n# Predicted mask\r\ny_pred = [1, 0, 0, 0, 1, 1, 1]\r\n\r\niou = jaccard_score(y_true, y_pred)\r\nprint(\"IoU:\", iou)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth mask\r\ny_true = torch.tensor([1, 1, 0, 0, 1, 0, 1], dtype=torch.bool)\r\n\r\n# Predicted mask\r\ny_pred = torch.tensor([1, 0, 0, 0, 1, 1, 1], dtype=torch.bool)\r\n\r\nintersection = (y_true & y_pred).sum().float()\r\nunion = (y_true | y_pred).sum().float()\r\n\r\niou = intersection / union\r\nprint(\"IoU:\", iou.item())",
+        "applicable_dataset_categories": [
+            "object_detection",
+            "semantic_segmentation"
+        ],
+        "sort_order": "descending"
+    },
+
+    {
+        "id": 7,
+        "formula": "{mae}",
+        "formula_display": "Mean Absolute Error",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Mean Absolute Error (MAE) measures the average magnitude of errors between predicted values and actual values.</p>\r\n\r\n<p>It evaluates how far predictions are from the true values on average, without considering the direction of the error. MAE is easy to interpret because it is expressed in the same units as the target variable.</p>\r\n\r\n<hr />\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>MAE is computed as the average of the absolute differences between predicted values and actual values.</p>\r\n\r\n<p><code>MAE = (1 / N) &times; &Sigma; | y &minus; ŷ |</code></p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n\t<li><strong>y</strong> = Actual value</li>\r\n\t<li><strong>ŷ</strong> = Predicted value</li>\r\n\t<li><strong>N</strong> = Total number of samples</li>\r\n</ul>\r\n\r\n<hr />\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If the actual values are [3, &minus;1, 2] and the predicted values are [2, 0, 2], then:</p>\r\n\r\n<p><code>MAE = (|3 &minus; 2| + |&minus;1 &minus; 0| + |2 &minus; 2|) / 3 = 0.67</code></p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import mean_absolute_error\r\n\r\n# Ground truth values\r\ny_true = [3.0, -1.0, 2.0]\r\n\r\n# Model predictions\r\ny_pred = [2.0, 0.0, 2.0]\r\n\r\nmae = mean_absolute_error(y_true, y_pred)\r\nprint(\"MAE:\", mae)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth values\r\ny_true = torch.tensor([3.0, -1.0, 2.0])\r\n\r\n# Model predictions\r\ny_pred = torch.tensor([2.0, 0.0, 2.0])\r\n\r\nmae = torch.mean(torch.abs(y_true - y_pred))\r\nprint(\"MAE:\", mae.item())",
+        "applicable_dataset_categories": [
+            "keypoint_detection",
+            "time_series_forecasting"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 6,
+        "formula": "{map}",
+        "formula_display": "Mean Average Precision (mAP)",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Mean Average Precision (MAP) measures the quality of ranked predictions by evaluating how well relevant items are ordered in the result list.</p>\r\n\r\n<p>It is commonly used in information retrieval, recommendation systems, and ranking-based competitions, where the order of predictions is more important than simple classification accuracy.</p>\r\n\r\n<hr />\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>MAP is computed as the mean of the Average Precision (AP) values calculated for multiple queries or ranking tasks.</p>\r\n\r\n<p><code>MAP = (AP₁ + AP₂ + ... + APₙ) / N</code></p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n\t<li><strong>AP</strong> = Average Precision for a single query</li>\r\n\t<li><strong>N</strong> = Total number of queries</li>\r\n</ul>\r\n\r\n<p>Average Precision summarizes precision values at the ranks where relevant items appear in the prediction list.</p>\r\n\r\n<hr />\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a system evaluates two queries with Average Precision scores of 0.75 and 0.85, then:</p>\r\n\r\n<p><code>MAP = (0.75 + 0.85) / 2 = 0.80</code></p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import average_precision_score\r\n\r\n# Relevance labels for a single query (1 = relevant, 0 = not relevant)\r\ny_true = [0, 1, 0, 0, 1]\r\n\r\n# Predicted relevance scores\r\ny_scores = [0.2, 0.9, 0.4, 0.3, 0.8]\r\n\r\nap = average_precision_score(y_true, y_scores)\r\nprint(\"Average Precision:\", ap)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Relevance labels (1 = relevant, 0 = not relevant)\r\ny_true = torch.tensor([0, 1, 0, 0, 1], dtype=torch.float)\r\n\r\n# Predicted relevance scores\r\ny_scores = torch.tensor([0.2, 0.9, 0.4, 0.3, 0.8])\r\n\r\n# Sort by predicted scores (descending)\r\nsorted_indices = torch.argsort(y_scores, descending=True)\r\ny_true_sorted = y_true[sorted_indices]\r\n\r\nhits = 0.0\r\nprecision_sum = 0.0\r\n\r\nfor i in range(len(y_true_sorted)):\r\n    if y_true_sorted[i] == 1:\r\n        hits += 1\r\n        precision_sum += hits / (i + 1)\r\n\r\naverage_precision = precision_sum / y_true.sum()\r\nprint(\"Average Precision:\", average_precision.item())",
+        "applicable_dataset_categories": [
+            "object_detection"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 5,
+        "formula": "{accuracy}",
+        "formula_display": "Accuracy",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Accuracy measures the proportion of predictions that exactly match the ground truth.</p>\r\n\r\n<p>It treats every prediction equally and works for both <strong>binary</strong> and <strong>multi-class</strong> classification problems. However, accuracy can be misleading on <strong>imbalanced datasets</strong>, where a model may achieve a high score by correctly predicting the majority class while failing to detect rare but important cases.</p>\r\n\r\n<hr />\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Accuracy is computed as the number of correct predictions divided by the total number of predictions.</p>\r\n\r\n<p><code>Accuracy = (TP + TN) / (TP + TN + FP + FN)</code></p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n\t<li><strong>TP</strong> = True Positives (correct positive predictions)</li>\r\n\t<li><strong>TN</strong> = True Negatives (correct negative predictions)</li>\r\n\t<li><strong>FP</strong> = False Positives (incorrect positive predictions)</li>\r\n\t<li><strong>FN</strong> = False Negatives (missed positive predictions)</li>\r\n</ul>\r\n\r\n<hr />\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model produces the following results:</p>\r\n\r\n<ul>\r\n\t<li>TP = 45</li>\r\n\t<li>TN = 45</li>\r\n\t<li>FP = 5</li>\r\n\t<li>FN = 5</li>\r\n</ul>\r\n\r\n<p>Then:</p>\r\n\r\n<p><code>Accuracy = (45 + 45) / 100 = 0.90</code></p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import accuracy_score\r\n\r\n# Ground truth labels\r\ny_true = [1, 0, 1, 1, 0, 0]\r\n\r\n# Model predictions\r\ny_pred = [1, 1, 1, 0, 0, 0]\r\n\r\naccuracy = accuracy_score(y_true, y_pred)\r\nprint(\"Accuracy:\", accuracy)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([1, 0, 1, 1, 0, 0])\r\n\r\n# Model predictions\r\ny_pred = torch.tensor([1, 1, 1, 0, 0, 0])\r\n\r\naccuracy = (y_true == y_pred).float().mean()\r\nprint(\"Accuracy:\", accuracy.item())",
+        "applicable_dataset_categories": [
+            "image_classification",
+            "object_detection",
+            "text_classification",
+            "tabular_classification",
+            "semantic_segmentation",
+            "instance_segmentation",
+            "tabular_regression",
+            "time_series_forecasting"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 4,
+        "formula": "{precision}",
+        "formula_display": "Precision",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Precision measures the proportion of predicted positive samples that are actually positive.</p>\r\n\r\n<p>It focuses on the correctness of positive predictions and is especially important in scenarios where false positives are more costly than false negatives.</p>\r\n\r\n<hr />\r\n\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Precision is computed as the number of correctly predicted positive samples divided by the total number of samples predicted as positive.</p>\r\n\r\n<p>\r\n  <code>Precision = TP / (TP + FP)</code>\r\n</p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n  <li><strong>TP</strong> = True Positives (correctly predicted positive samples)</li>\r\n  <li><strong>FP</strong> = False Positives (incorrectly predicted positive samples)</li>\r\n</ul>\r\n\r\n<hr />\r\n\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model predicts 50 samples as positive and 40 of them are correct, then:</p>\r\n\r\n<p>\r\n  <code>Precision = 40 / 50 = 0.80</code>\r\n</p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import precision_score\r\n\r\n# Ground truth labels\r\ny_true = [1, 0, 1, 1, 0, 0]\r\n\r\n# Model predictions\r\ny_pred = [1, 1, 1, 0, 0, 1]\r\n\r\nprecision = precision_score(y_true, y_pred)\r\nprint(\"Precision:\", precision)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([1, 0, 1, 1, 0, 0])\r\n\r\n# Model predictions\r\ny_pred = torch.tensor([1, 1, 1, 0, 0, 1])\r\n\r\ntp = ((y_pred == 1) & (y_true == 1)).sum().float()\r\nfp = ((y_pred == 1) & (y_true == 0)).sum().float()\r\n\r\nprecision = tp / (tp + fp)\r\nprint(\"Precision:\", precision.item())",
+        "applicable_dataset_categories": [
+            "image_classification",
+            "keypoint_detection",
+            "text_classification",
+            "tabular_classification",
+            "semantic_segmentation",
+            "instance_segmentation"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 3,
+        "formula": "{recall}",
+        "formula_display": "Recall",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Recall measures the proportion of actual positive samples that are correctly identified by the model.</p>\r\n\r\n<p>It focuses on the model&rsquo;s ability to capture positive cases and is especially important in scenarios where missing a positive instance is more costly than producing a false positive.</p>\r\n\r\n<hr />\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Recall is computed as the number of correctly predicted positive samples divided by the total number of actual positive samples.</p>\r\n\r\n<p><code>Recall = TP / (TP + FN)</code></p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n\t<li><strong>TP</strong> = True Positives (correctly identified positive samples)</li>\r\n\t<li><strong>FN</strong> = False Negatives (positive samples that were missed)</li>\r\n</ul>\r\n\r\n<hr />\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a dataset contains 50 actual positive samples and the model correctly identifies 40 of them, then:</p>\r\n\r\n<p><code>Recall = 40 / 50 = 0.80</code></p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import recall_score\r\n\r\n# Ground truth labels\r\ny_true = [1, 0, 1, 1, 0, 0]\r\n\r\n# Model predictions\r\ny_pred = [1, 1, 1, 0, 0, 1]\r\n\r\nrecall = recall_score(y_true, y_pred)\r\nprint(\"Recall:\", recall)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([1, 0, 1, 1, 0, 0])\r\n\r\n# Model predictions\r\ny_pred = torch.tensor([1, 1, 1, 0, 0, 1])\r\n\r\ntp = ((y_pred == 1) & (y_true == 1)).sum().float()\r\nfn = ((y_pred == 0) & (y_true == 1)).sum().float()\r\n\r\nrecall = tp / (tp + fn)\r\nprint(\"Recall:\", recall.item())",
+        "applicable_dataset_categories": [
+            "image_classification",
+            "keypoint_detection",
+            "text_classification",
+            "tabular_classification",
+            "semantic_segmentation",
+            "instance_segmentation"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 2,
+        "formula": "{loss}",
+        "formula_display": "Loss",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>Loss measures how well a model&rsquo;s predictions match the true labels by quantifying the error between predicted outputs and actual values.</p>\r\n\r\n<p>It is a core metric used during model training and optimization. Lower loss values indicate better model performance, while higher loss values indicate larger prediction errors. The exact behavior of the loss depends on the specific loss function selected for the task.</p>\r\n\r\n<hr />\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>Loss is computed using a task-specific loss function chosen by the user (for example, cross-entropy, mean squared error, or other domain-specific losses).</p>\r\n\r\n<p>The loss function defines how prediction errors are measured and how strongly different types of errors are penalized.</p>",
+        "code_block": "# Example: assuming the user selects Mean Squared Error (MSE) as the loss function\r\n\r\n# scikit-learn\r\nfrom sklearn.metrics import mean_squared_error\r\n\r\n# Ground truth values\r\ny_true = [3.0, -0.5, 2.0, 7.0]\r\n\r\n# Model predictions\r\ny_pred = [2.5, 0.0, 2.0, 8.0]\r\n\r\nloss = mean_squared_error(y_true, y_pred)\r\nprint(\"MSE Loss:\", loss)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth values\r\ny_true = torch.tensor([3.0, -0.5, 2.0, 7.0])\r\n\r\n# Model predictions\r\ny_pred = torch.tensor([2.5, 0.0, 2.0, 8.0])\r\n\r\n# Example: assuming the user selects Mean Squared Error (MSE)\r\nloss_fn = torch.nn.MSELoss()\r\nloss = loss_fn(y_pred, y_true)\r\n\r\nprint(\"MSE Loss:\", loss.item())",
+        "applicable_dataset_categories": [
+            "image_classification",
+            "object_detection",
+            "keypoint_detection",
+            "text_classification",
+            "tabular_classification",
+            "semantic_segmentation",
+            "instance_segmentation",
+            "tabular_regression",
+            "time_series_forecasting"
+        ],
+        "sort_order": "descending"
+    },
+    {
+        "id": 1,
+        "formula": "{f1_score}",
+        "formula_display": "F1 Score",
+        "description": "<h4><strong>Definition</strong></h4>\r\n\r\n<p>F1 Score measures the balance between <strong>precision</strong> and <strong>recall</strong> by combining them into a single metric.</p>\r\n\r\n<p>It is particularly useful for <strong>imbalanced datasets</strong>, where accuracy may be misleading. The F1 Score reaches its best value at 1.0, indicating perfect precision and recall, and its worst value at 0.0.</p>\r\n\r\n<hr />\r\n<h4><strong>Calculation</strong></h4>\r\n\r\n<p>F1 Score is computed as the harmonic mean of precision and recall.</p>\r\n\r\n<p><code>F1 Score = 2 &times; (Precision &times; Recall) / (Precision + Recall)</code></p>\r\n\r\n<p>Where:</p>\r\n\r\n<ul>\r\n\t<li><strong>Precision</strong> = TP / (TP + FP)</li>\r\n\t<li><strong>Recall</strong> = TP / (TP + FN)</li>\r\n\t<li><strong>TP</strong> = True Positives (correct positive predictions)</li>\r\n\t<li><strong>FP</strong> = False Positives (incorrect positive predictions)</li>\r\n\t<li><strong>FN</strong> = False Negatives (missed positive predictions)</li>\r\n</ul>\r\n\r\n<hr />\r\n<h4><strong>Example</strong></h4>\r\n\r\n<p>If a model produces the following values:</p>\r\n\r\n<ul>\r\n\t<li>Precision = 0.80</li>\r\n\t<li>Recall = 0.50</li>\r\n</ul>\r\n\r\n<p>Then:</p>\r\n\r\n<p><code>F1 Score = 2 &times; (0.80 &times; 0.50) / (0.80 + 0.50) &asymp; 0.62</code></p>",
+        "code_block": "# scikit-learn\r\nfrom sklearn.metrics import f1_score\r\n\r\n# Ground truth labels\r\ny_true = [1, 0, 1, 1, 0, 0]\r\n\r\n# Model predictions\r\ny_pred = [1, 1, 1, 0, 0, 1]\r\n\r\nf1 = f1_score(y_true, y_pred)\r\nprint(\"F1 Score:\", f1)\r\n\r\n\r\n# PyTorch\r\nimport torch\r\n\r\n# Ground truth labels\r\ny_true = torch.tensor([1, 0, 1, 1, 0, 0])\r\n\r\n# Model predictions\r\ny_pred = torch.tensor([1, 1, 1, 0, 0, 1])\r\n\r\ntp = ((y_pred == 1) & (y_true == 1)).sum().float()\r\nfp = ((y_pred == 1) & (y_true == 0)).sum().float()\r\nfn = ((y_pred == 0) & (y_true == 1)).sum().float()\r\n\r\nprecision = tp / (tp + fp)\r\nrecall = tp / (tp + fn)\r\n\r\nf1 = 2 * (precision * recall) / (precision + recall)\r\nprint(\"F1 Score:\", f1.item())",
+        "applicable_dataset_categories": [
+            "image_classification",
+            "keypoint_detection",
+            "text_classification",
+            "tabular_classification",
+            "semantic_segmentation",
+            "instance_segmentation",
+            "time_to_event_prediction"
+        ],
+        "sort_order": "descending"
+    }
+]
