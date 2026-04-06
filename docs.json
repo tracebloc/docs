@@ -125,6 +125,11 @@
       "discord": "https://discord.gg/tracebloc"
     }
   },
+  "integrations": {
+    "ga4": {
+      "measurementId": "G-9CS3JNFFRJ"
+    }
+  },
   "seo": {
     "indexHiddenPages": false
   },
