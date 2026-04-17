@@ -9,9 +9,19 @@ The `tracebloc_package` is a Python library for uploading models, linking them w
 
 ## Installation
 
-```bash
-pip install tracebloc_package>=0.6.32
-```
+ML framework dependencies are optional — pick the extra that matches your setup. The default install is ~140 MB (up from ~8 GB in older versions).
+
+| You use | Install command |
+|---|---|
+| PyTorch (most common) | `pip install "tracebloc_package[pytorch]>=0.6.33"` |
+| TensorFlow | `pip install "tracebloc_package[tensorflow]>=0.6.33"` |
+| scikit-learn only | `pip install "tracebloc_package[sklearn]>=0.6.33"` |
+| Hugging Face LoRA / PEFT (requires PyTorch) | `pip install "tracebloc_package[pytorch,huggingface]>=0.6.33"` |
+| XGBoost / CatBoost / LightGBM | `pip install "tracebloc_package[boosting]>=0.6.33"` |
+| Survival analysis | `pip install "tracebloc_package[survival]>=0.6.33"` |
+| Everything | `pip install "tracebloc_package[all]>=0.6.33"` |
+
+Upgrading from 0.6.32 or earlier? See the [migration guide](https://github.com/tracebloc/tracebloc-py-package/blob/develop/MIGRATION.md).
 
 ## Key Features
 

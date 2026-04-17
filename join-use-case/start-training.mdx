@@ -36,8 +36,14 @@ Then, install requirements:
 
 ```bash
 python -m pip install --upgrade pip
-pip install tracebloc_package
+
+# Pick the extra that matches your ML framework:
+pip install "tracebloc_package[pytorch]>=0.6.33"      # most common
+# pip install "tracebloc_package[tensorflow]>=0.6.33" # TensorFlow
+# pip install "tracebloc_package[all]>=0.6.33"        # everything
 ```
+
+See the [tracebloc Package page](/tools-help/tracebloc-package) for all available extras.
 
 ## Install and Launch Jupyter Notebook
 
