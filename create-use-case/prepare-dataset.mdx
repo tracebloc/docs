@@ -41,20 +41,19 @@ ingestor = CSVIngestor(
 Make sure Docker is running on your system (e.g. by starting Docker Desktop), then execute the following command:
 
 ```bash
-# Build for cloud and push directly to registry
-docker buildx build --platform linux/amd64 -t <your-username>/<image-name>:<tag> --push .
+# Build for cloud (multi-arch) and push directly to registry
+docker buildx build --platform linux/amd64,linux/arm64 -t <your-username>/<image-name>:<tag> --push .
 ```
 3. Edit ingestor-job.yaml:
 - `metadata.name`: Unique job name (e.g. ingestor-job-train and ingestor-job-test)
 - `image`: The tag you built and pushed
-- `LABEL_FILE`: Path inside container (e.g. /data/train.csv). - Points to csv file with labels and/or data in case of tabular data
+- `LABEL_FILE`: Path inside the pod to the labels CSV, under the PVC mount (e.g. `/data/shared/labels.csv`). For tabular data, this is the same file that contains both labels and features.
 - `TABLE_NAME`: Unique table name (no spaces, one per dataset). Title is optional
-- `PATH_TO_LOCAL_DATASET_FILE`: Path to your dataset file within the container
-- `SRC_PATH`: Root inside the container where your files are mounted
+- `SRC_PATH`: Root of the mounted dataset directory inside the pod (`/data/shared`, backed by `~/.tracebloc/<workspace>/data` on the client host)
 
 4. Deploy to Kubernetes
 ```bash
-`kubectl apply -f ingestor-job.yaml -n <namespace>`
+`kubectl apply -f ingestor-job.yaml -n <workspace>`
 ```
 ## Detailed Setup
 
@@ -85,6 +84,9 @@ Each template is already configured with the correct data category and format:
 | Data Type | Template File | Data Category | Data Format |
 |-----------|---------------|---------------|-------------|
 | Tabular   | templates/tabular_classification/tabular_classification.py | `TaskCategory.TABULAR_CLASSIFICATION` | `DataFormat.TABULAR` |
+| Tabular   | templates/tabular_regression/tabular_regression.py | `TaskCategory.TABULAR_REGRESSION` | `DataFormat.TABULAR` |
+| Tabular   | templates/time_series_forecasting/time_series_forecasting.py | `TaskCategory.TIME_SERIES_FORECASTING` | `DataFormat.TABULAR` |
+| Tabular   | templates/time_to_event_prediction/time_to_event_prediction.py | `TaskCategory.TIME_TO_EVENT_PREDICTION` | `DataFormat.TABULAR` |
 | Image     | templates/image_classification/image_classification.py | `TaskCategory.IMAGE_CLASSIFICATION` | `DataFormat.IMAGE` |
 | Image     | templates/object_detection/object_detection.py | `TaskCategory.OBJECT_DETECTION` | `DataFormat.IMAGE` |
 | Text      | templates/text_classification/text_classification.py | `TaskCategory.TEXT_CLASSIFICATION` | `DataFormat.TEXT` |
@@ -180,7 +182,7 @@ object_detection_options = {
 Define file extensions.
 
 ```python
-text_options = {"allowed_extension": FileExtension.TXT}  # Allowed text file extensions
+text_options = {"extension": FileExtension.TXT}  # Allowed text file extensions
 ```
 
 #### Set CSV ingestion options
@@ -231,23 +233,46 @@ Other data types work similarly, follow the same configuration pattern using the
 
 With your template configured, the next step is to package it into a Docker image so it can run inside the Kubernetes cluster.
 
-### Edit Dockerfile
+### Docker Hub Setup (first-time users)
 
-Before building the image, update your `Dockerfile` so that both the dataset and the ingestion script are copied into the container. This ensures the ingestor has everything it needs at runtime, independent of your local file system.
+The cluster pulls your ingestor image from a public Docker registry, so you need an account before you can push. If you already have one, skip to [Edit Dockerfile](#edit-dockerfile).
 
-#### Copy data files
-For all use cases except tabular data (where labels and features are contained within a single labels.csv file), copy the data files into the Docker container:
+1. **Create a Docker Hub account** at [hub.docker.com/signup](https://hub.docker.com/signup) and verify your email.
+2. **Log in from your terminal** so the `docker push` command can authenticate:
+
+   ```bash
+   docker login
+   ```
+
+3. **Push the data ingestor image** to your account using the build/push commands in the next section. The image name takes the form `<your-docker-username>/<image-name>:<tag>` — the username segment must match the account you just created.
+4. **Make the image public** so the cluster can pull it without credentials:
+   - Go to [hub.docker.com/repositories](https://hub.docker.com/repositories), open the repository you just pushed.
+   - Click **Settings → Visibility settings → Make public**.
+
+   Keeping the image private is also fine, but then you must create a Kubernetes `imagePullSecret` named `regcred` in the client namespace (the `ingestor-job.yaml` already references it).
+
+### Place data files on the client host
+
+Datasets are **not** baked into the Docker image. They live on the client host in the per-workspace data directory and are mounted into the ingestor pod through the shared PVC (`client-pvc` → `/data/shared`).
+
+Copy your dataset into the client's data directory, where `<workspace>` is the workspace name you chose during client install (which is also the Helm release name and the Kubernetes namespace — the chart uses the same value for all three). The directory `~/.tracebloc/<workspace>/data/` is created automatically by the installer; just drop your files into it:
 
 ```bash
-# Needed for image and text data: Copy source data into the container to /app
-COPY LOCAL_PATH/images/ app/images/
-# Copy labels to /app
-COPY LOCAL_PATH/labels.csv /app/labels.csv
+# Host path on the machine where the tracebloc client is installed.
+# HOST_DATA_DIR defaults to ~/.tracebloc; override only if you set it during install.
+cp -R LOCAL_PATH/images   ~/.tracebloc/<workspace>/data/
+cp    LOCAL_PATH/labels.csv ~/.tracebloc/<workspace>/data/
 ```
 
-Then, move the ingestion script over to the container as well:
+Inside the ingestor pod this directory is mounted at `/data/shared`, so the same files appear as `/data/shared/images/...` and `/data/shared/labels.csv`. Set `SRC_PATH` and `LABEL_FILE` in `ingestor-job.yaml` to point at those in-pod paths (see [Configure Kubernetes](#3-configure-kubernetes) below).
 
-```bash
+For tabular data the same rule applies — drop the single `labels.csv` (with features and labels) into `~/.tracebloc/<workspace>/data/`.
+
+### Edit Dockerfile
+
+The Dockerfile only needs to package the ingestion script — the dataset is mounted at runtime, so do **not** `COPY` data into the image:
+
+```dockerfile
 # Copy the ingestion script into /app
 COPY templates/tabular_classification/tabular_classification.py /app/ingestor.py
 ```
@@ -255,7 +280,7 @@ COPY templates/tabular_classification/tabular_classification.py /app/ingestor.py
 
 ### Build Docker Image
 
-You need a docker user and password to proceed with the next step. Most cloud platforms (AWS, Azure, GCP) run on Linux AMD64. Specifying `--platform linux/amd64` guarantees compatibility, particularly if you build images on Apple Silicon (M1/M2) or other ARM-based systems. Pick a setup, build and deploy the image:
+You need a docker user and password to proceed with the next step. Cloud platforms run a mix of x86 and ARM nodes (e.g. AWS Graviton, Azure Ampere, GCP Tau T2A). Building a multi-arch image with `--platform linux/amd64,linux/arm64` guarantees the image runs on either, particularly if you build on Apple Silicon (M1/M2) or other ARM-based systems. Pick a setup, build and deploy the image:
 
 #### For Local Development/Testing
 
@@ -270,11 +295,8 @@ docker push <your-username>/<image-name>:<tag>
 #### For Cloud Deployment (AWS, Azure, GCP)
 
 ```bash
-# Build for Linux AMD64 (required for most cloud platforms)
-docker build --platform linux/amd64 -t <your-username>/<image-name>:<tag> .
-
-# Build and push directly to registry
-docker buildx build --platform linux/amd64 -t <your-username>/<image-name>:<tag> --push .
+# Build a multi-arch image (works on x86 and ARM cloud nodes) and push directly to the registry
+docker buildx build --platform linux/amd64,linux/arm64 -t <your-username>/<image-name>:<tag> --push .
 ```
 
 
@@ -287,7 +309,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: <JOBNAME> # Set a job name e.g. ingestor-job-train
-  namespace: <NAMESPACE> # Use the client namespace
+  namespace: <workspace> # Use the client namespace
 spec:
   template:
     spec:
@@ -297,7 +319,7 @@ spec:
         imagePullPolicy: Always  # Use IfNotPresent only for local tests
         volumeMounts:
           - name: shared-volume
-            mountPath: "/data/shared" # Client shared storage. Target for copied files, not the local source path
+            mountPath: "/data/shared" # Client shared PVC. Backed by ~/.tracebloc/<workspace>/data on the client host — read your dataset from here
         env:
         # Client credentials
         - name: CLIENT_ENV
@@ -315,25 +337,23 @@ spec:
         - name: MYSQL_HOST # value has to match the mysql deployment name in the client values.yaml
           value: "mysql-client"
 
-        # Dataset information
+        # Dataset information — paths inside the ingestor pod.
+        # /data/shared is the mount of the client-pvc, which is backed by
+        # ~/.tracebloc/<workspace>/data on the client host.
         - name: SRC_PATH
-          value: "/app" # Source folder path within the data ingestor
+          value: "/data/shared" # Root of the mounted dataset directory
         - name: LABEL_FILE
-          value: <PATH_TO_DATASET_OR_LABELS_FILE_IN_DOCKER_CONTAINER>  # Example: "/app/labels.csv"
-        - name: COMPANY
-          value: <YOUR_COMPANY_OR_ORGANISATION_NAME>
+          value: "/data/shared/labels.csv" # Path to the labels CSV inside the pod
         - name: TABLE_NAME
           value: <UNIQUE_TABLE_NAME> # Different for train and test, no spaces
         - name: TITLE
           value: <DATASET_TITLE> # Optional
         - name: BATCH_SIZE
-          value: "4000" # Number of entries per request. Depends on CPU memory, not data size. 5,000 is a safe default, tested up to 10,000.
+          value: "4000" # Optional, defaults to 4000
         - name: LOG_LEVEL
           value: "DEBUG" # Set DEBUG, "WARNING", "INFO" or "ERROR"
       imagePullSecrets:
       - name: regcred
-      nodeSelector:
-        type: system
       volumes:
         - name: shared-volume
           persistentVolumeClaim:
@@ -347,11 +367,9 @@ spec:
 - `image`, your Docker image (imagePullPolicy: Always for DockerHub, IfNotPresent for local)
 - `CLIENT_ID`, `CLIENT_PASSWORD` from the [tracebloc client view](https://ai.tracebloc.io/clients)
 - `TABLE_NAME`, unique per dataset, train and test use different names, no spaces. Different names for train and test data is mandatory
-- `LABEL_FILE`, path inside the ingestor container, for images this is usually a CSV with file path and label columns. Ensure it matches the copy path in the `Dockerfile`
-- `PATH_TO_LOCAL_DATASET_FILE`, path to your dataset file within the container
-- `SRC_PATH`, root inside the container where your files are mounted
-- `YOUR_COMPANY_OR_ORGANISATION_NAME`, chose a suitable company or organisation name
-- `BATCH_SIZE`, number of entries sent per request. Depends on available CPU memory, not data size (e.g. image dimensions). Too large can exhaust memory. Tested up to 10,000, but 5,000 is a safe default for most systems.
+- `LABEL_FILE`, path inside the ingestor pod (under `/data/shared`) to the CSV with file paths and labels — must match the location of the file you placed in `~/.tracebloc/<workspace>/data/`
+- `SRC_PATH`, root inside the pod where the dataset directory is mounted (`/data/shared`)
+- `BATCH_SIZE` is the number of entries sent to the server per request. Optional — defaults to 4000. Keep it consistent across data types. It depends on available CPU memory, not for example image size. Too large can exhaust memory. It was tested up to 10,000, but 5,000 is a safe default for most systems.
 - `LOG_LEVEL`, "WARNING" for all warnings and errors, "INFO" for all logs, "ERROR" for errors only
 
 ### 4. Deploy
@@ -359,12 +377,12 @@ spec:
 Run the ingestor as a Kubernetes Job:
 
 ```bash
-kubectl apply -f ingestor-job.yaml -n <namespace>
-kubectl wait -n <namespace> --for=condition=complete job/<INGESTOR_JOB_NAME>
-kubectl logs -n <namespace> job/<INGESTOR_JOB_NAME>
+kubectl apply -f ingestor-job.yaml -n <workspace>
+kubectl wait -n <workspace> --for=condition=complete job/<INGESTOR_JOB_NAME>
+kubectl logs -n <workspace> job/<INGESTOR_JOB_NAME>
 
 # Delete the job only after verifying logs
-kubectl delete -n <namespace> job/<INGESTOR_JOB_NAME>
+kubectl delete -n <workspace> job/<INGESTOR_JOB_NAME>
 ```
 This will start a pod, run the ingestion process once, and once complete you can delete the job.
 
@@ -378,8 +396,8 @@ The data ingestor always runs a validation step before ingestion and moving file
 Verify if jobs and pods are deployed successfully and running:
 
 ```bash
-kubectl get jobs,pods -n <namespace>
-kubectl logs -n <namespace> <pod-name>
+kubectl get jobs,pods -n <workspace>
+kubectl logs -n <workspace> <pod-name>
 ```
 
 Look for "All records processed successfully" in the logs.
@@ -402,17 +420,17 @@ View your datasets at [ai.tracebloc.io/data](https://ai.tracebloc.io/data) after
 
 ## Troubleshooting
 
-**Recommended for debugging:** Use [k9s](https://k9scli.io/), a terminal-based Kubernetes dashboard, to monitor jobs, pods, and logs in real time. Run `k9s -n <NAMESPACE>` to get a live view of resources, switch between them instantly, and inspect logs or events with a few keystrokes. Compared to kubectl, it is faster and more convenient.
+**Recommended for debugging:** Use [k9s](https://k9scli.io/), a terminal-based Kubernetes dashboard, to monitor jobs, pods, and logs in real time. Run `k9s -n <workspace>` to get a live view of resources, switch between them instantly, and inspect logs or events with a few keystrokes. Compared to kubectl, it is faster and more convenient.
 
 **Stale Kubernetes Job preventing new Job execution:**
 ```bash
-kubectl delete job ingestor-job -n <namespace>
+kubectl delete job ingestor-job -n <workspace>
 kubectl logs <pod-name>
 ```
 
 **Storage Issues:**
 ```bash
-kubectl get pvc -n <namespace>
+kubectl get pvc -n <workspace>
 ```
 
 ---
