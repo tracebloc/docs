@@ -25,16 +25,20 @@ Once these requirements are met, proceed with:
 
 **Requirements for all image data tasks:** Uniform image sizes and uniform file types. For example all images as 256x256 rgb .jpg files. Convert files if necessary and in case your images do not fit the supported size, crop or resize accordingly.
 
+<Note>
+**Filenames in the label CSV:** For all image and text tasks, the `filename` column in the label CSV **must not include the file extension** (e.g. use `cat01`, not `cat01.jpg`). The extension is configured once on the ingestor side via `file_options.extension` in the template and applied to every row at ingestion time.
+</Note>
+
 All images are validated before ingestion by the data ingestor. The ingestion process only starts when every file meets the requirements. Fix or remove any invalid images, then retry.
 
 For object detection, images and annotations are automatically up- or downsized to 448x448 pixels.
 
 | Task                  | Input file type | Color mode                                                   | Supported image size | Label file type                   | Requirements                                 | Links    |
 |-----------------------|-----------------|--------------------------------------------------------------|----------------|-----------------------------------|----------------------------------------------|----------|
-| Classification        | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | Square (height = width)   | CSV                               | Uniform image size and file type per dataset | [Detailed structure](#image-classification) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
-| Keypoint Detection    | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | Square (height = width)   | CSV                              | Uniform image sizes <br></br> Same number of keypoints per image and class  | [Detailed structure](#image-keypoint-detection) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
-| Object Detection      | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | Square (height = width). Images and annotations will be resized to 448x448 px automatically | Pascal VOC                        | Uniform image sizes, one xml per image       | [Detailed structure](#image-object-detection) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
-| Semantic Segmentation | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | Square (height = width)   | PNG, JPG, JPEG | Uniform image and mask sizes                 | [Detailed structure](#image-semantic-segmentation) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
+| Classification        | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | Square (height = width)   | CSV                               | Uniform image size and file type per dataset | [Detailed structure](#image-classification) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates/image_classification) |
+| Keypoint Detection    | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | Square (height = width)   | CSV                              | Uniform image sizes <br></br> Same number of keypoints per image and class  | [Detailed structure](#image-keypoint-detection) <br></br>Template coming soon — contact [support@tracebloc.io](mailto:support@tracebloc.io) |
+| Object Detection      | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | Square (height = width). Images and annotations will be resized to 448x448 px automatically | Pascal VOC                        | Uniform image sizes, one xml per image       | [Detailed structure](#image-object-detection) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates/object_detection) |
+| Semantic Segmentation | PNG, JPG, JPEG             | rgb (3 channels) or grayscale (1 channel), 8-bit per channel | Square (height = width)   | PNG, JPG, JPEG | Uniform image and mask sizes                 | [Detailed structure](#image-semantic-segmentation) <br></br>Template coming soon — contact [support@tracebloc.io](mailto:support@tracebloc.io) |
 
 ### Image Classification
 
@@ -56,7 +60,7 @@ dog02,dog
 ...
 ```
 
-The filename should not include the file extension.
+The `filename` column must not include the file extension. Set the expected extension once via `file_options.extension` in the ingestor template.
 
 ### Image Keypoint Detection
 
@@ -125,13 +129,15 @@ test/
 Each row represents one detected object, not one image. An image with multiple objects will have multiple rows.
 
 ``` labels.csv
-filename,label
+filename,image_label
 street01,car
 street01,car
 street01,person
 street02,car
 ...
 ```
+
+The `filename` column links each row to its image and to the matching XML annotation file. The `image_label` column holds the class name for each object instance — one row per object. Filenames should not include the file extension.
 
 ### Image Semantic Segmentation
 
@@ -170,9 +176,12 @@ image2,mask2,road,#FFFFFF
 
 **Requirements for all tabular data tasks:** Each dataset must be provided as a single CSV file with a header row. Every column must contain uniform data types, for example numeric values for features and a categorical or alphanumeric column for labels. Use UTF-8 encoding with comma separators and validate that your schema matches the expected types. Invalid rows are skipped by the ingestor.
 
-| Task           | Data file type     | Requirements                                                                                            | Links    |
-|----------------|--------------------|---------------------------------------------------------------------------------------------------------|----------|
-| Classification | CSV (features and label in one single file) | Uniform data formats per column. <br></br>Feature columns: Numeric <br></br>Label columns: Alphanumeric | [Detailed structure](#tabular-classification) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
+| Task                     | Data file type                              | Requirements                                                                                                                                  | Links    |
+|--------------------------|---------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|----------|
+| Classification           | CSV (features and label in one single file) | Uniform data formats per column. <br></br>Feature columns: Numeric <br></br>Label columns: Alphanumeric                                       | [Detailed structure](#tabular-classification) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates/tabular_classification) |
+| Regression               | CSV (features and label in one single file) | Uniform data formats per column. <br></br>Feature columns: Numeric <br></br>Label column: Numeric (continuous target)                         | [Detailed structure](#tabular-regression) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates/tabular_regression) |
+| Time Series Forecasting  | CSV (timestamp, features and target in one single file) | A timestamp column in a parsable format (e.g. `YYYY-MM-DD` or ISO 8601). <br></br>Feature columns: Numeric <br></br>Target column: Numeric    | [Detailed structure](#time-series-forecasting) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates/time_series_forecasting) |
+| Time to Event Prediction | CSV (features, time and event in one single file) | A `time` column (duration until event or censoring, integer or numeric). <br></br>An event column (binary 0/1 indicating whether the event occurred). <br></br>Feature columns: Numeric | [Detailed structure](#time-to-event-prediction) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates/time_to_event_prediction) |
 
 ### Tabular Classification
 
@@ -186,19 +195,51 @@ id,feature1,feature2,feature3,label
 ...
 ```
 
-### Regression
+### Tabular Regression
 
-Regression tasks are supported on the platform. Evaluation uses Mean Absolute Error (MAE). For details on supported metrics, see [Supported Metrics](/create-use-case/define#supported-metrics-per-data-type-and-task). Reach out to us at [support@tracebloc.io](mailto:support@tracebloc.io) for guidance on data format requirements for regression use cases.
+Same structure as Tabular Classification, but the label column holds a continuous numeric target (not a class).
+
+``` csv
+id,square_feet,bedrooms,age,price
+1,1668.08,3,15,285.50
+2,1701.78,4,12,320.75
+3,1697.01,2,8,245.30
+...
+```
+
+### Time Series Forecasting
+
+Provide a single CSV with a timestamp column, one or more numeric feature columns, and the numeric target column you want to forecast. Rows must be ordered by time and use a consistent timestamp format.
+
+``` csv
+timestamp,feature_1,feature_2,target
+2023-10-01,7,1,125.50
+2023-10-02,1,0,132.30
+2023-10-03,2,0,128.75
+...
+```
+
+### Time to Event Prediction
+
+Provide a single CSV with feature columns, a `time` column (duration to event or censoring), and a binary event column (1 = event occurred, 0 = censored).
+
+``` csv
+age,feature_1,feature_2,time,event
+75,0,1.9,4,1
+55,0,1.1,6,1
+65,0,1.3,7,0
+...
+```
 
 ### Text Data
 
 | Task                  | Input files    | Label file type                       | Requirements                                                                                          | Links    |
 |-----------------------|----------------|-----------------------------------|---------------------------------------------------------------------------------------------------------|----------|
-| Classification        | TXT            | CSV                               |      Text file may not be empty  | [Detailed structure](#text-classification) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates) |
+| Classification        | TXT            | CSV                               |      Text file may not be empty  | [Detailed structure](#text-classification) <br></br>[Example](https://github.com/tracebloc/data-ingestors/tree/develop/templates/text_classification) |
 
 ### Text Classification
 
-The filename should not include the file extension.
+The `filename` column must not include the file extension. The extension is set once via `file_options.extension` in the ingestor template (e.g. `FileExtension.TXT`).
 
 ``` structure
 train/

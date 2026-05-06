@@ -3,11 +3,7 @@ title: "Setup Guide"
 description: "Detailed walkthrough for deploying a tracebloc workspace — requirements, installer internals, GPU support, and verification."
 ---
 
-# Setup Guide
-
 Everything the installer does, explained. This page walks through the full setup process — what each step does, what to expect, and how to verify it worked.
-
-Looking for the short version? See [Quick Setup](/getting-started/quick-setup).
 
 ---
 
@@ -61,13 +57,13 @@ Your client moves through these states as it goes from registration to running:
 
 ## 3. Deploy
 
-One command sets up your entire workspace. The installer is idempotent — it detects what's already installed and skips it, so it's safe to re-run at any time.
+One command sets up your entire workspace on any machine — macOS, Linux, or Windows. The installer is idempotent: it detects what's already installed and skips it, so it's safe to re-run at any time.
 
 <Tabs>
   <Tab title="macOS / Linux">
 
 ```bash
-bash <(curl -fsSL https://tracebloc.io/install.sh)
+bash <(curl -fsSL https://tracebloc.io/i.sh)
 ```
 
   </Tab>
@@ -76,28 +72,46 @@ bash <(curl -fsSL https://tracebloc.io/install.sh)
 Open **PowerShell as Administrator**:
 
 ```powershell
-irm https://tracebloc.io/install.ps1 | iex
+irm https://tracebloc.io/i.ps1 | iex
 ```
 
   </Tab>
 </Tabs>
 
-The installer prompts for three things:
+Nothing on your machine is modified outside:
 
-1. **Workspace name** — a namespace for your Kubernetes deployment, e.g. `berlin-team`, `vision-lab`
-2. **Client ID** — from step 2
-3. **Client password** — from step 2
+- `~/.tracebloc/` — data and config
+- **Docker** — container runtime
 
 ### What the Installer Does
 
-Behind the scenes, the installer builds a complete local Kubernetes environment:
+The installer runs four clearly labelled steps:
 
-1. **Detects your system** — OS, architecture, and GPU hardware
-2. **Installs dependencies** — Docker, k3d, kubectl, Helm (skips what's already present)
-3. **Creates a Kubernetes cluster** — a lightweight k3s cluster running inside Docker, with all persistent data stored in `~/.tracebloc/`
-4. **Deploys the tracebloc client** — via Helm chart, configured with your credentials
+**Step 1/4 — Check system requirements**
+Verifies Docker is installed and running, detects GPU hardware (falls back to CPU mode if none), and installs missing system tools (e.g. `conntrack`).
 
-Install logs are saved to `~/.tracebloc/install-*.log` if you need to debug anything.
+**Step 2/4 — Set up secure compute environment**
+Provisions a lightweight local Kubernetes cluster inside Docker. First run takes 1–2 minutes to download components.
+
+**Step 3/4 — Install tracebloc client**
+Prompts for a **workspace name** (e.g. `berlin-team`, `vision-lab`, `ml-mardan`). This identifies the client on your machine and becomes the Kubernetes namespace.
+
+**Step 4/4 — Connect to tracebloc network**
+Prompts for your **Client ID** and **password** from step 2 above. This links your secure local environment to the tracebloc platform so vendors can submit models for evaluation.
+
+When it finishes you'll see a summary like:
+
+```
+tracebloc client installed successfully
+
+Workspace : <workspace>
+Mode      : CPU      # or GPU
+
+Logs:       ~/.tracebloc/
+Data:       /tracebloc/<workspace>
+```
+
+Install logs are kept in `~/.tracebloc/` if you need to debug anything.
 
 ### GPU Support
 
