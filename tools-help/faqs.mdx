@@ -1,51 +1,63 @@
 ---
 title: "Frequently Asked Questions"
-description: "Find answers to common questions about using Tracebloc."
+description: "Common questions about running tracebloc — privacy, infrastructure, training, and getting help."
 ---
 
-Find answers to common questions about using Tracebloc.
+## Privacy & security
 
-## General Questions
+### Can the data scientist see my raw data?
+No. Data scientists submit model code; the code runs on your client, against your data, in an isolated sandbox. They only ever see the metrics you decide to expose. Raw data, in-flight model state, and intermediate artifacts never leave your infrastructure.
 
-### What is Tracebloc?
-Tracebloc is a platform that enables secure and private AI model evaluation. It allows data owners to test vertical AI models from external vendors while maintaining data privacy.
+### What gets shared with the data scientist or with tracebloc?
+Only the evaluation metrics you configure on the use case (accuracy, F1, latency, and so on). No raw data, no trained weights, no logs.
 
-### How does data privacy work?
-- Data never leaves your infrastructure
-- Model weights are encrypted
-- No raw data sharing
-- Secure communication channels
+### Where do trained model weights end up?
+On your storage. Trained weights stay on the persistent volume claim attached to your client. Data scientists never receive them.
 
-## Technical Questions
+### Is the client's egress restricted?
+Yes — the chart applies a Kubernetes `NetworkPolicy` that only allows training pods to reach the tracebloc backend (for orchestration metadata) and the in-cluster proxy that handles result and FLOPs reporting. **The egress lockdown only takes effect on a CNI that enforces NetworkPolicy.** EKS's default VPC CNI does not, out of the box — see the [EKS deployment guide](/environment-setup/eks-client-deployment-guide) for what to install.
 
-### System Requirements
-**Q: What are the minimum system requirements?**
-A: See our [requirements documentation](/environment-setup/setup-guide#requirements).
+## Infrastructure
 
-**Q: Do I need a GPU?**
-A: While not mandatory, a GPU is recommended for optimal performance.
+### Do I need a GPU?
+For most ML workloads, yes. The standalone installer detects NVIDIA and AMD GPUs and installs the right drivers automatically. CPU-only is fine for small tabular and text models, but expect long training times on anything image- or sequence-heavy.
 
-### Training Questions
-**Q: How do I start training?**
-A: Follow our [training guide](/join-use-case/start-training).
+### What Kubernetes versions do you support?
+Kubernetes 1.24 and above. See the [setup guide](/environment-setup/setup-guide) for the full prerequisites.
 
-**Q: How do I monitor training progress?**
-A: Use the Tracebloc dashboard or API.
+### Can I run on-premise only?
+Yes. The standalone installer provisions a local cluster on your machine, or you can deploy the unified Helm chart into your existing on-prem Kubernetes. The client never depends on cloud infrastructure for training.
 
-## Troubleshooting
+### Do you support air-gapped clusters?
+Yes — see the [packaged-chart install path in tracebloc/client INSTALL.md](https://github.com/tracebloc/client/blob/main/docs/INSTALL.md) for the offline flow.
 
-### Common Issues
-1. **Connection Problems**
-   - Check network settings
-   - Verify firewall rules
-   - Test connectivity
+## Training & models
 
-2. **Resource Issues**
-   - Check GPU availability
-   - Monitor memory usage
-   - Verify storage space
+### How do I monitor training?
+Through the [tracebloc dashboard](https://ai.tracebloc.io) — every experiment, every model, every metric. Or query the API if you prefer programmatic access.
 
-## Next Steps
+### What if a training run fails?
+The client retries transient failures automatically. Persistent failures show up in the dashboard with logs and exit codes. For ingestion-time failures, check the Job logs in the namespace you deployed into.
 
-- [Review key terms](/tools-help/key-terms)
-- [Check package documentation](/tools-help/tracebloc-package)
+### Can I bring my own model?
+Yes. Use the [tracebloc Python package](/tools-help/tracebloc-package) to upload a model file (PyTorch, TensorFlow, or a custom container). For ready-made starting points, see the [model zoo](https://github.com/tracebloc/model-zoo).
+
+### Do you support fine-tuning?
+Yes — the same upload flow handles full training, fine-tuning with pretrained weights, and inference-only evaluation.
+
+## Cost & support
+
+### How much does it cost?
+See the [pricing page](https://tracebloc.io/#pricing) on the website.
+
+### How do I get help?
+
+- Email [support@tracebloc.io](mailto:support@tracebloc.io)
+- Open an issue on the relevant GitHub repo: [client](https://github.com/tracebloc/client/issues), [data-ingestors](https://github.com/tracebloc/data-ingestors/issues), [docs](https://github.com/tracebloc/docs/issues)
+- Join the [Discord](https://discord.gg/tracebloc)
+
+## Next steps
+
+- [Get started](/environment-setup/setup-guide) — install the client
+- [Browse key terms](/tools-help/key-terms)
+- [Use the Python SDK](/tools-help/tracebloc-package)
