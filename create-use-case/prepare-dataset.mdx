@@ -277,6 +277,18 @@ The Dockerfile only needs to package the ingestion script — the dataset is mou
 COPY templates/tabular_classification/tabular_classification.py /app/ingestor.py
 ```
 
+If the cluster enforces the `restricted` Pod Security Standard (see [Run as non-root](#run-as-non-root) below), also add a non-root user to the Dockerfile, **before** the `# Set the entrypoint` line:
+
+```dockerfile
+RUN groupadd -g 1000 app && \
+    useradd -u 1000 -g 1000 -m -s /bin/bash app && \
+    chown -R 1000:1000 /app
+
+USER 1000
+
+# Set the entrypoint
+```
+
 
 ### Build Docker Image
 
@@ -317,6 +329,16 @@ spec:
       - name: api
         image: <YOUR_DOCKER_USER>/<YOUR_IMAGE_NAME>:latest # Your Docker image name and tag, e.g. "latest"
         imagePullPolicy: Always  # Use IfNotPresent only for local tests
+        # Required if the namespace enforces the `restricted` Pod Security Standard.
+        # See "Run as non-root" below.
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          capabilities:
+            drop:
+              - "ALL"
+          seccompProfile:
+            type: RuntimeDefault
         volumeMounts:
           - name: shared-volume
             mountPath: "/data/shared" # Client shared PVC. Backed by ~/.tracebloc/<workspace>/data on the client host — read your dataset from here
@@ -387,6 +409,46 @@ kubectl delete -n <workspace> job/<INGESTOR_JOB_NAME>
 This will start a pod, run the ingestion process once, and once complete you can delete the job.
 
 **IMPORTANT:** You must run this process twice — once for training data and once for test data. Use different `JOBNAME` and `TABLE_NAME` values for each run (e.g. `ingestor-job-train` / `ingestor-job-test`), and set `intent` to `TRAIN` or `TEST` accordingly in your template script.
+
+### Run as non-root
+
+If the namespace enforces the `restricted` [Pod Security Standard](https://kubernetes.io/docs/concepts/security/pod-security-standards/), `kubectl apply` will be admitted but the pod will be rejected with a warning like:
+
+```text
+Warning: would violate PodSecurity "restricted:latest":
+  allowPrivilegeEscalation != false (container "api" must set securityContext.allowPrivilegeEscalation=false),
+  unrestricted capabilities (container "api" must set securityContext.capabilities.drop=["ALL"]),
+  runAsNonRoot != true (pod or container "api" must set securityContext.runAsNonRoot=true),
+  seccompProfile (pod or container "api" must set securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
+job.batch/ingestor-job-train-data created
+```
+
+Two changes are needed:
+
+**1. Add a `securityContext` block to the container in `ingestor-job.yaml`** (already shown in the YAML above):
+
+```yaml
+securityContext:
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - "ALL"
+  seccompProfile:
+    type: RuntimeDefault
+```
+
+**2. Run the container as a non-root user.** Add the following to the Dockerfile **before** the `# Set the entrypoint` line so the image ships with a UID that satisfies `runAsNonRoot: true`:
+
+```dockerfile
+RUN groupadd -g 1000 app && \
+    useradd -u 1000 -g 1000 -m -s /bin/bash app && \
+    chown -R 1000:1000 /app
+
+USER 1000
+```
+
+Rebuild and push the image, then re-apply the job.
 
 The data ingestor always runs a validation step before ingestion and moving files.
 
