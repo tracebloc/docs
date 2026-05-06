@@ -36,7 +36,12 @@ Then, install requirements:
 
 ```bash
 python -m pip install --upgrade pip
-pip install tracebloc_package
+
+# Install with the extra that matches your framework:
+pip install "tracebloc_package[pytorch]"
+# pip install "tracebloc_package[tensorflow]"
+# pip install "tracebloc_package[sklearn]"
+# pip install "tracebloc_package[all]"  # legacy behaviour — all frameworks
 ```
 
 ## Install and Launch Jupyter Notebook
@@ -149,7 +154,7 @@ In case of multiple uploads, only the most recently uploaded model will be linke
 Upload the model to the use case workspace from your notebook:
 
 ```python
-user.uploadModel("../../model-zoo/model_zoo/<task>/<framework>/model.py")
+user.upload_model("../../model-zoo/model_zoo/<task>/<framework>/model.py")
 ```
 
 For details on model code formats, mandatory variables per framework, and pre-trained weights, see [Customize Models](/join-use-case/model-optimization).
@@ -159,7 +164,7 @@ For details on model code formats, mandatory variables per framework, and pre-tr
 Navigate to the use case and copy the "Training Dataset ID" at the center of the use case pane and enter it to establish the link
 
 ```python
-trainingObject = user.linkModelDataset('Dataset ID')
+training = user.link_model_dataset('Dataset ID')
 ```
 
 You should get "Assignment successful!" and the dataset parameters.
@@ -170,14 +175,14 @@ Set the experiment name and configure hyperparameters.
 
 ```python
 # Set experiment name
-trainingObject.experimentName("My Experiment")
+training.experiment_name("My Experiment")
 
 # Set training parameters
-trainingObject.epochs(10)
+training.epochs(10)
 ...
 
 # Get training plan
-trainingObject.getTrainingPlan()
+training.get_training_plan()
 ```
 
 Get the training plan to check settings before you start the training. For a detailed list of all hyperparameter options, see [Hyperparameters](/join-use-case/hyperparameters).
@@ -186,10 +191,10 @@ For classical, non federated and non gradient descent-based machine learning alg
 
 ```python
 # Set training parameters
-trainingObject.epochs(1)
+training.epochs(1)
 
 # Set federated learning cycles = 1
-trainingObject.cycles(1)
+training.cycles(1)
 
 ```
 
@@ -198,13 +203,13 @@ trainingObject.cycles(1)
 To send the model to the workspace infrastructure and start training on the training data, run:
 
 ```python
-trainingObject.start()
+training.start()
 ```
 
 Go to the [tracebloc website](https://ai.tracebloc.io/my-use-cases) and your use case, then navigate to the "Training/Finetuning" tab you will see your experiment. Monitor the training process hover over the learning curves to check the performance at specific epochs and cycles.
 
 <Info>
-If you want to run a second experiment, overwrite parameters and re-start training with `trainingObject.start()`.
+If you want to run a second experiment, overwrite parameters and re-start training with `training.start()`.
 </Info>
 
 ### Pause, Re-Start and Stop:
