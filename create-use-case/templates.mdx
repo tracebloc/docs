@@ -1,6 +1,34 @@
 ---
 title: "Templates"
-description: "Ready-made use case examples to get started quickly."
+description: "Ready-made data ingestion templates for every supported task — clone, configure, deploy."
 ---
 
-Browse examples at the [template section of the tracebloc website](https://ai.tracebloc.io/explore).
+Each task tracebloc supports comes with a runnable data-ingestion template — a working `Dockerfile`, `ingestor.py`, and `ingestor-job.yaml` you can copy, point at your data, and ship.
+
+## Available templates
+
+| Task | Template |
+|---|---|
+| Image classification | [`templates/image_classification`](https://github.com/tracebloc/data-ingestors/tree/develop/templates/image_classification) |
+| Object detection | [`templates/object_detection`](https://github.com/tracebloc/data-ingestors/tree/develop/templates/object_detection) |
+| Text classification | [`templates/text_classification`](https://github.com/tracebloc/data-ingestors/tree/develop/templates/text_classification) |
+| Tabular classification | [`templates/tabular_classification`](https://github.com/tracebloc/data-ingestors/tree/develop/templates/tabular_classification) |
+| Tabular regression | [`templates/tabular_regression`](https://github.com/tracebloc/data-ingestors/tree/develop/templates/tabular_regression) |
+| Time series forecasting | [`templates/time_series_forecasting`](https://github.com/tracebloc/data-ingestors/tree/develop/templates/time_series_forecasting) |
+| Time-to-event prediction | [`templates/time_to_event_prediction`](https://github.com/tracebloc/data-ingestors/tree/develop/templates/time_to_event_prediction) |
+
+Keypoint detection and semantic segmentation are supported, but ready-made templates are still in flight — contact [support@tracebloc.io](mailto:support@tracebloc.io) for guidance in the meantime. See [Prerequisites](/create-use-case/prerequisites) for the full list of supported tasks and required data formats.
+
+## How to use a template
+
+1. **Clone the data-ingestors repo** and copy the template directory you want.
+2. **Point it at your data** — set `SRC_PATH` and `LABEL_FILE` in `ingestor-job.yaml`.
+3. **Build and deploy** as a Kubernetes Job. See [Prepare Dataset](/create-use-case/prepare-dataset) for the full ingestion workflow.
+
+## Browse live use cases
+
+For real examples already running on the platform, see the [explore section on tracebloc](https://ai.tracebloc.io/explore).
+
+## Need help?
+
+Email [support@tracebloc.io](mailto:support@tracebloc.io).
