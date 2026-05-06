@@ -24,7 +24,7 @@ Override defaults by setting environment variables before the install command. U
 Example — custom cluster name with two worker nodes:
 
 ```bash
-CLUSTER_NAME=my-cluster AGENTS=2 bash <(curl -fsSL https://tracebloc.io/install.sh)
+CLUSTER_NAME=my-cluster AGENTS=2 bash <(curl -fsSL https://tracebloc.io/i.sh)
 ```
 
 ## Cluster Management
@@ -96,10 +96,12 @@ The installer does **not** install GPU drivers on Windows. Pre-install NVIDIA dr
 
 Skip the installer entirely. Use this if you already have a Kubernetes cluster, need custom resource limits, or want full control over the Helm deployment.
 
+A single unified chart — **`tracebloc/client`** — supports AKS, EKS, bare-metal, and OpenShift. Platform behaviour is selected via values overrides; reference defaults live in the repo at [`client/ci/{aks,eks,bm,oc}-values.yaml`](https://github.com/tracebloc/client/tree/main/client/ci).
+
 ### Add the Helm repository
 
 ```bash
-helm repo add tracebloc https://tracebloc.github.io/client/
+helm repo add tracebloc https://tracebloc.github.io/client
 helm repo update
 ```
 
@@ -115,52 +117,146 @@ helm show values tracebloc/client > values.yaml
 
 #### Authentication
 
-Connect the client to your tracebloc account:
+Set your Client ID and password from the [tracebloc client view](https://ai.tracebloc.io/clients):
 
 ```yaml
 clientId: "<YOUR_CLIENT_ID>"
 clientPassword: "<YOUR_CLIENT_PASSWORD>"
 ```
 
-#### Resource Limits
+#### Resource Limits for Training Jobs
 
-Control how much CPU, memory, and GPU each training job can consume. Size these according to your workloads and available hardware:
+Defaults are sized for typical workloads. Override per job size; for GPU support, requests and limits **must** be equal:
 
 ```yaml
 env:
   RESOURCE_REQUESTS: "cpu=2,memory=8Gi"
   RESOURCE_LIMITS: "cpu=2,memory=8Gi"
-  GPU_REQUESTS: ""        # "nvidia.com/gpu=1" for GPU
-  GPU_LIMITS: ""          # "nvidia.com/gpu=1" for GPU
-  RUNTIME_CLASS_NAME: ""  # "nvidia" for GPU with k3s
+  GPU_REQUESTS: ""             # "nvidia.com/gpu=1" for GPU
+  GPU_LIMITS: ""               # "nvidia.com/gpu=1" for GPU
+  RUNTIME_CLASS_NAME: ""       # "nvidia" for k3s GPU
 ```
 
 #### Storage
 
-Persistent volumes for the database, logs, and training data. Adjust sizes based on your dataset:
+Storage class and PVC sizes:
 
 ```yaml
 storageClass:
   create: true
-  name: client-storage-class
-  provisioner: manual
+  provisioner: ""              # set per platform (see ci/*-values.yaml)
   allowVolumeExpansion: true
   parameters: {}
 
+# Bare-metal only — hostPath-backed PVs at /tracebloc/{data,logs,mysql}
 hostPath:
-  enabled: true
+  enabled: false
 
 pvc:
   mysql: 2Gi
   logs: 10Gi
   data: 50Gi
-
-pvcAccessMode: ReadWriteOnce
 ```
 
-#### Proxy (optional)
+Platform snippets (drop into your values file):
 
-Only needed if your machine accesses the internet through a corporate proxy:
+<details>
+<summary>AKS</summary>
+
+```yaml
+storageClass:
+  create: true
+  provisioner: file.csi.azure.com
+  parameters:
+    skuName: Standard_LRS
+  mountOptions:
+    - dir_mode=0750
+    - file_mode=0640
+    - uid=999
+    - gid=999
+    - mfsymlinks
+    - cache=strict
+    - actimeo=30
+clusterScope: true
+```
+</details>
+
+<details>
+<summary>EKS</summary>
+
+```yaml
+storageClass:
+  create: true
+  provisioner: efs.csi.aws.com
+  volumeBindingMode: Immediate
+  reclaimPolicy: Retain
+  mountOptions: [actimeo=30]
+  parameters:
+    directoryPerms: "700"
+    uid: "999"
+    gid: "999"
+    fileSystemId: <YOUR_EFS_FILESYSTEM_ID>
+    provisioningMode: efs-ap
+clusterScope: true
+```
+</details>
+
+<details>
+<summary>Bare-metal / k3s / k3d</summary>
+
+```yaml
+hostPath:
+  enabled: true
+pvcAccessMode: ReadWriteOnce
+storageClass:
+  create: true
+  provisioner: kubernetes.io/no-provisioner
+namespace:
+  podSecurity:
+    enforce: ""        # hostPath needs the privileged init-mysql-data container
+    enforceVersion: ""
+clusterScope: true
+```
+</details>
+
+<details>
+<summary>OpenShift</summary>
+
+```yaml
+storageClass:
+  create: false
+  name: ocs-storagecluster-cephfs
+clusterScope: false
+openshift:
+  scc:
+    enabled: true
+networkPolicy:
+  training:
+    enabled: true
+    dnsNamespace: openshift-dns
+    dnsSelector:
+      dns.operator.openshift.io/daemonset-dns: default
+    clusterCidrs:
+      - "10.128.0.0/14"
+      - "172.30.0.0/16"
+```
+</details>
+
+#### Docker Registry
+
+The chart pulls the client image from a container registry — credentials are required in production. Use a token, not a plaintext password.
+
+```yaml
+dockerRegistry:
+  server: https://index.docker.io/v1/
+  username: <DOCKER_USERNAME>
+  password: <DOCKER_PASSWORD or DOCKER_TOKEN>
+  email: <DOCKER_EMAIL>
+```
+
+The chart auto-creates a secret named `{{ .Release.Name }}-regcred`. Omit the `dockerRegistry` block entirely to skip pull-secret creation (e.g. when using a public mirror).
+
+#### Proxy (optional)
 
 ```yaml
 env:
@@ -168,6 +264,129 @@ env:
   HTTP_PROXY_PORT: "8080"
   HTTP_PROXY_USERNAME: ""
   HTTP_PROXY_PASSWORD: ""
+```
+
+#### Auto-upgrade (on by default)
+
+Releases of chart `1.3.0+` install a `<release>-auto-upgrade` CronJob that polls `https://tracebloc.github.io/client` daily and runs `helm upgrade --reset-then-reuse-values` whenever a newer chart version is published. Closes [tracebloc/client#69](https://github.com/tracebloc/client/issues/69) — older deployed clients no longer drift from the latest secure release.
+
+```yaml
+autoUpgrade:
+  enabled: true                # set false to opt out
+  schedule: "23 2 * * *"       # daily at 02:23 UTC
+  suspend: false               # one-shot pause without removing resources
+  repoUrl: "https://tracebloc.github.io/client"
+  repoName: "tracebloc"
+  chartName: "client"
+  timeout: "10m"
+```
+
+The CronJob's ServiceAccount is bound to the built-in `cluster-admin` ClusterRole because the chart templates cluster-scoped resources (PriorityClass, StorageClass, ClusterRoleBinding, optionally Namespace). Disable if you need a manual approval gate on upgrades.
+
+#### NetworkPolicy hardening for training pods
+
+Training pods run untrusted ML code. The chart can apply a NetworkPolicy that denies ingress and restricts egress to DNS + external HTTPS only — blocking pod-to-pod, MySQL, and Kubernetes API access from the training pod.
+
+```yaml
+networkPolicy:
+  training:
+    enabled: true
+    dnsNamespace: kube-system
+    dnsSelector: {}            # empty falls back to {k8s-app: kube-dns}
+    clusterCidrs:
+      - "10.0.0.0/8"
+      - "172.16.0.0/12"
+      - "192.168.0.0/16"
+```
+
+Requires a CNI that **enforces** NetworkPolicy:
+
+| Platform | Notes |
+|----------|-------|
+| AKS | needs `--network-policy azure` (Azure NPM) or Calico at cluster create |
+| EKS | needs Calico or Cilium add-on (the default AWS VPC CNI alone does **not** enforce) |
+| Bare-metal | needs Calico / Cilium / kube-router (Flannel alone does **not** enforce) |
+| OpenShift | OVN-Kubernetes enforces by default |
+
+Leave `enabled: false` on clusters without an enforcing CNI — silently having no protection is worse than explicitly disabling it.
+
+<Warning>
+The chart's training-pod egress lockdown only blocks traffic if your CNI enforces NetworkPolicy. Verify your CNI before relying on it.
+</Warning>
+
+#### Resource Monitor and node-agents namespace
+
+The `tracebloc-resource-monitor` DaemonSet collects node-level CPU/memory metrics. It mounts `hostPath` volumes (`/proc`, `/sys`) which Pod Security Admission's `restricted` profile bans — so the chart isolates it in a dedicated **privileged** namespace (default `tracebloc-node-agents`).
+
+```yaml
+resourceMonitor: true          # set false on clusters where metrics-server cannot be installed
+nodeAgents:
+  namespace:
+    create: true
+    name: tracebloc-node-agents
+```
+
+When `create: false`, create the namespace yourself with the required PSA labels:
+
+```bash
+kubectl create namespace tracebloc-node-agents
+kubectl label namespace tracebloc-node-agents \
+  pod-security.kubernetes.io/enforce=privileged \
+  pod-security.kubernetes.io/warn=privileged \
+  pod-security.kubernetes.io/audit=privileged
+```
+
+The DaemonSet **requires** `metrics-server`. It is bundled on k3d/k3s/AKS, present on OpenShift, and **must be installed manually on EKS** (`kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml`).
+
+#### Pod Security Admission labels
+
+Training Jobs run untrusted user-supplied ML code. The chart can create the release namespace with Pod Security Admission `warn`/`audit`/`enforce` labels at the `restricted` profile for defense-in-depth:
+
+```yaml
+namespace:
+  create: false                # true only on greenfield installs
+  podSecurity:
+    warn: restricted
+    audit: restricted
+    enforce: restricted        # set "" for bare-metal hostPath installs
+```
+
+When `create: false` (default) and you want PSA labels on an existing namespace:
+
+```bash
+kubectl label namespace <workspace> \
+  pod-security.kubernetes.io/warn=restricted \
+  pod-security.kubernetes.io/audit=restricted \
+  pod-security.kubernetes.io/enforce=restricted
+```
+
+#### Image digest pinning
+
+Pin images by content hash for reproducible deploys. When `digest` is set, `tag` is ignored and `imagePullPolicy` drops to `IfNotPresent`.
+
+```yaml
+images:
+  jobsManager:    { digest: "sha256:..." }
+  podsMonitor:    { digest: "sha256:..." }
+  resourceMonitor: { digest: "sha256:..." }
+  requestsProxy:  { digest: "sha256:..." }
+  mysqlClient:    { tag: "", digest: "" }
+  busybox:        { tag: "1.35", digest: "" }
+```
+
+#### PriorityClass and PodDisruptionBudgets
+
+The chart pins the MySQL pod with a `tracebloc-data-plane` PriorityClass (value `1000000`) so it survives node-level OOM and scheduling pressure, and applies PDBs to MySQL and the jobs manager. Override only if you run a multi-replica MySQL externally:
+
+```yaml
+priorityClass:
+  create: true
+  name: tracebloc-data-plane
+  value: 1000000
+
+podDisruptionBudget:
+  mysql:       { create: true }
+  jobsManager: { create: true }
 ```
 
 ### Deploy
@@ -181,26 +400,45 @@ helm upgrade --install <workspace> tracebloc/client \
   --values values.yaml
 ```
 
-### Update
+### Upgrade
 
-Pull the latest chart version and apply your configuration:
+The auto-upgrade CronJob handles routine version bumps. To upgrade manually:
 
 ```bash
 helm repo update
 helm upgrade <workspace> tracebloc/client \
   --namespace <workspace> \
+  --reset-then-reuse-values \
   --values values.yaml
 ```
 
-### Uninstall
+<Note>
+When upgrading **into** chart 1.3.0 from 1.2.x, use `--reset-then-reuse-values` (not plain `--reuse-values`) — the new `autoUpgrade` block did not exist in 1.2.x and a plain reuse fails template rendering.
+</Note>
 
-Remove the client and all associated resources:
+### Uninstall
 
 ```bash
 helm uninstall <workspace> -n <workspace>
+```
+
+PVCs and the PriorityClass are annotated `helm.sh/resource-policy: keep` so your data and shared cluster resources survive uninstall. To remove them too:
+
+```bash
 kubectl delete pvc --all -n <workspace>
 kubectl delete namespace <workspace>
 ```
+
+### Migrating from legacy charts
+
+If you installed before chart 1.3.x using `tracebloc/aks`, `tracebloc/eks`, or `tracebloc/bm`, see the [migration guide in the client repo](https://github.com/tracebloc/client/blob/main/client/MIGRATION.md). Key changes:
+
+- 4 charts → 1 chart (`tracebloc/client`) with platform values overrides
+- Auth keys flattened: `jobsManager.env.CLIENT_ID` + `secrets.clientPassword` → top-level `clientId` + `clientPassword`
+- PVC keys flattened: `clientData` / `clientLogsPvc` / `mysqlPvc` (with `name`, `storage`, `hostPath`) → `pvc.{data,logs,mysql}` (size only) + `hostPath.enabled` for bare-metal
+- ServiceAccount renamed from `default` to `{{ .Release.Name }}-jobs-manager`
+- Pull-secret renamed from hard-coded `regcred` to `{{ .Release.Name }}-regcred`
+- The `namespace` value in the legacy `values.yaml` is gone — use `helm install -n <ns>` instead
 
 ## Security
 
