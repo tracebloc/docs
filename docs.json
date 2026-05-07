@@ -67,6 +67,7 @@
               "join-use-case/join-use-case",
               "join-use-case/start-training",
               "join-use-case/hyperparameters",
+              "join-use-case/how-training-works",
               "join-use-case/model-optimization",
               "join-use-case/model-evaluation"
             ]
@@ -84,7 +85,6 @@
             "group": "Tools & Help",
             "pages": [
               "tools-help/tracebloc-package",
-              "tools-help/how-training-works",
               "tools-help/faqs",
               "tools-help/key-terms"
             ]
