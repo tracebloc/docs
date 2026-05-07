@@ -84,6 +84,7 @@
             "group": "Tools & Help",
             "pages": [
               "tools-help/tracebloc-package",
+              "tools-help/pipeline-reference",
               "tools-help/faqs",
               "tools-help/key-terms"
             ]
