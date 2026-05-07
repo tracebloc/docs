@@ -1,0 +1,337 @@
+---
+title: "How training works"
+description: "What the tracebloc client does to your data and model in each use case, so you can reproduce a run locally and compare results."
+---
+
+This page documents the training and inference pipeline that the tracebloc client runs for every supported use case. The goal is full transparency: you can read what happens step-by-step, write an equivalent script on your own machine against the same dataset, and compare metrics number-for-number against what the platform reports.
+
+If something here does not match what you observe in your run, please [open a support ticket](mailto:support@tracebloc.io) — the source of truth is the open client code in [`tracebloc/tracebloc-client`](https://github.com/tracebloc/tracebloc-client).
+
+## Shared lifecycle
+
+Every use case runs through the same outer loop, defined in `use_cases/base_use_case.py` and `core/modes/base_training.py` / `base_inference.py`:
+
+<Steps>
+  <Step title="Resolve experiment">
+    The runner reads the experiment configuration (dataset IDs, hyperparameters, framework, mode) and selects the correct framework adapter (PyTorch, TensorFlow, or scikit-learn).
+  </Step>
+  <Step title="Load model">
+    Your uploaded model file is downloaded and instantiated. For continued cycles or inference, the latest weights are pulled and loaded into the model.
+  </Step>
+  <Step title="Build data pipeline">
+    The domain strategy for the use case loads raw data, applies preprocessing, and returns a training/validation `DataLoader` pair (training mode) or a single test loader (inference mode).
+  </Step>
+  <Step title="Configure optimizer and loss">
+    The parameters manager normalizes hyperparameters, selects the loss function, and constructs the optimizer (and scheduler, if any).
+  </Step>
+  <Step title="Run loop">
+    For each epoch, the training loop iterates batches, calls the strategy's `_train_step` (forward, loss, backward, step) and then `_eval_step` for validation. Per-batch results feed into the metrics class.
+  </Step>
+  <Step title="Compute and report metrics">
+    After each epoch, the metrics class produces epoch-level numbers. After the cycle ends, it produces cycle-level aggregate metrics (the ones surfaced in the platform UI). Weights are then saved and uploaded.
+  </Step>
+</Steps>
+
+### Common defaults
+
+| Setting | Default | Override |
+|---|---|---|
+| Train/validation split | 80 / 20 | `validation_split` parameter |
+| Batch size | 32 | `batch_size` parameter |
+| Optimizer | Adam | `optimizer` parameter |
+| LR scheduler | `ReduceLROnPlateau` on validation loss | configurable |
+| Class weighting | Enabled when class counts are imbalanced | automatic |
+
+To replicate locally, use the same split ratio and seed when slicing your data, the same loss and optimizer, and the same per-use-case preprocessing described below.
+
+## Per use case
+
+<AccordionGroup>
+
+<Accordion title="Image classification" icon="image">
+
+**Frameworks:** PyTorch, TensorFlow
+
+**Input**
+- Image files (JPEG/PNG) plus a metadata table with `data_id` (filename) and `label` (class name).
+- Class names are encoded to integer indices.
+
+**Preprocessing**
+- Resize images to `image_size` (model parameter).
+- Normalize with ImageNet mean/std (PyTorch) or framework-equivalent.
+- Optional augmentation pipeline (rotation, shift, flip, brightness/contrast) applied only on the training split.
+- **Stratified** train/val split so class proportions are preserved.
+
+**Training step**
+1. Forward: `logits = model(images)` → shape `(B, num_classes)`.
+2. Loss: `CrossEntropyLoss` by default; class weights applied if classes are imbalanced.
+3. Backward and optimizer step.
+4. Per-batch accuracy = `(argmax(logits) == labels).mean()`.
+
+**Validation step**
+- Same forward pass, no backward; accumulate predictions and probabilities.
+
+**Cycle metrics**
+- `accuracy`, `top_3_accuracy`, `top_5_accuracy`
+- `auc_roc` (macro), `auc_pr` (macro)
+- `log_loss`, `brier_score`
+- `qwk` (quadratic weighted kappa)
+- Confusion matrix
+
+**Inference output**
+- Per-image predicted class index and softmax probabilities.
+
+</Accordion>
+
+<Accordion title="Object detection" icon="square-dashed">
+
+**Frameworks:** PyTorch (YOLO and R-CNN families auto-detected)
+
+**Input**
+- Images plus a metadata table grouped by image, with one bounding box per row: `data_id`, `class`, box coordinates.
+- Box format is normalized internally to `xyxy`.
+
+**Preprocessing**
+- Resize with letterbox padding to preserve aspect ratio; box coordinates rescaled accordingly.
+- Training-only augmentations (flips, color jitter, rotation).
+- Train/val split is non-stratified, deduplicated by image filename so a single image is never split across both sets.
+
+**Training step**
+- **R-CNN family:** `model(images, targets)` returns a dict of internal losses (RPN, classification, box regression). Sum and backprop.
+- **YOLO family:** `model(images)` returns raw predictions; loss is computed by the model's own loss module.
+
+**Validation step**
+- Forward in eval mode. R-CNN returns `[{boxes, scores, labels}, ...]`; YOLO predictions are converted to that same format.
+
+**Cycle metrics** (via `torchmetrics.detection.MeanAveragePrecision`)
+- `map`, `map_50`, `map_75`
+- `mar_1`, `mar_10`
+- `iou`, `giou`
+
+**Inference output**
+- Per-image: boxes, scores, class labels.
+
+</Accordion>
+
+<Accordion title="Semantic segmentation" icon="layer-group">
+
+**Frameworks:** PyTorch
+
+**Input**
+- Image plus per-pixel class mask. Metadata: `data_id`, `mask_id`. Masks are integer class indices in `[0, num_classes)`.
+
+**Preprocessing**
+- Image and mask resized together to `image_size`.
+- Image-only normalization (ImageNet mean/std).
+- Joint augmentation (the same flip/rotation applied to both image and mask).
+
+**Training step**
+1. Forward: `model(images)` returns logits `(B, C, H, W)` or a `{"out": ..., "aux": ...}` dict.
+2. Loss: `CrossEntropyLoss` over pixels. If an `aux` head is present, total loss = `loss_main + 0.4 * loss_aux` (torchvision convention).
+3. Backward and optimizer step.
+4. Per-batch pixel accuracy.
+
+**Cycle metrics**
+- `pixel_accuracy`, `mean_pixel_accuracy`
+- `iou`, `mean_iou`, `frequency_weighted_iou`
+- `dice`
+- `boundary_iou`, `boundary_f1`
+- `hausdorff_distance`, `asd` (average surface distance)
+- Confusion matrix
+
+</Accordion>
+
+<Accordion title="Keypoint detection" icon="crosshairs">
+
+**Frameworks:** PyTorch (R-CNN, heatmap, and direct-regression families)
+
+**Input**
+- Images and per-image keypoint coordinates (with optional visibility flags).
+
+**Preprocessing**
+- Resize to `image_size`; keypoints rescaled to match.
+- ImageNet normalization.
+- Train/val split is non-stratified.
+
+**Training step**
+- **R-CNN (KeypointRCNN):** `model(images, targets)` returns a loss dict; sum and backprop.
+- **Heatmap:** Predict `(B, K, H, W)` heatmaps; MSE-style loss against target heatmaps.
+- **Direct regression:** Predict `(B, K, 2)`; MSE-style loss against ground-truth coordinates.
+
+**Cycle metrics**
+- `pck` (Percentage of Correct Keypoints) at threshold `0.2 * image_size`
+- `pck@0.5` (stricter threshold)
+- `auc` over PCK thresholds
+- `mpjpe` (mean per-joint position error, in pixels)
+
+</Accordion>
+
+<Accordion title="Text classification" icon="font">
+
+**Frameworks:** PyTorch (HuggingFace Transformers)
+
+**Input**
+- Raw text strings with class labels. Metadata columns: `data_id`, `text`, `label`.
+
+**Preprocessing**
+- Tokenization with the configured tokenizer (typically the one bundled with the base model).
+- Padding/truncation to `max_length`.
+- Stratified train/val split.
+
+**Training step**
+1. Forward: `model(input_ids=..., attention_mask=..., labels=...)`. HuggingFace models return `(loss, logits)`; custom models compute loss externally with `CrossEntropyLoss`.
+2. Backward and optimizer step (gradient clipping enabled).
+3. Per-batch accuracy from `argmax(logits)`.
+
+**Optional model adaptations**
+- LoRA fine-tuning when `lora_enabled` is set (with `lora_r`, `lora_alpha`, `lora_dropout`, optional Q-LoRA).
+- 4-/8-bit quantization when enabled.
+
+**Cycle metrics**
+- `accuracy`
+- `f1_macro`, `f1_weighted`
+- `precision_macro`, `recall_macro`
+- `auc_roc` (multiclass, macro)
+- Confusion matrix
+
+</Accordion>
+
+<Accordion title="Tabular classification" icon="table">
+
+**Frameworks:** PyTorch, TensorFlow, scikit-learn (incl. XGBoost / LightGBM)
+
+**Input**
+- A tabular file (CSV) with feature columns plus a `label` column. Categorical features may be strings.
+
+**Preprocessing**
+- Optional feature selection (drop low-variance / highly-missing columns) when not pinned via `feature_columns`.
+- Imputation: median (numeric) and mode (categorical).
+- Categorical encoding via `LabelEncoder`.
+- `StandardScaler` on numeric features for neural network frameworks.
+- **Stratified** train/val split on the label.
+- Encoders and scalers are persisted in cycle 1 and reused in later cycles and during inference, so transformations are identical across runs.
+
+**Training step**
+1. Forward: `model(X_batch)` → logits `(B, num_classes)`.
+2. Loss: `CrossEntropyLoss` (PyTorch), `categorical_crossentropy` (TF), or the estimator's built-in objective (sklearn). Class weights applied for imbalance.
+3. Backward + optimizer step (or `estimator.fit(...)` for sklearn).
+
+**Cycle metrics**
+- `accuracy`, `balanced_accuracy`
+- `f1_macro`, `f1_weighted`, `f1_micro`
+- `precision_macro`, `recall_macro`
+- `f_beta_0.5`, `f_beta_2.0`
+- `cohen_kappa`, `qwk`
+- `auc_roc`, `auc_pr`
+- `gini`, `normalized_gini`
+- `brier_score`, `hamming_loss`, `jaccard_score`, `npv`
+- Confusion matrix
+
+</Accordion>
+
+<Accordion title="Tabular regression" icon="chart-line">
+
+**Frameworks:** PyTorch, TensorFlow, scikit-learn
+
+**Input**
+- Tabular features plus a continuous target column. Rows with non-finite targets are dropped.
+
+**Preprocessing**
+- Identical to tabular classification, except: target is **not** encoded, and the train/val split is **not** stratified.
+
+**Training step**
+1. Forward: `model(X_batch)` → predictions `(B,)` or `(B, 1)`.
+2. Loss: `MSELoss` by default (configurable to MAE, SmoothL1, Huber).
+3. Backward and optimizer step.
+4. Per-epoch R² accumulated from running sum-of-squares of residuals and target variance.
+
+**Cycle metrics**
+- `r2`, `explained_variance`
+- `mae`, `mse`, `rmse`, `median_absolute_error`, `max_error`
+- `mape`, `smape`
+- `pearson_r`, `spearman_r`
+
+</Accordion>
+
+<Accordion title="Time series forecasting" icon="wave-square">
+
+**Frameworks:** PyTorch
+
+**Input**
+- A time-indexed table with feature column(s) and a target column.
+
+**Preprocessing**
+- Sliding-window construction: input sequences of length `seq_length`, targets of length `forecast_horizon`.
+- Scaling (MinMax or Standard) fit on the training window only and replayed on validation/inference.
+- **Temporal** train/val split (no shuffle) so the validation window is strictly later in time than the training window.
+
+**Training step**
+1. Forward: `model(sequences)` returns predictions of shape `(B, horizon, features)` or `(B, horizon)`.
+2. Loss: `MSELoss` by default (MAE / Huber / custom configurable).
+3. Backward and optimizer step.
+4. Per-batch MAE.
+
+**Cycle metrics**
+- `mae`, `mse`, `rmse`
+- `r2`
+- `mape` (when targets are non-zero)
+
+</Accordion>
+
+<Accordion title="Time-to-event prediction" icon="clock">
+
+**Frameworks:** PyTorch (with lifelines / scikit-survival also supported for inference)
+
+**Input**
+- Tabular features plus a `duration` column (time to event or censoring) and an `event` column (1 = observed event, 0 = censored).
+
+**Preprocessing**
+- Same imputation, encoding, and scaling as tabular use cases.
+- Rows with non-finite durations are dropped.
+- Non-stratified train/val split.
+
+**Training step**
+1. Forward: `risk = model(features)` returns a scalar risk score per sample, `(B,)`.
+2. Loss: **Cox partial likelihood** (`cox_ph_loss_torch`). For each event in the batch, the loss term is `risk_i − log(sum(exp(risk_j)) for j in risk set at time_i)`; the loss is the negative mean of these terms.
+3. Backward (with gradient clipping) and optimizer step.
+
+The first `Linear` layer of your model is checked to ensure `in_features` matches the actual number of preprocessed features — this prevents silent mismatches when weights are aggregated across cycles.
+
+**Cycle metrics**
+- `c_index` (concordance index, computed via `lifelines.utils.concordance_index(durations, -risk_scores, events)` — risk scores are negated because higher risk should mean shorter survival).
+
+**Inference output**
+- Per-sample risk score; concordance index over the test set.
+
+</Accordion>
+
+</AccordionGroup>
+
+## Reproducing a run locally
+
+To validate a result you saw on the platform:
+
+<Steps>
+  <Step title="Take the same data slice">
+    Use the same dataset and the same train/validation split ratio. For stratified splits, stratify on the label column; for time series, split temporally.
+  </Step>
+  <Step title="Apply the same preprocessing">
+    Match the preprocessing in the table above for your use case — especially scaling and categorical encoding, which materially shift loss values.
+  </Step>
+  <Step title="Use the same model file">
+    Run the same model architecture and (where applicable) the same pre-trained weights you uploaded to tracebloc.
+  </Step>
+  <Step title="Match loss, optimizer, and hyperparameters">
+    Read these from the experiment parameters in the platform UI. Default loss/optimizer choices are listed above per use case.
+  </Step>
+  <Step title="Compute the same metrics">
+    Use the metric definitions listed for your use case (e.g., `sklearn.metrics.f1_score(..., average="macro")`, `torchmetrics.detection.MeanAveragePrecision`, `lifelines.utils.concordance_index`).
+  </Step>
+  <Step title="Compare cycle-level numbers">
+    The numbers shown in the tracebloc UI are **cycle-level aggregates**, not per-batch. Run a full cycle locally before comparing.
+  </Step>
+</Steps>
+
+<Tip>
+The full source for every pipeline above lives in [`tracebloc/tracebloc-client`](https://github.com/tracebloc/tracebloc-client) under `use_cases/<task>/main.py` and `core/domains/.../<task>.py`. Cycle-level metric implementations live under `core/metrics/`.
+</Tip>
