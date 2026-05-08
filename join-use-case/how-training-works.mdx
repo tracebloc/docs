@@ -486,6 +486,22 @@ Random split with a deterministic seed. Default 85/15. The split is **not** stra
 
 ## Reproducing a run locally
 
+<Warning>
+**Expect small variation, even with everything matched.** Two runs of the same script on the same data on the same machine can produce slightly different metric values — that's a property of modern deep-learning stacks, not a tracebloc-specific quirk. Reproducing a tracebloc run on your own machine compounds the same effects, so plan to compare numbers within a tolerance band (typically the second or third decimal place for accuracy-style metrics, a few percent for percentage errors), not exactly.
+
+Common reasons numbers move:
+
+- **Hardware differences.** GPU vs CPU, different GPU models, and different CUDA / cuDNN versions execute the same operations through different kernels. Sums of floating-point numbers are not associative, so reductions on different hardware can produce slightly different last-decimal-place values.
+- **GPU non-determinism.** Several common operations (some convolution backward passes, some scatter/gather kernels, atomic accumulation) are not deterministic by default — running the same forward/backward twice on the same GPU can produce different gradients.
+- **Library versions.** Different versions of PyTorch, TensorFlow, scikit-learn, and torchmetrics can change defaults, fix bugs, or alter numerical paths in ways that move the final numbers a little.
+- **Data-loader worker timing.** When the data loader uses multiple worker processes, the order batches actually arrive in can depend on process scheduling — different orderings produce slightly different gradient sequences and slightly different end-of-epoch state, even with the same shuffle seed.
+- **Federated averaging.** A tracebloc run trains across multiple federated cycles in which model weights are averaged across edges between cycles. A single-machine local run cannot reproduce that averaging step exactly — for multi-cycle and multi-edge experiments, the platform's cycle-end weights and your local cycle-end weights will diverge after the first averaging round.
+- **Stateful layers.** Batch normalization's running statistics, dropout masks, and any other stochastic layer state depend on batch order and initialization, both of which are sensitive to the points above.
+- **Mixed precision.** If your local run uses different mixed-precision settings than the platform did, you'll see small differences from rounding alone.
+
+If your local numbers land within a reasonable band of the platform's, the run reproduced. If they diverge by a meaningful margin, please [open a support ticket](mailto:support@tracebloc.io) — that signals a real mismatch (likely preprocessing, data-slice, or configuration drift) worth investigating together.
+</Warning>
+
 To validate a result you saw on the platform:
 
 <Steps>
