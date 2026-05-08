@@ -9,40 +9,53 @@ If something here does not match what you observe in your run, please [open a su
 
 ## Shared lifecycle
 
-Every use case runs through the same outer loop, defined in `use_cases/base_use_case.py` and `core/modes/base_training.py` / `base_inference.py`:
+Every use case runs through the same outer loop on the edge:
 
 <Steps>
-  <Step title="Resolve experiment">
-    The runner reads the experiment configuration (dataset IDs, hyperparameters, framework, mode) and selects the correct framework adapter (PyTorch, TensorFlow, or scikit-learn).
+  <Step title="Resolve the experiment">
+    The platform reads your experiment configuration — dataset, hyperparameters, framework choice, training-or-inference mode — and selects the right framework backend (PyTorch, TensorFlow, scikit-learn, lifelines, or scikit-survival).
   </Step>
-  <Step title="Load model">
-    Your uploaded model file is downloaded and instantiated. For continued cycles or inference, the latest weights are pulled and loaded into the model.
+  <Step title="Load your model">
+    Your uploaded model file is fetched and instantiated. For continued cycles and inference, the latest weights from the experiment are loaded into it.
   </Step>
-  <Step title="Build data pipeline">
-    The domain strategy for the use case loads raw data, applies preprocessing, and returns a training/validation `DataLoader` pair (training mode) or a single test loader (inference mode).
+  <Step title="Build the data pipeline">
+    The platform loads your raw data, runs the use-case-specific preprocessing, and produces training and validation batches (or a single test set in inference mode).
   </Step>
   <Step title="Configure optimizer and loss">
-    The parameters manager normalizes hyperparameters, selects the loss function, and constructs the optimizer (and scheduler, if any).
+    Your hyperparameters are normalized, your loss function is constructed, and your optimizer (and learning-rate scheduler, if any) is built — all from the values you set in the notebook.
   </Step>
-  <Step title="Run loop">
-    For each epoch, the training loop iterates batches, calls the strategy's `_train_step` (forward, loss, backward, step) and then `_eval_step` for validation. Per-batch results feed into the metrics class.
+  <Step title="Run the training loop">
+    For each epoch, every training batch goes through forward, loss, backward, and optimizer step. Validation batches run a forward pass only. Per-batch numbers feed into the metrics layer.
   </Step>
   <Step title="Compute and report metrics">
-    After each epoch, the metrics class produces epoch-level numbers. After the cycle ends, it produces cycle-level aggregate metrics (the ones surfaced in the platform UI). Weights are then saved and uploaded.
+    After each epoch the metrics layer produces epoch-level numbers (loss curves, monitoring metric). After the full cycle ends it produces the cycle-level aggregate metrics shown in the platform UI. Weights are then saved and uploaded for the next cycle.
   </Step>
 </Steps>
 
-### Common defaults
+### Experiment parameters (shared across all use cases)
 
-| Setting | Default | Override |
+Every use case below pulls its run-time configuration from the same set of experiment parameters. **You set these values in your Jupyter notebook** when you configure and submit the experiment with the `tracebloc` Python package; the platform deserializes them on the edge before training begins. The same parameter names work the same way across image classification, object detection, segmentation, keypoint detection, text, tabular, time series, and survival use cases — only the subset that applies to a given task is read.
+
+The values that reach the platform are always whatever you set in the notebook. The SDK initializes every parameter to a default at construction time, so even an experiment where you change nothing arrives on the edge with concrete values for every field. When you call a setter (`optimizer("adam")`, `batch_size(64)`, …), the SDK overwrites that field; on `start()` the assembled payload is what the platform receives.
+
+The SDK's starting defaults — sent verbatim if you don't change them in the notebook:
+
+| Setting | Default | Notebook setter |
 |---|---|---|
-| Train/validation split | 80 / 20 | `validation_split` parameter |
-| Batch size | 32 | `batch_size` parameter |
-| Optimizer | Adam | `optimizer` parameter |
-| LR scheduler | `ReduceLROnPlateau` on validation loss | configurable |
-| Class weighting | Enabled when class counts are imbalanced | automatic |
+| Epochs | 10 (forced to 1 for survival frameworks) | `epochs(...)` |
+| Cycles | 1 | `cycles(...)` |
+| Optimizer | SGD | `optimizer(...)` |
+| Learning rate | 0.001, constant | `learning_rate(...)` |
+| Batch size | 16 | `batch_size(...)` |
+| Validation split | computed per dataset as `num_classes / min_images_per_edge`, clamped to `[0.1, 0.5]` | `validation_split(...)` (only accepts values in `[default, 0.5]`) |
+| Seed | off | `seed(...)` |
+| Shuffle (training) | on | `shuffle(...)` |
+| All augmentation flags | off | `<flag>(...)` |
+| Pre-trained weights | off | model upload setting |
 
-To replicate locally, use the same split ratio and seed when slicing your data, the same loss and optimizer, and the same per-use-case preprocessing described below.
+**Class weighting** is applied automatically by the platform for **image classification** and **tabular classification** only, when your loss function is cross-entropy, NLL, or binary BCE. The formula is described in those sections. Other use cases do not reweight the loss.
+
+To replicate a run locally, read the actual values your experiment was launched with from the experiment view (or your notebook), then match the per-use-case preprocessing and metrics described below — those parts are baked into the platform pipeline and are not configurable from the notebook.
 
 ## Per use case
 
@@ -53,63 +66,83 @@ To replicate locally, use the same split ratio and seed when slicing your data, 
 **Frameworks:** PyTorch, TensorFlow
 
 **Input**
-- Image files (JPEG/PNG) plus a metadata table with `data_id` (filename) and `label` (class name).
-- Class names are encoded to integer indices.
+- Image files (JPEG / PNG) supplied through the dataset metadata as `data_id` (the image filename) and `label` (the class name).
+- Class names are mapped to integer indices in the order defined by the dataset's class list, so the same class always lines up with the same logit position across cycles and inference.
 
 **Preprocessing**
-- Resize images to `image_size` (model parameter).
-- Normalize with ImageNet mean/std (PyTorch) or framework-equivalent.
-- Optional augmentation pipeline (rotation, shift, flip, brightness/contrast) applied only on the training split.
-- **Stratified** train/val split so class proportions are preserved.
+- Images are resized to a square at the size you set in the notebook (default 256). Aspect ratio is **not** preserved — the resize is a direct stretch.
+- Pixel values are normalized using ImageNet mean and standard deviation. You can override the mean and standard deviation in the notebook if your model was pre-trained against different statistics.
+- The augmentation flags you set in the notebook (rotation, shifts, brightness, etc.) drive an image augmentation pipeline that runs on the training split only — validation always sees the unaugmented preprocessing so metrics stay deterministic across epochs. For reference, the SDK only allows the geometric and color augmentation flags to be set on PyTorch experiments — horizontal and vertical flip flags are TensorFlow-only at the SDK level.
+- Train/validation split is **stratified by class label** (so class proportions are preserved on both sides) and uses a deterministic seed. If your chosen split would leave one side empty on a small dataset, it is silently retried with the ratio clamped into a safe range.
 
 **Training step**
-1. Forward: `logits = model(images)` → shape `(B, num_classes)`.
-2. Loss: `CrossEntropyLoss` by default; class weights applied if classes are imbalanced.
-3. Backward and optimizer step.
-4. Per-batch accuracy = `(argmax(logits) == labels).mean()`.
+1. Forward pass through the model produces a logit per class.
+2. The loss function you configured in the notebook is used. Cross-entropy is the common choice; if you pick a regression-style loss (such as MSE) the labels are converted to one-hot floats automatically so the shapes line up.
+3. **Class weighting** is applied automatically: for cross-entropy / NLL, each class gets a weight inversely proportional to its training-split frequency (normalized so the weights average to 1, so balanced classes effectively pass through unchanged); for binary BCE, the positive class gets a weight equal to `negative_count / positive_count`. Regression losses like MSE and L1 are not reweighted. This means a verifier who computes loss locally without these weights will see different numbers, especially on imbalanced datasets.
+4. Backward pass and optimizer step.
+5. Per-batch monitoring metric: accuracy — the fraction of images whose predicted class matches the ground-truth class.
 
 **Validation step**
-- Same forward pass, no backward; accumulate predictions and probabilities.
+- Same forward pass without backward. The validation transform applies the same resize and normalization but no augmentation, so validation is deterministic across epochs.
 
 **Cycle metrics**
-- `accuracy`, `top_3_accuracy`, `top_5_accuracy`
-- `auc_roc` (macro), `auc_pr` (macro)
-- `log_loss`, `brier_score`
-- `qwk` (quadratic weighted kappa)
-- Confusion matrix
+- **Accuracy family**: accuracy, top-3 accuracy, top-5 accuracy. For datasets with fewer than 3 (or 5) classes, the corresponding top-k accuracy collapses to 1.0 — interpret it accordingly.
+- **Probability-based**: macro-averaged AUC-ROC, macro-averaged AUC-PR, log loss, Brier score (multiclass squared-error form, not the binary sklearn version), quadratic weighted kappa.
+- **Confusion matrix** is produced and surfaced in the run output.
 
 **Inference output**
-- Per-image predicted class index and softmax probabilities.
+- Per image: the predicted class index and the full softmax probability vector. The class-index ordering is the dataset's class list — match this ordering when comparing locally.
 
 </Accordion>
 
 <Accordion title="Object detection" icon="square-dashed">
 
-**Frameworks:** PyTorch (YOLO and R-CNN families auto-detected)
+**Frameworks:** PyTorch (YOLO and R-CNN model families)
 
 **Input**
-- Images plus a metadata table grouped by image, with one bounding box per row: `data_id`, `class`, box coordinates.
-- Box format is normalized internally to `xyxy`.
+- Images plus per-image annotation files (Pascal VOC-style XML sidecars) listing each object's class name and bounding-box coordinates.
+- Class names are matched case-insensitively against the dataset's class list and mapped to integer indices in the order that list defines.
+
+**Choosing the model family**
+
+You select the model family in the notebook — either an R-CNN family model (Faster R-CNN, Mask R-CNN) or a YOLO family model. The platform branches its training and validation logic on this choice, so it has to be set correctly for your model. If left unset, the platform falls back to inspecting the model name and class for the word "yolo"; if neither matches, it defaults to R-CNN. Picking an unsupported value will fail the run early.
 
 **Preprocessing**
-- Resize with letterbox padding to preserve aspect ratio; box coordinates rescaled accordingly.
-- Training-only augmentations (flips, color jitter, rotation).
-- Train/val split is non-stratified, deduplicated by image filename so a single image is never split across both sets.
+- Images are resized to a square at the size you set in the notebook (default 416 for R-CNN; for YOLO the platform pins the image size at 448 regardless of what you configure). Aspect ratio is **not** preserved — the resize is a direct stretch, and bounding-box coordinates are rescaled to the same stretched frame. Letterbox padding is **not** used today.
+- Pixel values are scaled to `[0, 1]`. ImageNet mean/std normalization is **not** applied in the object-detection pipeline by default — torchvision R-CNN models normalize internally as part of the model, and YOLO consumes the `[0, 1]` tensor directly.
+- Bounding boxes are validated before training: boxes that fall outside the image, are smaller than 2 pixels on a side, have an extreme aspect ratio, or cover a near-zero area are dropped (along with their labels) so the model never sees degenerate targets.
+- Class labels are **zero-indexed** — the first class in your dataset list is class 0. This differs from torchvision's R-CNN convention where class 0 is reserved for background, so a torchvision pre-trained classifier head cannot be reused as-is.
+- The augmentation flags you set in the notebook drive a joint image-and-bounding-box augmentation pipeline that runs on the training split only. Geometric transforms are applied to the image and to its bounding-box coordinates together so labels stay aligned. Validation always sees the unaugmented preprocessing.
+- Train/validation split is random (non-stratified) and deduplicated by image filename, so all the boxes for a given image stay on the same side of the split. Default split is 85/15.
 
 **Training step**
-- **R-CNN family:** `model(images, targets)` returns a dict of internal losses (RPN, classification, box regression). Sum and backprop.
-- **YOLO family:** `model(images)` returns raw predictions; loss is computed by the model's own loss module.
+
+- **R-CNN family**: the model is run in training mode and returns its internal loss dict (region-proposal, classification, box-regression, objectness). The platform sums these with equal weights and backpropagates. The loss function you set in the notebook is **ignored** for R-CNN — the model defines its own losses.
+- **YOLO family**: the model returns raw grid predictions. The loss is computed by an external loss module supplied alongside your model — the platform does not ship a built-in YOLO loss.
+
+A backward pass and optimizer step follow.
+
+**Per-batch monitoring metrics** (loss-curve only, not the cycle metric)
+- **R-CNN**: an "all boxes correct" rate — an image counts as correct only if every ground-truth box has a predicted box of the same class with IoU above 0.2. Strict criterion; expect low values early in training.
+- **YOLO**: the fraction of grid cells with objectness confidence above 0.5.
 
 **Validation step**
-- Forward in eval mode. R-CNN returns `[{boxes, scores, labels}, ...]`; YOLO predictions are converted to that same format.
+- For R-CNN, the model is run in evaluation mode and produces a list of per-image predictions (boxes, scores, class labels) directly. No additional non-maximum suppression or score filtering is applied by the platform — whatever thresholds the model was constructed with apply.
+- For YOLO, every grid cell with positive objectness is decoded into a box in pixel coordinates. **Non-maximum suppression is not applied** by the platform on the YOLO path. If you want NMS for a fair local comparison, apply it in your local script with the same thresholds.
 
-**Cycle metrics** (via `torchmetrics.detection.MeanAveragePrecision`)
-- `map`, `map_50`, `map_75`
-- `mar_1`, `mar_10`
-- `iou`, `giou`
+**Cycle metrics**
+
+Standard COCO-style detection metrics computed only on validation pairs where both prediction and ground truth have at least one box. Pairs where either side is empty are skipped so an all-empty-prediction model returns zero across the board cleanly.
+
+- **Mean Average Precision**: mAP averaged across IoU thresholds 0.5 to 0.95 in 0.05 steps (the COCO definition), plus mAP at fixed IoU thresholds of 0.5 and 0.75.
+- **Mean Average Recall** at 1 detection per image and at 10 detections per image.
+- **IoU** between matched prediction-target pairs (single-threshold, 0.2).
+- **Generalized IoU** between matched pairs.
+
+The run also reports **precision, recall, and F1**, but these are currently placeholders and will read as zero — don't compare against them.
 
 **Inference output**
-- Per-image: boxes, scores, class labels.
+- Per image: a list of predicted bounding boxes, their confidence scores, and their predicted class labels. Boxes are returned in the same coordinate frame the model was trained on.
 
 </Accordion>
 
@@ -118,138 +151,252 @@ To replicate locally, use the same split ratio and seed when slicing your data, 
 **Frameworks:** PyTorch
 
 **Input**
-- Image plus per-pixel class mask. Metadata: `data_id`, `mask_id`. Masks are integer class indices in `[0, num_classes)`.
+- An image and a corresponding mask file per row, supplied through the dataset metadata as `data_id` (image file) and `mask_id` (mask file).
+- Mask files are read from disk; class indices are derived as described under *Mask handling* below.
 
 **Preprocessing**
-- Image and mask resized together to `image_size`.
-- Image-only normalization (ImageNet mean/std).
-- Joint augmentation (the same flip/rotation applied to both image and mask).
+- The image and mask are resized to a square at the size you set in the notebook (default 256). Aspect ratio is **not** preserved — the resize is a direct stretch.
+- The image uses bilinear resampling; the mask uses **nearest-neighbor** so class indices stay integers. This is the most common reproduction mistake — bilinear on a mask invents non-existent classes.
+- Image pixel values are scaled to `[0, 1]`. ImageNet mean/std normalization is **not** applied by default in the segmentation pipeline.
+- The augmentation flags you set in the notebook drive a joint image-and-mask augmentation pipeline that runs on the training split only. The same geometric transform is applied to the image and to its mask so per-pixel labels stay aligned. Validation always sees the unaugmented preprocessing.
+- Train/validation split is random (non-stratified, deterministic seed). The platform uses your `validation_split` value, with two safety nets: a one-row dataset reuses the same data for train and val instead of crashing, and if your chosen split produces a degenerate partition the run silently retries with 80/20.
+
+**Mask handling**
+
+Mask files are first read as grayscale, even if they are RGB on disk (so a multi-color RGB-encoded mask is effectively flattened before the class-index lookup). The grayscale pixel values are then mapped to class indices:
+
+- **Binary problems (2 classes):** the mask is thresholded at the midpoint of the 8-bit range — pixel values above 127 become class 1, the rest become class 0.
+- **Multi-class problems:** the first `num_classes` sorted unique pixel values in the mask file are treated as the canonical encodings and mapped to `0..N-1` in sorted order. Extra unique values that come from JPEG noise or anti-aliased edges are snapped to the nearest canonical neighbor, so every pixel ends up in `[0, num_classes)`.
+
+A user who encodes their masks differently locally (one-hot, RGB-color → class table, etc.) will not get the same loss numbers. Match this exact mapping when reproducing.
 
 **Training step**
-1. Forward: `model(images)` returns logits `(B, C, H, W)` or a `{"out": ..., "aux": ...}` dict.
-2. Loss: `CrossEntropyLoss` over pixels. If an `aux` head is present, total loss = `loss_main + 0.4 * loss_aux` (torchvision convention).
-3. Backward and optimizer step.
-4. Per-batch pixel accuracy.
+1. Forward pass through the model. The pipeline accepts either a raw logits tensor or a dict-shaped output (the torchvision FCN / DeepLab family returns one), so torchvision-style models work without adaptation.
+2. The loss function you configured in the notebook is used (cross-entropy is the common choice for segmentation). If no loss is configured, cross-entropy is used as a fallback.
+3. If the model has an auxiliary classifier head (FCN / DeepLab with `aux_loss=True`), the total loss is `main_loss + 0.4 × aux_loss`, matching the torchvision reference recipe. The 0.4 weight is configurable.
+4. Backward pass and optimizer step.
+5. Per-batch monitoring metric: pixel accuracy — the fraction of pixels whose predicted class matches the ground-truth class.
+
+**Validation step**
+- Same forward pass without backward. Predictions are taken as the argmax across the class dimension, producing a per-pixel class-index mask.
 
 **Cycle metrics**
-- `pixel_accuracy`, `mean_pixel_accuracy`
-- `iou`, `mean_iou`, `frequency_weighted_iou`
-- `dice`
-- `boundary_iou`, `boundary_f1`
-- `hausdorff_distance`, `asd` (average surface distance)
-- Confusion matrix
+- **Pixel-level**: pixel accuracy, mean pixel accuracy, IoU, mean IoU, frequency-weighted IoU, Dice
+- **Boundary-aware**: boundary IoU, boundary F1
+- **Distance-based**: Hausdorff distance, average surface distance
+- **Classification-style** (per-pixel, macro-averaged across classes): precision, recall, F1
+- **Per-class IoU**: one number per class that appeared in the cycle
+
+A few definitions worth pinning down for local replication:
+- **IoU** here is the global Jaccard index across all pixels; **mean IoU** is the per-class IoU averaged across classes. They genuinely diverge on imbalanced data — pick the right one for your comparison.
+- **Dice** is macro-averaged across classes, computed on integer-class inputs (not one-hot).
+- **Precision / recall / F1** are macro-averaged across classes.
+
+**Inference output**
+- A per-image class-index mask at the configured image size.
 
 </Accordion>
 
 <Accordion title="Keypoint detection" icon="crosshairs">
 
-**Frameworks:** PyTorch (R-CNN, heatmap, and direct-regression families)
+**Frameworks:** PyTorch — three model families are supported: R-CNN-style keypoint detectors (KeypointRCNN), heatmap regressors, and direct coordinate regressors.
 
 **Input**
-- Images and per-image keypoint coordinates (with optional visibility flags).
+- Images and per-image keypoint annotations supplied through the dataset metadata. Each keypoint is an `[x, y, visibility]` triple; the visibility component is optional.
+- Keypoints with non-positive x or y are treated as **missing or out-of-frame** — they contribute an all-zero plane in the heatmap target instead of needing a separate mask channel.
+
+**Choosing the model family**
+
+You select the model family in the notebook. The platform's loss, metrics, and per-batch monitoring all branch on this choice, so it has to match the model you uploaded.
 
 **Preprocessing**
-- Resize to `image_size`; keypoints rescaled to match.
-- ImageNet normalization.
-- Train/val split is non-stratified.
+- Two size knobs that do different things:
+  - **Image size for the model**: the size you set in the notebook for what the model actually sees. Default 224. The image is resized to a square at this size, and keypoint coordinates are rescaled by the same factors so they stay aligned with the resized image. Aspect ratio is **not** preserved — the resize is a direct stretch.
+  - **PCK reference size**: a separate size used only as the reference scale for the per-batch PCK threshold (the threshold is set to 20% of this size). Default 256. Changing it does not change what the model sees — only how strict the per-batch correctness threshold is.
+- Pixel values are scaled to `[0, 1]`. ImageNet mean/std normalization is **not** applied by default in the keypoint pipeline.
+- For the heatmap family, ground-truth heatmaps are generated as 2D Gaussian peaks centered on each keypoint, at the resized image size, with a fixed standard deviation of 2 pixels. They are generated **after** augmentation so the targets stay aligned with the augmented image.
+- The augmentation flags you set in the notebook drive a joint image-and-keypoint augmentation pipeline that runs on the training split only. The same geometric transform is applied to the image and to its keypoint coordinates so the labels stay consistent.
+- Train/validation split is random (non-stratified) and uses a deterministic seed. Default 85/15. If the split fails on a tiny dataset, the same data is reused for both train and val instead of crashing.
 
 **Training step**
-- **R-CNN (KeypointRCNN):** `model(images, targets)` returns a loss dict; sum and backprop.
-- **Heatmap:** Predict `(B, K, H, W)` heatmaps; MSE-style loss against target heatmaps.
-- **Direct regression:** Predict `(B, K, 2)`; MSE-style loss against ground-truth coordinates.
+
+- **R-CNN family**: the model is run in training mode and returns its internal loss dict (region-proposal, classification, box-regression, keypoint losses). The platform sums these with equal weights and backpropagates. The loss function you set in the notebook is **ignored** for R-CNN — the model defines its own losses. A second forward pass in evaluation mode produces the per-image predictions used by the metrics layer.
+- **Heatmap family**: the model returns a heatmap tensor with one channel per keypoint. The loss function you configured in the notebook is applied between predicted and ground-truth heatmaps (mean squared error is the common choice). Per-batch keypoints are recovered by taking the argmax of each predicted heatmap channel.
+- **Direct regression**: the model returns keypoint coordinates directly. The loss function you configured in the notebook is applied between predicted and ground-truth coordinates.
+
+A backward pass and optimizer step follow.
+
+**Per-batch monitoring metric**
+
+Percentage of Correct Keypoints (PCK): the fraction of predicted keypoints whose Euclidean distance to the ground truth is below `0.2 × PCK reference size` (in pixels of the resized image).
+
+**Validation step**
+
+- Same forward pass without backward. Predictions are stored for the cycle-level metrics layer to consume.
 
 **Cycle metrics**
-- `pck` (Percentage of Correct Keypoints) at threshold `0.2 * image_size`
-- `pck@0.5` (stricter threshold)
-- `auc` over PCK thresholds
-- `mpjpe` (mean per-joint position error, in pixels)
+
+- **Detection-style**: precision, recall, F1 — computed from a per-keypoint TP/FP/FN match against a configurable distance threshold.
+- **Position error**: Mean Per-Joint Position Error (MPJPE), the mean Euclidean distance between predicted and ground-truth keypoints in pixels of the resized image. Mean Absolute Error (MAE) is also reported.
+- **COCO-style**: Object Keypoint Similarity (OKS). Per-image scale is derived from the bounding box of the ground-truth keypoints, and per-keypoint sigma defaults to a uniform 0.05.
+- **PCK at multiple thresholds**: `pck@0.05`, `pck@0.1`, `pck@0.2`, `pck@0.3`, `pck@0.5`.
+- **Visibility accuracy**: reported only when your dataset carries a visibility component on each keypoint.
+
+**Inference output**
+
+- **R-CNN**: per-image predicted bounding boxes, confidence scores, class labels, and keypoints.
+- **Heatmap**: per-image heatmap stack; the predicted keypoint per channel is the argmax of that channel.
+- **Direct regression**: per-image `(K, 2)` keypoint coordinates.
 
 </Accordion>
 
 <Accordion title="Text classification" icon="font">
 
-**Frameworks:** PyTorch (HuggingFace Transformers)
+**Frameworks:** PyTorch — both HuggingFace Transformers and plain PyTorch models are supported. The platform detects at the start of training whether your model returns its own loss (HF style) or needs an external one (plain PyTorch) and routes accordingly.
 
 **Input**
-- Raw text strings with class labels. Metadata columns: `data_id`, `text`, `label`.
+- A text file per sample on disk (one `.txt` file per row), plus a metadata table that lists each text's filename and its class label.
+- The platform looks up `<dataset_path>/<filename>.txt` for each row, so your filenames must match exactly.
 
 **Preprocessing**
-- Tokenization with the configured tokenizer (typically the one bundled with the base model).
-- Padding/truncation to `max_length`.
-- Stratified train/val split.
+- Each text is tokenized with your configured tokenizer. If you didn't specify one, the platform falls back to your configured model ID, and finally to a default tokenizer.
+- Tokens are padded and truncated to your configured **maximum sequence length** (default 512). Padding happens at tokenization time, so all batches see fixed-shape inputs.
+- **Label-to-index mapping** is fixed in the first training cycle and persisted alongside your weights. Subsequent cycles and inference reuse the same mapping, so the same class always maps to the same logit position. When reproducing locally, use the saved mapping rather than your own ordering.
+- Train/validation split is **stratified by label** with a deterministic seed (default 80/20). If stratification fails because a class has too few examples, the run silently falls back to a non-stratified random split with the same seed.
 
 **Training step**
-1. Forward: `model(input_ids=..., attention_mask=..., labels=...)`. HuggingFace models return `(loss, logits)`; custom models compute loss externally with `CrossEntropyLoss`.
-2. Backward and optimizer step (gradient clipping enabled).
-3. Per-batch accuracy from `argmax(logits)`.
+
+- **HuggingFace-style models**: the model is called with `input_ids`, `attention_mask`, and `labels`, and returns its own loss. Your notebook's loss function is ignored on this path — the model defines it.
+- **Plain PyTorch models**: the model is called with `input_ids` only and returns logits. The platform applies the loss function you configured in the notebook to compute the training loss. Input dtype is automatically cast to match the model's parameter dtype (float, half, or long).
+
+A backward pass and optimizer step follow. Gradient clipping is applied during the backward pass.
+
+**Per-batch monitoring metric**: accuracy — the fraction of texts whose argmax-predicted class matches the ground-truth class.
+
+**Validation step**
+
+- Same forward pass without backward. Logits are retained on CPU so the cycle metrics layer can compute probability-based metrics from them.
 
 **Optional model adaptations**
-- LoRA fine-tuning when `lora_enabled` is set (with `lora_r`, `lora_alpha`, `lora_dropout`, optional Q-LoRA).
-- 4-/8-bit quantization when enabled.
+
+LoRA fine-tuning is available for compatible models. You configure the LoRA parameters (rank, alpha, dropout, and whether to use Q-LoRA for quantized fine-tuning) from the notebook; SDK starting defaults are rank 256, alpha 512, dropout 0.05, Q-LoRA off.
 
 **Cycle metrics**
-- `accuracy`
-- `f1_macro`, `f1_weighted`
-- `precision_macro`, `recall_macro`
-- `auc_roc` (multiclass, macro)
-- Confusion matrix
+
+- **Classification basics** (per-class, macro-averaged): precision, recall, F1.
+- **F1 variants**: F1 macro, F1 micro, F1 weighted.
+- **Agreement metrics**: Matthews correlation coefficient, Cohen's kappa, quadratic weighted kappa.
+- **Other classification**: Hamming loss, Jaccard score (macro), F-beta at β = 0.5 and β = 2.0 (macro), specificity, negative predictive value (binary direct; multiclass macro-averaged), balanced accuracy.
+- **Probability-based**: AUC-ROC (binary on the positive class; multiclass one-vs-rest macro-averaged), AUC-PR (average precision; multiclass macro-averaged over one-hot encodings), Gini coefficient and normalized Gini, log loss, Brier score (multiclass squared-error form).
+- **Top-k accuracy** for problems with more than two classes: top-3 and top-5, reported only when *k* is strictly less than the number of classes.
+- **Confusion matrix**: produced with a fixed label order matching your dataset's class list — pin to that order when comparing locally.
+
+Each metric is computed independently; if one fails (for example, AUC-ROC on a single-class validation slice), it falls back to zero rather than failing the entire cycle.
+
+**Class weighting** is **not** applied automatically for text classification. If your dataset is imbalanced, configure class weights in your loss function from the notebook.
+
+**Inference output**
+- Per text: the predicted class index plus the softmax probability vector. The class-index ordering follows your dataset's class list — match that ordering when comparing locally.
 
 </Accordion>
 
 <Accordion title="Tabular classification" icon="table">
 
-**Frameworks:** PyTorch, TensorFlow, scikit-learn (incl. XGBoost / LightGBM)
+**Frameworks:** PyTorch, TensorFlow, and any scikit-learn-compatible estimator (including XGBoost and LightGBM).
 
 **Input**
-- A tabular file (CSV) with feature columns plus a `label` column. Categorical features may be strings.
+- A tabular file with feature columns plus a label column. The label column name is configurable; categorical feature values can be strings.
 
 **Preprocessing**
-- Optional feature selection (drop low-variance / highly-missing columns) when not pinned via `feature_columns`.
-- Imputation: median (numeric) and mode (categorical).
-- Categorical encoding via `LabelEncoder`.
-- `StandardScaler` on numeric features for neural network frameworks.
-- **Stratified** train/val split on the label.
-- Encoders and scalers are persisted in cycle 1 and reused in later cycles and during inference, so transformations are identical across runs.
+
+The preprocessing pipeline runs in this order, and the full set of fitted statistics (which columns to use, imputation values, category mappings, label-to-index map, scaling means and standard deviations) is **frozen in the first training cycle and reused** in subsequent cycles and at inference. When reproducing a run locally, pull these statistics from the experiment artifacts rather than refitting on your own data slice.
+
+1. **Column selection.** You can configure which columns the model sees from the notebook — either an include list, an exclude list, or derived feature definitions. If you don't configure anything, all columns from the dataset's schema are used.
+2. **Missing value imputation.** Numeric columns are filled with the **median** of the training split. Categorical columns are filled with the literal string `"Unknown"`. The label column is not imputed.
+3. **Binary encoding.** Columns with exactly two distinct values that look like booleans (`Y`/`N`, `YES`/`NO`, `TRUE`/`FALSE`, `1`/`0`, plus literal Python booleans) are auto-encoded to `0`/`1` integers. The truthy and falsy strings are configurable.
+4. **Categorical encoding.** Two strategies, configurable from the notebook:
+   - **Label encoding** (default): each distinct string in a categorical column maps to a small integer based on the order it first appears in the training split. Categories not seen during training map to `-1` at inference.
+   - **One-hot encoding**: each distinct string becomes its own `0`/`1` column.
+5. **Label-to-index mapping.** Class labels are mapped to integer indices in the order defined by your dataset's class list, so a class always lines up with the same logit position. By default, encountering a label that isn't in the class list fails the run; this strict check is configurable.
+6. **Numeric feature scaling.** Numeric feature columns are z-scored (mean 0, standard deviation 1) using training-split statistics; the label column is excluded. On by default and can be turned off.
+
+**Train/validation split**
+
+Stratified by class label with a deterministic seed. Default 85/15. If the configured split would leave one side empty, the run silently retries with the ratio clamped into a safe range.
 
 **Training step**
-1. Forward: `model(X_batch)` → logits `(B, num_classes)`.
-2. Loss: `CrossEntropyLoss` (PyTorch), `categorical_crossentropy` (TF), or the estimator's built-in objective (sklearn). Class weights applied for imbalance.
-3. Backward + optimizer step (or `estimator.fit(...)` for sklearn).
+
+- **PyTorch and TensorFlow**: a forward pass produces a logit per class. The loss function you configured in the notebook is applied; cross-entropy is the typical choice. A backward pass and optimizer step follow.
+- **scikit-learn**: training is a single `fit(X, y)` call per batch using the estimator's built-in objective. There is no separate forward / backward pass and no notebook-configured loss on this path.
+
+**Class weighting** is applied automatically across all three frameworks. For cross-entropy and similar log-likelihood losses, each class is weighted in inverse proportion to its training-split frequency, normalized so the weights average to 1 — so balanced datasets effectively pass through unchanged, and imbalanced ones get the rarer classes upweighted.
+
+**Per-batch monitoring metric**: accuracy — the fraction of rows whose predicted class matches the ground-truth class.
+
+**Validation step**
+
+- Same forward pass without backward. Predictions and raw logits are retained so the cycle metrics layer can compute probability-based metrics from them.
 
 **Cycle metrics**
-- `accuracy`, `balanced_accuracy`
-- `f1_macro`, `f1_weighted`, `f1_micro`
-- `precision_macro`, `recall_macro`
-- `f_beta_0.5`, `f_beta_2.0`
-- `cohen_kappa`, `qwk`
-- `auc_roc`, `auc_pr`
-- `gini`, `normalized_gini`
-- `brier_score`, `hamming_loss`, `jaccard_score`, `npv`
-- Confusion matrix
+
+- **Classification basics** (per-class, macro-averaged): precision, recall, F1.
+- **Other classification metrics**: balanced accuracy, F-beta at β = 0.5 and β = 2.0 (macro), Matthews correlation coefficient, Cohen's kappa, quadratic weighted kappa, Hamming loss, Jaccard score (macro), specificity, negative predictive value (binary direct; multiclass macro-averaged).
+- **Probability-based** (when raw logits are available): AUC-ROC (binary on the positive class; multiclass one-vs-rest macro), AUC-PR (average precision; multiclass macro over one-hot), Gini coefficient and normalized Gini, Brier score (multiclass squared-error form).
+- **Confusion matrix**: produced with a fixed label order matching your dataset's class list — pin to that order when comparing locally.
+
+Each metric is computed independently; if one fails, it falls back to zero rather than crashing the cycle.
+
+**Inference output**
+- Per row: the predicted class index plus the predicted probability vector (softmax for multiclass, sigmoid for binary). The class-index ordering follows your dataset's class list — match that ordering when comparing locally.
 
 </Accordion>
 
 <Accordion title="Tabular regression" icon="chart-line">
 
-**Frameworks:** PyTorch, TensorFlow, scikit-learn
+**Frameworks:** PyTorch, TensorFlow, and any scikit-learn-compatible regressor (including XGBoost and LightGBM).
 
 **Input**
-- Tabular features plus a continuous target column. Rows with non-finite targets are dropped.
+- A tabular file with feature columns plus a continuous target column. The target column name is configurable.
+- Rows whose target is missing or non-finite are dropped before training so they can't poison gradients.
 
 **Preprocessing**
-- Identical to tabular classification, except: target is **not** encoded, and the train/val split is **not** stratified.
+
+The feature pipeline is the same as tabular classification — column selection (or full schema if you don't configure one), median / `"Unknown"` imputation, binary encoding, categorical encoding (label or one-hot), and z-scoring of numeric feature columns. There are two regression-specific differences:
+
+- **Label-to-index mapping is skipped.** The target stays numeric.
+- **Target scaling.** By default, the target column is also z-scored using training-split statistics (mean and standard deviation). The platform stores the scaling parameters alongside your weights and **inverse-transforms** predictions and labels back to the original target scale before computing cycle metrics — so the reported error numbers are in your data's original units, not in the z-scored space the loss is computed in. Target scaling can be turned off from the notebook; if you turn it off but leave feature scaling on, and your target has a much wider range than your scaled features, you'll see a warning in the run log because the loss will dominate strangely.
+
+The fitted preprocessing state (column choices, imputation values, category mappings, feature scaling stats, target scaling stats) is **frozen in the first training cycle and reused** in subsequent cycles and at inference.
+
+**Train/validation split**
+
+Random (non-stratified — the target is continuous), with a deterministic seed. Default 85/15. If the configured split would leave one side empty, the run silently retries with the ratio clamped into a safe range.
 
 **Training step**
-1. Forward: `model(X_batch)` → predictions `(B,)` or `(B, 1)`.
-2. Loss: `MSELoss` by default (configurable to MAE, SmoothL1, Huber).
-3. Backward and optimizer step.
-4. Per-epoch R² accumulated from running sum-of-squares of residuals and target variance.
+
+- **PyTorch and TensorFlow**: a forward pass produces a continuous prediction per row (or per timestep, for sequence-shaped outputs — the platform takes the last timestep). The loss function you configured in the notebook is applied; MSE is the typical default, with MAE, smooth L1, and Huber as common alternatives. A backward pass and optimizer step follow. Gradient clipping is applied **only when the global gradient norm exceeds 10**, then clipped to 10 — so well-behaved training runs see no clipping and unstable runs are kept from blowing up.
+- **scikit-learn**: training is a single `fit(X, y)` call using the estimator's built-in objective. The platform fits the estimator **once** in the first training batch of the first cycle; subsequent cycles only run prediction. If you want a sklearn regressor that actually updates across federated cycles, choose one that supports incremental / warm-start fitting.
+
+**Per-batch monitoring metric**: R² (coefficient of determination), accumulated from the running residual sum of squares and target variance.
+
+**Validation step**
+
+- Same forward pass without backward. Predictions are stored, then inverse-transformed alongside ground-truth targets at cycle metric time so the reported metrics are in original units.
 
 **Cycle metrics**
-- `r2`, `explained_variance`
-- `mae`, `mse`, `rmse`, `median_absolute_error`, `max_error`
-- `mape`, `smape`
-- `pearson_r`, `spearman_r`
+
+All values are reported in the original target scale (after the inverse transform if target scaling was on):
+
+- **Standard error metrics**: mean absolute error, mean squared error, root mean squared error, median absolute error, max absolute error.
+- **Percentage error metrics**: mean absolute percentage error (computed only over rows whose true value is non-zero — entirely-zero validation slices return NaN), symmetric mean absolute percentage error.
+- **Goodness of fit**: R², explained variance.
+- **Bias**: mean bias error (mean of `prediction − target` — positive means systematic over-prediction).
+- **Log-scale error**: root mean squared log error, computed only when both predictions and targets are non-negative; otherwise NaN.
+
+Rows with NaN in either prediction or target are filtered out before metrics are computed (with a warning if any rows were dropped). If every row is NaN, all metrics return NaN rather than crashing.
+
+**Inference output**
+- Per row: a single continuous prediction in the original target scale (inverse-transformed if target scaling was on during training).
 
 </Accordion>
 
@@ -258,50 +405,80 @@ To replicate locally, use the same split ratio and seed when slicing your data, 
 **Frameworks:** PyTorch
 
 **Input**
-- A time-indexed table with feature column(s) and a target column.
+- A time-indexed table with one timestamp column, one or more feature columns, and a continuous target column. Rows are expected to arrive in chronological order.
 
 **Preprocessing**
-- Sliding-window construction: input sequences of length `seq_length`, targets of length `forecast_horizon`.
-- Scaling (MinMax or Standard) fit on the training window only and replayed on validation/inference.
-- **Temporal** train/val split (no shuffle) so the validation window is strictly later in time than the training window.
+
+- **Feature and target scaling.** Both the feature columns and the target column are scaled using statistics fit on the training window only, then re-applied to the validation window and to inference data. The choice of scaler is configurable from the notebook (Min-Max scaling or standard z-scoring); Min-Max is the default. The fitted scaler instances are persisted alongside your weights and reused in subsequent cycles and at inference, so a federated run keeps a consistent scale across cycles.
+- **Sliding-window construction.** From the chronologically ordered, scaled rows the platform builds sliding-window samples: each input is a sequence of length **sequence length** (the lookback window you set in the notebook, default 60), and each target covers the next **forecast horizon** steps (default 1). With a single-step horizon the target is scalar; with a longer horizon it's a vector of that length.
+- **Auto-adjusted sequence length.** If your training or validation window is too short to fit even one full lookback-plus-horizon sample, the platform shortens the sequence length to the largest feasible value rather than crashing, and logs a warning. Forecast horizon is never silently shrunk — that's part of your experiment contract.
+
+**Train/validation split**
+
+**Temporal** (no shuffling) — the validation window is strictly later in time than the training window so future leakage is impossible. Default 80/20.
 
 **Training step**
-1. Forward: `model(sequences)` returns predictions of shape `(B, horizon, features)` or `(B, horizon)`.
-2. Loss: `MSELoss` by default (MAE / Huber / custom configurable).
-3. Backward and optimizer step.
-4. Per-batch MAE.
+
+1. The forward pass takes a batch of sequences and returns predictions shaped to the forecast horizon. The platform automatically reshapes outputs to match the target shape (squeezing or broadcasting trailing singleton dimensions).
+2. The loss function you configured in the notebook is applied; mean squared error is the typical default, with mean absolute error, smooth L1, and Huber as common alternatives.
+3. A backward pass and optimizer step follow.
+
+**Per-batch monitoring metric**: mean absolute error between predicted and target sequences (in the scaled space the model trains on).
+
+**Validation step**
+
+- Same forward pass without backward. Predictions are stored for the cycle metrics layer.
 
 **Cycle metrics**
-- `mae`, `mse`, `rmse`
-- `r2`
-- `mape` (when targets are non-zero)
+
+All metrics are computed on the **scaled** target space the model trains in (no inverse transform is applied at metric time today — interpret error magnitudes accordingly):
+
+- **Standard error metrics**: mean absolute error, mean squared error, root mean squared error, max absolute error.
+- **Goodness of fit**: R² (returns NaN on degenerate slices, e.g. constant targets).
+- **Percentage errors**: mean absolute percentage error (skips rows whose true value is near zero), median absolute percentage error (robust to outliers), symmetric MAPE.
+- **Direction accuracy**: the percentage of consecutive timestep pairs where the predicted change has the same sign as the actual change — a "did the model get the trend right" metric.
+- **Theil's U**: a normalized error statistic comparing predicted vs. actual change between consecutive steps. Lower is better.
+
+Each metric is wrapped in error handling — degenerate inputs return NaN rather than failing the cycle.
+
+**Inference output**
+- Per input window: a predicted sequence of length equal to the forecast horizon, in the model's scaled space. Use the saved scaler from the experiment artifacts to invert the predictions back to the original target scale.
 
 </Accordion>
 
 <Accordion title="Time-to-event prediction" icon="clock">
 
-**Frameworks:** PyTorch (with lifelines / scikit-survival also supported for inference)
+**Frameworks:** PyTorch (a neural risk model trained with the Cox partial-likelihood loss), plus lifelines and scikit-survival (classical survival estimators that fit in a single pass and skip the neural training loop).
 
 **Input**
-- Tabular features plus a `duration` column (time to event or censoring) and an `event` column (1 = observed event, 0 = censored).
+- A tabular file with feature columns plus two target columns: a **duration** column (time until the event, or until censoring) and an **event indicator** column (`1` if the event was observed, `0` if the row was censored).
 
 **Preprocessing**
-- Same imputation, encoding, and scaling as tabular use cases.
-- Rows with non-finite durations are dropped.
-- Non-stratified train/val split.
+
+- A small set of internal bookkeeping columns is dropped from the feature set automatically (filename, IDs, timestamps, etc.) so all three frameworks see the same feature columns.
+- For the **PyTorch** path, the same tabular preprocessing pipeline used by tabular classification and regression is applied: median / `"Unknown"` imputation, binary and categorical encoding, and z-scoring of numeric features. The fitted state is frozen in cycle 1 and reused thereafter.
+- For the **lifelines** and **scikit-survival** paths, the data is passed through to the estimator unmodified — those libraries handle their own preprocessing internally.
+
+**Train/validation split**
+
+Random split with a deterministic seed. Default 85/15. The split is **not** stratified by the event indicator (matching the legacy behavior). The Cox loss sorts by duration internally at every step, so the order rows arrive in does not affect the loss.
 
 **Training step**
-1. Forward: `risk = model(features)` returns a scalar risk score per sample, `(B,)`.
-2. Loss: **Cox partial likelihood** (`cox_ph_loss_torch`). For each event in the batch, the loss term is `risk_i − log(sum(exp(risk_j)) for j in risk set at time_i)`; the loss is the negative mean of these terms.
-3. Backward (with gradient clipping) and optimizer step.
 
-The first `Linear` layer of your model is checked to ensure `in_features` matches the actual number of preprocessed features — this prevents silent mismatches when weights are aggregated across cycles.
+- **PyTorch**: the model takes the feature matrix and produces a single risk score per row (higher = worse prognosis). The loss is **Cox partial log-likelihood** — a survival-specific loss that ranks each observed event against everyone who was still at risk at that event time. The loss is hardcoded for this use case; the loss function you configured in the notebook is ignored on this path because Cox is the only canonical choice. A backward pass and optimizer step follow. Gradient clipping is applied **only when the global gradient norm exceeds 10**, then clipped to 10 — Cox loss can spike on small batches when one event dominates the risk set, but well-behaved batches see no clipping.
+- **Lifelines / scikit-survival**: a single `fit` call on the full training slice, using the estimator's own optimization. There is no separate forward / backward pass.
 
-**Cycle metrics**
-- `c_index` (concordance index, computed via `lifelines.utils.concordance_index(durations, -risk_scores, events)` — risk scores are negated because higher risk should mean shorter survival).
+**Validation step**
+
+- **PyTorch**: same forward pass without backward; risk scores are stored for the cycle metric.
+- **Lifelines / scikit-survival**: predictions are taken from the fitted estimator's standard prediction interface.
+
+**Cycle metric**
+
+- **Concordance index (C-index)** — the standard survival metric. It measures the fraction of comparable pairs of samples that the model ranks correctly: among pairs where you can tell from the data which subject experienced the event sooner, the C-index is the fraction the model also ranks in that order. A C-index of 1.0 means perfect ranking; 0.5 means random; and below 0.5 means the model is ranking inversely. Computed on the entire validation slice at once (it cannot be averaged per-batch). The platform negates risk scores when calling the underlying library to handle the convention difference — internally, higher = sooner-event for the model, but the library expects higher = longer-survival.
 
 **Inference output**
-- Per-sample risk score; concordance index over the test set.
+- Per row: a single risk score (higher means earlier predicted event). The C-index is also reported over the test set.
 
 </Accordion>
 
@@ -313,25 +490,25 @@ To validate a result you saw on the platform:
 
 <Steps>
   <Step title="Take the same data slice">
-    Use the same dataset and the same train/validation split ratio. For stratified splits, stratify on the label column; for time series, split temporally.
+    Use the same dataset and the same train/validation split ratio you configured. Match the split strategy for your use case — stratified by label for image and tabular classification, deduplicated by image for object detection, temporal (no shuffle) for time series, and so on.
   </Step>
   <Step title="Apply the same preprocessing">
-    Match the preprocessing in the table above for your use case — especially scaling and categorical encoding, which materially shift loss values.
+    Match the preprocessing described in the section for your use case — especially feature scaling, target scaling (for regression and time series), and categorical encoding, all of which materially shift loss values. For use cases where the preprocessing state is frozen in the first cycle (tabular, time series, time-to-event), pull the saved statistics from your experiment artifacts rather than refitting on your slice.
   </Step>
   <Step title="Use the same model file">
-    Run the same model architecture and (where applicable) the same pre-trained weights you uploaded to tracebloc.
+    Run the same model architecture, and the same pre-trained weights if you started from any.
   </Step>
-  <Step title="Match loss, optimizer, and hyperparameters">
-    Read these from the experiment parameters in the platform UI. Default loss/optimizer choices are listed above per use case.
+  <Step title="Match the experiment configuration">
+    Use the same loss, optimizer, learning rate, batch size, epochs, cycles, sequence length, augmentation flags, etc. — read them off the experiment view or your notebook. The shared parameter table above lists where the platform falls back when something is unset.
   </Step>
   <Step title="Compute the same metrics">
-    Use the metric definitions listed for your use case (e.g., `sklearn.metrics.f1_score(..., average="macro")`, `torchmetrics.detection.MeanAveragePrecision`, `lifelines.utils.concordance_index`).
+    Match the metric definitions called out per use case (averaging convention, threshold choices, scaled vs. original target space). Each accordion above lists the exact set of metrics the platform reports for that use case.
   </Step>
   <Step title="Compare cycle-level numbers">
-    The numbers shown in the tracebloc UI are **cycle-level aggregates**, not per-batch. Run a full cycle locally before comparing.
+    The numbers shown in the platform UI are **cycle-level aggregates**, not per-batch. Run a full cycle locally before comparing.
   </Step>
 </Steps>
 
 <Tip>
-The full source for every pipeline above lives in [`tracebloc/tracebloc-client`](https://github.com/tracebloc/tracebloc-client) under `use_cases/<task>/main.py` and `core/domains/.../<task>.py`. Cycle-level metric implementations live under `core/metrics/`.
+The platform code is open source at [`tracebloc/tracebloc-client`](https://github.com/tracebloc/tracebloc-client) — if a number on your end doesn't line up with what the platform reports, please [open a support ticket](mailto:support@tracebloc.io) so we can investigate together.
 </Tip>
