@@ -1,0 +1,31 @@
+# Template — copy into each upstream source repo as
+#   .github/workflows/notify-docs.yml
+#
+# Replace <SOURCE_ID> below with the matching `id` from
+# tracebloc/docs:.github/sync-sources.yml
+#
+# Adjust the `paths:` filter if the watched file is not README.md.
+#
+# Required: an org-level (or repo-level) secret named DOCS_DISPATCH_TOKEN.
+#   - Fine-grained PAT scoped to repo `tracebloc/docs`
+#   - Permission: Contents: Read and write  (needed to fire repository_dispatch)
+
+name: Notify docs of upstream change
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "README.md"
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger docs sync
+        env:
+          GH_TOKEN: ${{ secrets.DOCS_DISPATCH_TOKEN }}
+        run: |
+          gh api repos/tracebloc/docs/dispatches \
+            -f event_type=upstream-changed \
+            -f 'client_payload[source_id]=<SOURCE_ID>'

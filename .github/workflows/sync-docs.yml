@@ -1,0 +1,121 @@
+name: Sync docs from upstream
+
+# Triggers:
+#   - repository_dispatch: fired by source repos when a watched file changes (push-driven)
+#   - workflow_dispatch:   manual run from the Actions tab (optional source_id input)
+#   - schedule:            daily safety-net in case a dispatch is missed
+on:
+  repository_dispatch:
+    types: [upstream-changed]
+  workflow_dispatch:
+    inputs:
+      source_id:
+        description: "Specific source id from sync-sources.yml (leave empty for all)"
+        required: false
+        type: string
+  schedule:
+    - cron: "0 6 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq \
+            https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Resolve target sources
+        id: filter
+        env:
+          DISPATCH_ID: ${{ github.event.client_payload.source_id }}
+          INPUT_ID: ${{ inputs.source_id }}
+        run: |
+          target="${DISPATCH_ID:-${INPUT_ID:-}}"
+          if [ -n "$target" ]; then
+            echo "Filtering for source: $target"
+            yq -o=json ".sources[] | select(.id == \"$target\")" \
+              .github/sync-sources.yml | jq -s . > /tmp/sources.json
+          else
+            echo "Processing all sources"
+            yq -o=json '.sources' .github/sync-sources.yml > /tmp/sources.json
+          fi
+          count=$(jq length /tmp/sources.json)
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "Found $count source(s) to process"
+          if [ "$count" = "0" ]; then
+            echo "Nothing to do."
+          fi
+
+      - name: Fetch upstream files
+        if: steps.filter.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ secrets.SOURCE_REPOS_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p .sync-cache
+          jq -c '.[]' /tmp/sources.json | while read -r s; do
+            id=$(jq -r .id <<<"$s")
+            repo=$(jq -r .repo <<<"$s")
+            ref=$(jq -r .ref <<<"$s")
+            src=$(jq -r .src <<<"$s")
+            echo "Fetching $repo@$ref:$src -> .sync-cache/$id"
+            gh api "repos/$repo/contents/$src?ref=$ref" \
+              -H "Accept: application/vnd.github.raw" \
+              > ".sync-cache/$id"
+          done
+          ls -la .sync-cache
+
+      - name: Run Claude to update docs
+        if: steps.filter.outputs.count != '0'
+        uses: anthropics/claude-code-action@v1
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        with:
+          prompt: |
+            You are syncing this Mintlify docs site with upstream README changes.
+
+            The mapping is at `.github/sync-sources.yml`.
+            The list of sources to process this run is at `/tmp/sources.json`.
+            For each source, the latest upstream file content is at
+            `.sync-cache/<id>`.
+
+            For every entry in `/tmp/sources.json`:
+              1. Read `.sync-cache/<id>` (upstream) and the docs page at `dest`.
+              2. Apply the entry's `instruction` to update the docs page in place.
+              3. Preserve YAML frontmatter, page-specific framing, links to other
+                 Mintlify pages, and any callouts/components already on the page.
+              4. Follow `AGENTS.md` style: active voice, second person, sentence
+                 case headings, **bold** for UI elements, `code` for paths and
+                 commands.
+              5. If the upstream content does not meaningfully change anything in
+                 the docs page, skip that source — do not edit the file.
+
+            Do not edit any files outside the `dest` paths listed in the
+            sources. Do not touch `.sync-cache/` or `/tmp/`.
+
+      - name: Open or update PR
+        if: steps.filter.outputs.count != '0'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: docs/sync-upstream
+          delete-branch: true
+          commit-message: "docs: sync upstream sources"
+          title: "docs: sync upstream sources"
+          body: |
+            Automated sync from upstream repos via Claude.
+
+            **Triggered by:** `${{ github.event_name }}`
+            **Source filter:** `${{ github.event.client_payload.source_id || inputs.source_id || 'all' }}`
+
+            Review carefully — Claude rewrites prose to fit docs style, but
+            verify accuracy against the upstream README before merging.
+          labels: |
+            docs-sync
+            automated
