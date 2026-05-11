@@ -5,7 +5,7 @@ description: "What the tracebloc client does to your data and model in each use 
 
 This page documents the training and inference pipeline that the tracebloc client runs for every supported use case. The goal is full transparency: you can read what happens step-by-step, write an equivalent script on your own machine against the same dataset, and compare metrics number-for-number against what the platform reports.
 
-If something here does not match what you observe in your run, please [open a support ticket](mailto:support@tracebloc.io) so we can investigate together.
+If something here does not match what you observe in your run, please [contact us](mailto:support@tracebloc.io) so we can investigate together.
 
 ## Shared lifecycle
 
@@ -499,7 +499,7 @@ Common reasons numbers move:
 - **Stateful layers.** Batch normalization's running statistics, dropout masks, and any other stochastic layer state depend on batch order and initialization, both of which are sensitive to the points above.
 - **Mixed precision.** If your local run uses different mixed-precision settings than the platform did, you'll see small differences from rounding alone.
 
-If your local numbers land within a reasonable band of the platform's, the run reproduced. If they diverge by a meaningful margin, please [open a support ticket](mailto:support@tracebloc.io) — that signals a real mismatch (likely preprocessing, data-slice, or configuration drift) worth investigating together.
+If your local numbers land within a reasonable band of the platform's, the run reproduced. If they diverge by a meaningful margin, please [contact us](mailto:support@tracebloc.io) — that signals a real mismatch (likely preprocessing, data-slice, or configuration drift) worth investigating together.
 </Warning>
 
 To validate a result you saw on the platform:
@@ -526,5 +526,5 @@ To validate a result you saw on the platform:
 </Steps>
 
 <Tip>
-If a number on your end doesn't line up with what the platform reports, please [open a support ticket](mailto:support@tracebloc.io) so we can investigate together.
+If a number on your end doesn't line up with what the platform reports, please [contact us](mailto:support@tracebloc.io) so we can investigate together.
 </Tip>
