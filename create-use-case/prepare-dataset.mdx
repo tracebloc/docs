@@ -292,22 +292,9 @@ USER 1000
 
 ### Build Docker Image
 
-You need a docker user and password to proceed with the next step. Cloud platforms run a mix of x86 and ARM nodes (e.g. AWS Graviton, Azure Ampere, GCP Tau T2A). Building a multi-arch image with `--platform linux/amd64,linux/arm64` guarantees the image runs on either, particularly if you build on Apple Silicon (M1/M2) or other ARM-based systems. Pick a setup, build and deploy the image:
-
-#### For Local Development/Testing
+You need a docker user and password to proceed with the next step. Cloud platforms run a mix of x86 and ARM nodes (e.g. AWS Graviton, Azure Ampere, GCP Tau T2A). Building a multi-arch image with `--platform linux/amd64,linux/arm64` guarantees the image runs on either, particularly if you build on Apple Silicon (M1/M2) or other ARM-based systems. Build and push the image with a single command:
 
 ```bash
-# Build for your local platform
-docker build -t <your-username>/<image-name>:<tag> .
-
-# Optional: Push to registry for sharing
-docker push <your-username>/<image-name>:<tag>
-```
-
-#### For Cloud Deployment (AWS, Azure, GCP)
-
-```bash
-# Build a multi-arch image (works on x86 and ARM cloud nodes) and push directly to the registry
 docker buildx build --platform linux/amd64,linux/arm64 -t <your-username>/<image-name>:<tag> --push .
 ```
 
