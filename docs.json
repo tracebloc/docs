@@ -67,6 +67,7 @@
               "join-use-case/join-use-case",
               "join-use-case/start-training",
               "join-use-case/hyperparameters",
+              "join-use-case/how-training-works",
               "join-use-case/model-optimization",
               "join-use-case/model-evaluation"
             ]
