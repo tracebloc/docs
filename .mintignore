@@ -1,6 +1,10 @@
-# Mintlify automatically ignores these files and directories:
-# .git, .github, .claude, .agents, .idea, node_modules,
-# README.md, LICENSE.md, CHANGELOG.md, CONTRIBUTING.md
+# Mintlify is supposed to auto-ignore .git, .github, .claude, .agents,
+# .idea, node_modules, README.md, LICENSE.md, CHANGELOG.md, CONTRIBUTING.md
+# — but in practice the dev server still tries to MDX-parse files inside
+# .github (e.g. pull_request_template.md, which uses HTML <!-- comments),
+# so list it explicitly.
+.github/
+.github/**
 
 # Draft content
 drafts/
