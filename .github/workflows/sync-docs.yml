@@ -59,35 +59,34 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.SOURCE_REPOS_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
-          mkdir -p .sync-cache
+          mkdir -p /tmp/sync-cache
           jq -c '.[]' /tmp/sources.json | while read -r s; do
             id=$(jq -r .id <<<"$s")
             repo=$(jq -r .repo <<<"$s")
             ref=$(jq -r .ref <<<"$s")
             src=$(jq -r .src <<<"$s")
-            echo "Fetching $repo@$ref:$src -> .sync-cache/$id"
+            echo "Fetching $repo@$ref:$src -> /tmp/sync-cache/$id"
             gh api "repos/$repo/contents/$src?ref=$ref" \
               -H "Accept: application/vnd.github.raw" \
-              > ".sync-cache/$id"
+              > "/tmp/sync-cache/$id"
           done
-          ls -la .sync-cache
+          ls -la /tmp/sync-cache
 
       - name: Run Claude to update docs
         if: steps.filter.outputs.count != '0'
         uses: anthropics/claude-code-action@v1
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
             You are syncing this Mintlify docs site with upstream README changes.
 
             The mapping is at `.github/sync-sources.yml`.
             The list of sources to process this run is at `/tmp/sources.json`.
             For each source, the latest upstream file content is at
-            `.sync-cache/<id>`.
+            `/tmp/sync-cache/<id>`.
 
             For every entry in `/tmp/sources.json`:
-              1. Read `.sync-cache/<id>` (upstream) and the docs page at `dest`.
+              1. Read `/tmp/sync-cache/<id>` (upstream) and the docs page at `dest`.
               2. Apply the entry's `instruction` to update the docs page in place.
               3. Preserve YAML frontmatter, page-specific framing, links to other
                  Mintlify pages, and any callouts/components already on the page.
@@ -98,7 +97,7 @@ jobs:
                  the docs page, skip that source — do not edit the file.
 
             Do not edit any files outside the `dest` paths listed in the
-            sources. Do not touch `.sync-cache/` or `/tmp/`.
+            sources. Do not touch `/tmp/sync-cache/` or `/tmp/sources.json`.
 
       - name: Open or update PR
         if: steps.filter.outputs.count != '0'
