@@ -5,6 +5,8 @@
 # tracebloc/docs:.github/sync-sources.yml
 #
 # Adjust the `paths:` filter if the watched file is not README.md.
+# Adjust `branches:` if the source repo's default branch is not `main`
+# (e.g. some tracebloc repos use `master`).
 #
 # Required: an org-level (or repo-level) secret named DOCS_DISPATCH_TOKEN.
 #   - Fine-grained PAT scoped to repo `tracebloc/docs`
