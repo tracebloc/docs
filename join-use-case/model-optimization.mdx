@@ -5,10 +5,10 @@ description: "Learn the model format requirements, mandatory variables per frame
 
 ## Use Pre-trained Weights
 
-Upload weights along with your model in the `user.uploadModel()` step and set `weights=True`, the default value is False:
+Upload weights along with your model in the `user.upload_model()` step and set `weights=True`, the default value is False:
 
 ```python
-user.uploadModel("../../model-zoo/model_zoo/<task>/<framework>/model.py", weights=True)
+user.upload_model(model_name="../../model-zoo/model_zoo/<task>/<framework>/model.py", weights=True)
 ```
 
 A weights file with the same base name as the model and suffix "\_weights.pkl" must exist in the same directory. For example, if the model file is "mymodel.py", the corresponding weights file should be "mymodel_weights.pkl".

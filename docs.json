@@ -84,7 +84,7 @@
           {
             "group": "Tools & Help",
             "pages": [
-              "tools-help/tracebloc-package",
+              "tools-help/tracebloc",
               "tools-help/faqs",
               "tools-help/key-terms"
             ]
@@ -143,10 +143,11 @@
     { "source": "/environment-setup/eks-deployment-guide", "destination": "/environment-setup/eks-client-deployment-guide" },
     { "source": "/environment-setup/architecture", "destination": "/environment-setup/configuration" },
     { "source": "/environment-setup/setup_eks.sh", "destination": "/environment-setup/eks-client-deployment-guide" },
-    { "source": "/join-use-case/tracebloc-package", "destination": "/tools-help/tracebloc-package" },
+    { "source": "/join-use-case/tracebloc-package", "destination": "/tools-help/tracebloc" },
+    { "source": "/tools-help/tracebloc-package", "destination": "/tools-help/tracebloc" },
     { "source": "/join-use-case/model-optimisation.md", "destination": "/join-use-case/model-optimization" },
     { "source": "/join-use-case/join-use-case/model-optimisation.md", "destination": "/join-use-case/model-optimization" },
-    { "source": "/tracebloc-package/user-linkModelDataset", "destination": "/tools-help/tracebloc-package" },
+    { "source": "/tracebloc-package/user-linkModelDataset", "destination": "/tools-help/tracebloc" },
     { "source": "/experiment/details", "destination": "/join-use-case/explore-use-case" },
     { "source": "/experiment/exp-guide", "destination": "/join-use-case/start-training" },
     { "source": "/collaboration/collaboration-overview", "destination": "/join-use-case/overview" },
@@ -156,7 +157,7 @@
     { "source": "/create-use-case/set-evaluation", "destination": "/create-use-case/evaluate-models" },
     { "source": "/client-setup/setup-requirements", "destination": "/environment-setup/setup-guide" },
     { "source": "/training-guide/jupyter-notebook", "destination": "/join-use-case/start-training" },
-    { "source": "/model-requirements/api-supported", "destination": "/tools-help/tracebloc-package" },
+    { "source": "/model-requirements/api-supported", "destination": "/tools-help/tracebloc" },
     { "source": "/model-requirements/model-zoo", "destination": "/create-use-case/templates" },
     { "source": "/FAQ/Collaboration", "destination": "/tools-help/faqs" },
     { "source": "/FAQ/General", "destination": "/tools-help/faqs" },
@@ -172,7 +173,7 @@
     { "source": "/tags/:slug*", "destination": "/overview/tracebloc" },
     { "source": "/blog/authors", "destination": "https://tracebloc.io/blog" },
     { "source": "/blog/archive", "destination": "https://tracebloc.io/blog" },
-    { "source": "/tracebloc-package", "destination": "/tools-help/tracebloc-package" }
+    { "source": "/tracebloc-package", "destination": "/tools-help/tracebloc" }
   ],
   "seo": {
     "indexHiddenPages": false

@@ -1,0 +1,69 @@
+# Mapping: upstream source files → docs pages
+#
+# Add a new source by appending an entry. The `id` is also used in the
+# source repo's notify workflow (see .github/notify-docs.workflow-template.yml)
+# to tell this repo which mapping changed.
+#
+# Fields:
+#   id          unique slug for this mapping
+#   repo        owner/name of the upstream repo
+#   ref         branch or tag to read from
+#   src         file path inside the upstream repo
+#   dest        path in this repo (must exist)
+#   private     true if the repo is private (requires SOURCE_REPOS_TOKEN)
+#   instruction natural-language brief Claude follows when updating dest
+
+sources:
+  - id: tracebloc-package
+    repo: tracebloc/tracebloc-py-package
+    ref: develop
+    src: README.md
+    dest: tools-help/tracebloc.mdx
+    private: true
+    instruction: |
+      Sync the Installation, Key Features, and Quick Start sections to reflect
+      the upstream README. Preserve the page frontmatter and any prose that is
+      unique to the docs page (e.g. links to other Mintlify pages).
+
+  - id: client-setup
+    repo: tracebloc/client
+    ref: main
+    src: README.md
+    dest: environment-setup/setup-guide.mdx
+    private: false
+    instruction: |
+      Sync installer steps, requirements, supported platforms, and verification
+      commands. Preserve the page's narrative framing (numbered top-level steps,
+      requirements table) and any prose unique to the docs page.
+
+  - id: start-training
+    repo: tracebloc/start-training
+    ref: main
+    src: README.md
+    dest: join-use-case/start-training.mdx
+    private: false
+    instruction: |
+      Sync notebook setup and the steps for launching experiments to match the
+      upstream README. Preserve cross-links to other Join-a-Use-Case pages.
+
+  - id: data-ingestors
+    repo: tracebloc/data-ingestors
+    ref: master
+    src: Readme.md
+    dest: create-use-case/prepare-dataset.mdx
+    private: false
+    instruction: |
+      Sync dataset preparation pipeline steps, supported formats, and ingestor
+      configuration from the upstream README. Preserve the page frontmatter and
+      any examples specific to the docs page.
+
+  - id: model-zoo
+    repo: tracebloc/model-zoo
+    ref: master
+    src: README.md
+    dest: create-use-case/templates.mdx
+    private: false
+    instruction: |
+      Sync the list of available model templates and their descriptions from the
+      upstream README. Preserve the page frontmatter and any prose specific to
+      the docs page.
