@@ -66,7 +66,12 @@ jobs:
           target="${DISPATCH_ID:-${INPUT_ID:-}}"
           if [ -n "$target" ]; then
             echo "Filtering for source: $target"
-            yq -o=json ".sources[] | select(.id == \"$target\")" \
+            # Pass `target` to yq via env + strenv() so the value never gets
+            # interpolated into the yq expression as a string literal.
+            # Untrusted client_payload / workflow_dispatch input can't break
+            # out of the query or inject yq syntax.
+            TARGET="$target" yq -o=json \
+              '.sources[] | select(.id == strenv(TARGET))' \
               /tmp/sync-sources.yml | jq -s . > /tmp/sources.json
           else
             echo "Processing all sources"
