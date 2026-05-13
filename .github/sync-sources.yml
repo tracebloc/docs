@@ -16,7 +16,7 @@
 sources:
   - id: tracebloc-package
     repo: tracebloc/tracebloc-py-package
-    ref: main
+    ref: develop
     src: README.md
     dest: tools-help/tracebloc.mdx
     private: true
@@ -48,7 +48,7 @@ sources:
 
   - id: data-ingestors
     repo: tracebloc/data-ingestors
-    ref: main
+    ref: master
     src: Readme.md
     dest: create-use-case/prepare-dataset.mdx
     private: false
@@ -59,7 +59,7 @@ sources:
 
   - id: model-zoo
     repo: tracebloc/model-zoo
-    ref: main
+    ref: master
     src: README.md
     dest: create-use-case/templates.mdx
     private: false
