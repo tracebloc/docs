@@ -18,7 +18,7 @@ sources:
     repo: tracebloc/tracebloc-py-package
     ref: main
     src: README.md
-    dest: tools-help/tracebloc-package.mdx
+    dest: tools-help/tracebloc.mdx
     private: true
     instruction: |
       Sync the Installation, Key Features, and Quick Start sections to reflect
