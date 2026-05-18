@@ -5,11 +5,15 @@ description: "Detailed walkthrough for deploying a tracebloc workspace — requi
 
 Everything the installer does, explained. This page walks through the full setup process — what each step does, what to expect, and how to verify it worked.
 
+<Note>
+The installer deploys a **single-node workspace on one machine** — a local Kubernetes cluster running inside Docker on that host. For multi-node or production deployments, see the [EKS deployment guide](/environment-setup/eks-client-deployment-guide).
+</Note>
+
 ---
 
 ## Requirements
 
-The installer runs on any modern machine. These are the minimum specs to run a workspace comfortably:
+The installer runs on any modern machine (one host per workspace). These are the minimum specs to run a workspace comfortably:
 
 | | Minimum | Recommended |
 |---|---------|-------------|
