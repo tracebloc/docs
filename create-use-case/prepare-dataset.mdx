@@ -16,6 +16,75 @@ This guide covers:
 
 **IMPORTANT** Make sure that the data format and ML task is supported and that data standards are met by reviewing the [docs](/create-use-case/prerequisites). You must run the process twice, once to ingest training and once to ingest testing data.
 
+## Setup options
+
+You can ingest data into your client in two ways:
+
+- **Declarative YAML (recommended, simpler)** — describe your dataset in ~8 lines of `ingest.yaml`, then `helm install`. No Dockerfile, no custom Python script. The official ingestor image runs it for you. Use this for any dataset that fits a supported category.
+- **Custom Python template + Kubernetes Job (advanced)** — clone the [data-ingestors repo](https://github.com/tracebloc/data-ingestors), pick a per-category template script, edit it, build and push a Docker image, then `kubectl apply` an `ingestor-job.yaml`. Use this when the declarative schema can't express what your data needs — e.g. non-trivial preprocessing, a custom validator, or a `BaseProcessor` subclass.
+
+Start with the declarative method below. Drop down to the custom-template flow only if you need it.
+
+## Declarative YAML (recommended)
+
+Describe your dataset in ~8 lines of YAML, then `helm install`. The official ingestor image (published as `ghcr.io/tracebloc/ingestor`) runs it. No Dockerfile, no Python script.
+
+### 1. Add the chart repo (one-time)
+
+```bash
+helm repo add tracebloc https://tracebloc.github.io/client
+helm repo update
+```
+
+The `tracebloc/client` parent chart bootstraps the cluster (jobs-manager, MySQL, RBAC). The `tracebloc/ingestor` subchart submits per-dataset ingestion runs against it.
+
+<Note>
+If you installed the client via the one-liner (`bash <(curl -fsSL https://tracebloc.io/i.sh)`), use `--reset-then-reuse-values` so the helm upgrade doesn't drop the values the installer applied:
+
+```bash
+helm upgrade <workspace> tracebloc/client -n <namespace> --reset-then-reuse-values
+```
+
+Append `--version <version-number>` to pin a specific chart version.
+</Note>
+
+### 2. Stage your data on the cluster's shared PVC
+
+The chart **doesn't transport data into the cluster** — it points at data already accessible to the cluster's shared PVC (`client-pvc` by default, mounted at `/data/shared/` inside the ingestor Pod). Before installing, get your raw files there. The simplest pattern for a small dataset is a throwaway `kubectl cp` Pod that mounts the PVC; for production you'd typically use an init container with cloud-storage sync. Full staging recipe and manifests live in the [client ingestor README](https://github.com/tracebloc/client/blob/develop/ingestor/README.md#stage-your-data-on-the-shared-pvc).
+
+### 3. Write your `ingest.yaml`
+
+The example below is for `image_classification`. **Other categories require different fields** — e.g. `tabular_classification` has no `images:` and instead needs a typed `schema:` block. Don't copy this one blindly; grab the matching file from [`examples/yaml/`](https://github.com/tracebloc/data-ingestors/tree/master/examples/yaml) (one per category) and edit from there. Per-category sample data and READMEs live under [`templates/`](https://github.com/tracebloc/data-ingestors/tree/master/templates).
+
+```yaml
+apiVersion: tracebloc.io/v1
+kind: IngestConfig
+category: image_classification
+table: cats_dogs_train
+intent: train
+csv: /data/shared/cats-dogs/labels.csv
+images: /data/shared/cats-dogs/images/
+label: label
+```
+
+The top-level shape (`apiVersion`, `kind`, `category`, `table`, `intent`, `label`) is the same for every category; the `category` field picks the validator set, file-extension defaults, and column conventions. The data-source fields (`csv:`, `images:`, `schema:`, …) vary per category. The paths are *paths inside the ingestor Pod*, which is the PVC mount you populated in step 2.
+
+### 4. Install once per dataset
+
+```bash
+helm install my-cats-dogs tracebloc/ingestor \
+  --namespace <workspace> \
+  --set-file ingestConfig=./ingest.yaml
+```
+
+The ingestor runs once: validates your data, copies files into the destination directory on the PVC, inserts rows into MySQL, sends metadata to the tracebloc backend, then exits. Repeat per dataset (one helm release per dataset, with different `table:` and `intent:` for train and test).
+
+Full chart docs (data-staging recipe, schema, every category, update model, verification, override knobs) → [client ingestor README](https://github.com/tracebloc/client/blob/develop/ingestor/README.md).
+
+## Custom Python template (advanced)
+
+Use this flow when the declarative schema can't express what your data needs — typically when you have non-trivial preprocessing logic, a custom validator, or a `BaseProcessor` subclass. The sections below — Quick Setup and Detailed Setup — both describe this advanced path.
+
 ## Quick Setup
 
 Use this quick setup if you already have an ingestor configured and just want to switch datasets or toggle between training and testing. If you are setting up for the first time, go to the next section for the detailed walkthrough.
