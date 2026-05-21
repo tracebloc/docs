@@ -117,6 +117,10 @@ Data:       /tracebloc/<workspace>
 
 Install logs are kept in `~/.tracebloc/` if you need to debug anything.
 
+<Note>
+To upgrade a one-liner install later, run `helm upgrade <workspace> tracebloc/client -n <namespace> --reset-then-reuse-values` (append `--version <version-number>` to pin). See [Configuration → Upgrade](/environment-setup/configuration#upgrade) for details — `--reset-then-reuse-values` is required so the values applied by the installer are preserved.
+</Note>
+
 ### GPU Support
 
 The installer auto-detects GPU hardware and configures the cluster accordingly:
