@@ -50,7 +50,23 @@ Append `--version <version-number>` to pin a specific chart version.
 
 ### 2. Stage your data on the cluster's shared PVC
 
-The chart **doesn't transport data into the cluster** — it points at data already accessible to the cluster's shared PVC (`client-pvc` by default, mounted at `/data/shared/` inside the ingestor Pod). Before installing, get your raw files there. The simplest pattern for a small dataset is a throwaway `kubectl cp` Pod that mounts the PVC; for production you'd typically use an init container with cloud-storage sync. Full staging recipe and manifests live in the [client ingestor README](https://github.com/tracebloc/client/blob/develop/ingestor/README.md#stage-your-data-on-the-shared-pvc).
+The chart **doesn't transport data into the cluster** — it points at data already accessible to the cluster's shared PVC (`client-pvc` by default, mounted at `/data/shared/` inside the ingestor Pod). Before installing, get your raw files there.
+
+For a single-node workspace (the default install), the PVC is backed by a host directory the installer created at `~/.tracebloc/<workspace>/data/`. Drop your files into a per-dataset subdirectory:
+
+```bash
+# Host path on the machine where the tracebloc client is installed.
+# Pick a <prefix> per dataset — it becomes the path you reference in ingest.yaml.
+mkdir -p ~/.tracebloc/<workspace>/data/<prefix>
+cp -R LOCAL_PATH/images   ~/.tracebloc/<workspace>/data/<prefix>/
+cp    LOCAL_PATH/labels.csv ~/.tracebloc/<workspace>/data/<prefix>/
+```
+
+Inside the ingestor Pod those files appear at `/data/shared/<prefix>/...` — that's what you'll put in `ingest.yaml` below.
+
+<Note>
+For multi-node or EKS deployments where the PVC isn't backed by a local host path, use a throwaway `kubectl cp` Pod or a cloud-storage init container instead. See the [client ingestor README](https://github.com/tracebloc/client/blob/develop/ingestor/README.md#stage-your-data-on-the-shared-pvc) for those recipes.
+</Note>
 
 ### 3. Write your `ingest.yaml`
 
@@ -71,13 +87,21 @@ The top-level shape (`apiVersion`, `kind`, `category`, `table`, `intent`, `label
 
 ### 4. Install once per dataset
 
+The ingestor runs once: validates your data, copies files into the destination directory on the PVC, inserts rows into MySQL, sends metadata to the tracebloc backend, then exits. **Run it twice per dataset** — once with `intent: train`, once with `intent: test` — using distinct `table:` names. The example below shows both releases:
+
 ```bash
-helm install my-cats-dogs tracebloc/ingestor \
+# Train release — points at the ingest.yaml from step 3 (table: cats_dogs_train, intent: train)
+helm install cats-dogs-train tracebloc/ingestor \
   --namespace <workspace> \
-  --set-file ingestConfig=./ingest.yaml
+  --set-file ingestConfig=./ingest-train.yaml
+
+# Test release — same shape, with table: cats_dogs_test and intent: test
+helm install cats-dogs-test tracebloc/ingestor \
+  --namespace <workspace> \
+  --set-file ingestConfig=./ingest-test.yaml
 ```
 
-The ingestor runs once: validates your data, copies files into the destination directory on the PVC, inserts rows into MySQL, sends metadata to the tracebloc backend, then exits. Repeat per dataset (one helm release per dataset, with different `table:` and `intent:` for train and test).
+Each `helm install` is a separate release (the first argument is the release name), so the two runs don't collide. The ingestor Pod picks up `CLIENT_ID` / `CLIENT_PASSWORD` automatically from the Kubernetes Secret the parent `tracebloc/client` chart created in `<workspace>` at install time — you don't pass credentials on the `helm install` command.
 
 Full chart docs (data-staging recipe, schema, every category, update model, verification, override knobs) → [client ingestor README](https://github.com/tracebloc/client/blob/develop/ingestor/README.md).
 
