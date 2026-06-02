@@ -103,6 +103,16 @@ helm install cats-dogs-test tracebloc/ingestor \
 
 Each `helm install` is a separate release (the first argument is the release name), so the two runs don't collide. The ingestor Pod picks up `CLIENT_ID` / `CLIENT_PASSWORD` automatically from the Kubernetes Secret the parent `tracebloc/client` chart created in `<workspace>` at install time — you don't pass credentials on the `helm install` command.
 
+<Warning>
+**Validation error like `'<your_category>' is not one of [...]` or `Additional properties are not allowed`?** Your local Helm chart cache is stale and doesn't know about the newer category or schema field. Refresh it before retrying:
+
+```bash
+helm repo update
+```
+
+Then re-run the `helm install` command above.
+</Warning>
+
 Full chart docs (data-staging recipe, schema, every category, update model, verification, override knobs) → [client ingestor README](https://github.com/tracebloc/client/blob/develop/ingestor/README.md).
 
 ## Custom Python template (advanced)
