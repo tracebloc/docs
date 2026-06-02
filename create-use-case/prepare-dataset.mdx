@@ -5,7 +5,7 @@ description: "Learn how to prepare and ingest your datasets into tracebloc using
 
 ## Overview
 
-Make your data available to the Kubernetes cluster so it can be used for training and evaluation. Regardless of where your client runs on Azure, AWS, Google Cloud, or a local Minikube setup, the process of ingesting datasets works the same way.
+Make your data available to the Kubernetes cluster so it can be used for training and evaluation. Whether your client runs on Azure, AWS, Google Cloud, or a local Minikube setup, the process of ingesting datasets works the same way.
 
 The data ingestor is a lightweight service that bridges your raw data and the cluster's persistent storage. It comes with ready-made templates (CSV, images, text) that you can use as starting points and customize for your own dataset. By containerizing the ingestion step, the ingestor validates data format and schema, enforces consistency, and transfers the dataset securely into cluster's SQL storage where it becomes accessible to all training and evaluation jobs.
 
@@ -29,6 +29,16 @@ Start with the declarative method below. Drop down to the custom-template flow o
 
 Describe your dataset in ~8 lines of YAML, then `helm install`. The official ingestor image (published as `ghcr.io/tracebloc/ingestor`) runs it. No Dockerfile, no Python script.
 
+<Note>
+**Before you run any commands in this section:** if you installed the client via the one-liner (`bash <(curl -fsSL https://tracebloc.io/i.sh)`), every later `helm upgrade <workspace> tracebloc/client …` **must** include `--reset-then-reuse-values`, otherwise the upgrade drops the values the installer applied and breaks the workspace:
+
+```bash
+helm upgrade <workspace> tracebloc/client -n <namespace> --reset-then-reuse-values
+```
+
+Append `--version <version-number>` to pin a specific chart version. This caveat only affects upgrades of the parent `tracebloc/client` chart, not the `helm install tracebloc/ingestor` runs below.
+</Note>
+
 ### 1. Add the chart repo (one-time)
 
 ```bash
@@ -37,16 +47,6 @@ helm repo update
 ```
 
 The `tracebloc/client` parent chart bootstraps the cluster (jobs-manager, MySQL, RBAC). The `tracebloc/ingestor` subchart submits per-dataset ingestion runs against it.
-
-<Note>
-If you installed the client via the one-liner (`bash <(curl -fsSL https://tracebloc.io/i.sh)`), use `--reset-then-reuse-values` so the helm upgrade doesn't drop the values the installer applied:
-
-```bash
-helm upgrade <workspace> tracebloc/client -n <namespace> --reset-then-reuse-values
-```
-
-Append `--version <version-number>` to pin a specific chart version.
-</Note>
 
 ### 2. Stage your data on the cluster's shared PVC
 
