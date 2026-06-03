@@ -104,10 +104,11 @@ helm install cats-dogs-test tracebloc/ingestor \
 Each `helm install` is a separate release (the first argument is the release name), so the two runs don't collide. The ingestor Pod picks up `CLIENT_ID` / `CLIENT_PASSWORD` automatically from the Kubernetes Secret the parent `tracebloc/client` chart created in `<workspace>` at install time — you don't pass credentials on the `helm install` command.
 
 <Warning>
-**Validation error like `'<your_category>' is not one of [...]` or `Additional properties are not allowed`?** Your local Helm chart cache is stale and doesn't know about the newer category or schema field. Refresh it before retrying:
+**Validation error like `'<your_category>' is not one of [...]` or `Additional properties are not allowed (<field> was unexpected)`?** This comes from the cluster's `jobs-manager` validating against its own bundled schema at submit time — the deployed schema is older than the ingestor image you're installing. `helm repo update` won't fix it (that only refreshes the local chart index, not the running server). The fix is on the cluster side: upgrade the parent chart so jobs-manager redeploys with the current schema.
 
 ```bash
-helm repo update
+helm upgrade <workspace> tracebloc/client \
+  -n <workspace> --reset-then-reuse-values
 ```
 
 Then re-run the `helm install` command above.
