@@ -5,12 +5,15 @@ description: "Step-by-step guide to deploy Tracebloc on Amazon EKS. Build a prod
 
 ## Overview
 
+<Note>
+**Use EKS for production** — multi-node, autoscaling, or shared GPU clusters on AWS. For a single machine (a laptop or one server), the [local installer](/environment-setup/setup-guide) is simpler and faster.
+</Note>
 
 Running machine learning workloads in the cloud often requires a reliable, secure, and scalable infrastructure—yet setting it up can be complex. This guide walks you through building a complete Amazon EKS (Elastic Kubernetes Service) environment from scratch using the AWS CLI. By following these steps, you'll create a production-ready foundation with networking, GPU-optional compute, storage, and security fully aligned with AWS and Kubernetes best practices.
 
 Once the infrastructure is in place, you'll deploy and configure the tracebloc client to securely train and benchmark AI models. This setup ensures that your proprietary data stays within your environment, while still allowing external AI models to be tested and fine-tuned in a controlled, isolated way. The result: a scalable, secure platform for high-performance ML workloads that accelerates collaboration with external experts while maintaining full control over your data and IP.
 
-The entire setup can be completed in about 1–2 hours.
+The entire setup takes ~1–2 hours.
 
 If the cluster is already up and you are just adding another client to it, skip the cluster-creation steps and go straight to ["Client Configuration"](#5-client-configuration).
 
@@ -44,7 +47,7 @@ aws configure set region eu-central-1
 ```
 
 #### Required Permissions
-Your AWS user/role should have permissions for:
+Requires permissions for:
 - Amazon EKS cluster management
 - VPC and networking resources
 - EC2 instances and security groups
@@ -137,6 +140,8 @@ Together, these measures ensure that external models can be deployed safely into
 
 ## Quick Setup
 
+Quick Setup runs an automated script that builds the whole cluster in one go. Want step-by-step control (or to customize networking)? Use [Detailed Setup](#detailed-setup) instead.
+
 ### Purpose
 Spin up a production-ready EKS baseline (VPC, subnets, internet gateway, EKS cluster, managed nodegroup, EFS + CSI driver) in one go. Includes basic validation, colored logging, and a cleanup mode.
 
@@ -167,7 +172,7 @@ Run `./setup_eks.sh cleanup` to remove cluster, nodegroup, EFS, subnets, gateway
 - **Costs**: This creates billable resources (EC2, EKS, EFS, data transfer). Remove when not needed.
 - **Network model**: Subnets are configured to auto-assign public IPs for simplicity. Adjust to private subnets + NAT as needed.
 - **Kubernetes version**: The script requests `--kubernetes-version 1.32`; update if your region/account supports a different current version.
-- **Security hardening**: Treat this as a solid baseline; adapt SGs, private subnets, IRSA, and PodSecurity/OPA as required by your environment.
+- **Security hardening**: This is a production baseline; harden further for your environment (security groups, private subnets, IRSA, Pod Security/OPA).
 
 If you prefer more control over your setup and want to customize the environment to your needs, follow the step-by-step guide below.
 
@@ -454,7 +459,7 @@ Creates a nodegroup with `t3.medium` instances (2 vCPUs, 4 GiB memory) spread ac
 
 #### Training Nodegroup
 
-This group runs your ML training workloads and **must be sized appropriately** to provide sufficient memory and compute. Consider dataset size, model type, the number of parallel workloads and whether GPU acceleration is needed. Select instance types and scaling parameters carefully, based on the kind of models you expect to train and the resources they demand.
+This group runs your ML training workloads — size it for your dataset, model type, number of parallel workloads, and whether you need GPUs.
 
 Refer to the [EC2 instance types list](https://aws.amazon.com/ec2/instance-types) and [EKS managed nodegroups docs](https://docs.aws.amazon.com/eks/latest/userguide/create-managed-node-group.html) for guidance.
 
