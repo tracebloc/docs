@@ -98,7 +98,7 @@ Verifies Docker is installed and running, detects GPU hardware (falls back to CP
 Provisions a lightweight local Kubernetes cluster inside Docker. First run takes 1–2 minutes to download components.
 
 **Step 3/4 — Install tracebloc client**
-Prompts for a **workspace name** (e.g. `berlin-team`, `vision-lab`, `ml-mardan`). This identifies the client on your machine and becomes the Kubernetes namespace.
+Deploys the tracebloc client into the cluster — no input required. The client runs in a fixed local namespace (`tracebloc`), and one client runs per machine.
 
 **Step 4/4 — Connect to tracebloc network**
 Prompts for your **Client ID** and **password** from step 2 above. This links your secure local environment to the tracebloc platform so vendors can submit models for evaluation.
@@ -108,17 +108,18 @@ When it finishes you'll see a summary like:
 ```
 tracebloc client installed successfully
 
-Workspace : <workspace>
-Mode      : CPU      # or GPU
+Workspace : tracebloc
+Version   : 1.4.4      # the client version you're running
+Mode      : CPU        # or GPU
 
 Logs:       ~/.tracebloc/
-Data:       /tracebloc/<workspace>
+Data:       /tracebloc/tracebloc
 ```
 
 Install logs are kept in `~/.tracebloc/` if you need to debug anything.
 
 <Note>
-To upgrade a one-liner install later, run `helm upgrade <workspace> tracebloc/client -n <namespace> --reset-then-reuse-values` (append `--version <version-number>` to pin). See [Configuration → Upgrade](/environment-setup/configuration#upgrade) for details — `--reset-then-reuse-values` is required so the values applied by the installer are preserved.
+To upgrade a one-liner install later, run `helm upgrade tracebloc tracebloc/client -n tracebloc --reset-then-reuse-values` (append `--version <version-number>` to pin). See [Configuration → Upgrade](/environment-setup/configuration#upgrade) for details — `--reset-then-reuse-values` is required so the values applied by the installer are preserved.
 </Note>
 
 ### GPU Support
@@ -136,15 +137,18 @@ See [Configuration > GPU](/environment-setup/configuration#gpu-support) for deta
 After the installer finishes, confirm that your workspace is running:
 
 ```bash
-kubectl get pods -n <workspace>
+kubectl get pods -n tracebloc
 ```
 
-You should see two pods in `Running` state:
+You should see these pods in `Running` state:
 
 | Pod | Role |
 |-----|------|
-| `mysql-...` | Local metadata store — tracks jobs, metrics, and configuration |
-| `tracebloc-jobs-manager-...` | The client — executes training jobs and communicates with the platform |
+| `mysql-client-...` | Local metadata store — tracks jobs, metrics, and configuration |
+| `tracebloc-jobs-manager-...` | The client — runs training jobs and communicates with the platform |
+| `tracebloc-requests-proxy-...` | Routes the client's outbound traffic to the platform |
+
+A `tracebloc-resource-monitor` DaemonSet also runs in the `tracebloc-node-agents` namespace, reporting node capacity.
 
 Then open [ai.tracebloc.io](https://ai.tracebloc.io) and check that your client status shows **Online**. This confirms the client has established a secure connection to the tracebloc backend.
 

@@ -5,14 +5,14 @@ description: "Common issues and debugging commands for your tracebloc workspace.
 
 Most issues fall into a few categories: pods not starting, client not connecting, or resource limits being hit. Start with the quick checks below — they cover the most common problems.
 
-For real-time cluster monitoring, try [k9s](https://k9scli.io/) — run `k9s -n <workspace>` to get a live view of pods, logs, and events.
+For real-time cluster monitoring, try [k9s](https://k9scli.io/) — run `k9s -n <namespace>` to get a live view of pods, logs, and events.
 
 ## Quick Checks
 
 | Symptom | Check | Fix |
 |---------|-------|-----|
-| Pods not starting | `kubectl describe pod <pod> -n <workspace>` | Check resource limits, Docker status |
-| Client shows Offline | `kubectl logs -n <workspace> -l app=tracebloc-jobs-manager` | Verify client ID/password, check network |
+| Pods not starting | `kubectl describe pod <pod> -n <namespace>` | Check resource limits, Docker status |
+| Client shows Offline | `kubectl logs -n <namespace> -l app=tracebloc-jobs-manager` | Verify client ID/password, check network |
 | Docker not running | `docker info` | Start Docker Desktop or daemon |
 | Cluster not found | `k3d cluster list` | Re-run the installer |
 | GPU not detected | `nvidia-smi` | Install NVIDIA drivers, reboot, re-run installer |
@@ -34,6 +34,7 @@ Issues specific to local (k3d) deployments:
 | Error Message | Description | Resolution |
 |---------------|-------------|------------|
 | ServiceBus connection error after Docker restart | When Docker overutilizes local resources and restarts, the ServiceBus connection may fail with `NoneType` errors. | Monitor resources via Docker Dashboard. Restart the jobs manager pod (e.g. in k9s, exit with Ctrl+D) to restore the connection. |
+| Installer stops: *"This machine already runs the tracebloc client '…'"* | A **different** client is already installed here. tracebloc runs one client per machine. | **Update** it: re-run with the same Client ID. **Switch** clients: `k3d cluster delete tracebloc` (wipes the current client + its local data), then re-run. **Run both:** use a separate machine. |
 
 ## Debugging Commands
 
@@ -42,9 +43,9 @@ When the quick checks don't resolve the issue, use these commands to dig deeper.
 ### Pod status and logs
 
 ```bash
-kubectl get pods -n <workspace>
-kubectl logs <pod-name> -n <workspace>
-kubectl describe pod <pod-name> -n <workspace>
+kubectl get pods -n <namespace>
+kubectl logs <pod-name> -n <namespace>
+kubectl describe pod <pod-name> -n <namespace>
 ```
 
 ### Resource usage
@@ -53,7 +54,7 @@ See if your nodes or pods are running out of CPU or memory:
 
 ```bash
 kubectl top nodes
-kubectl top pods -n <workspace>
+kubectl top pods -n <namespace>
 ```
 
 ### Storage
@@ -61,7 +62,7 @@ kubectl top pods -n <workspace>
 Check that persistent volume claims are bound and have enough capacity:
 
 ```bash
-kubectl get pvc -n <workspace>
+kubectl get pvc -n <namespace>
 kubectl get pv
 ```
 
@@ -70,7 +71,7 @@ kubectl get pv
 If pods fail with `ErrImagePull`, verify that the Docker registry secret exists:
 
 ```bash
-kubectl get secret regcred -n <workspace>
+kubectl get secret regcred -n <namespace>
 ```
 
 ## CPU and Memory Optimization
