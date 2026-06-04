@@ -23,7 +23,7 @@ The installer runs on any modern machine (one host per workspace). These are the
 
 **Supported platforms:** macOS (Intel & Apple Silicon) · Linux (x86_64 & arm64) · Windows (x86_64 & arm64)
 
-**Outbound access needed:** The installer downloads container images and connects to the tracebloc platform. Make sure your network allows traffic to `*.docker.io`, `*.tracebloc.io`, `github.com`, and `pypi.org`.
+**Outbound access needed:** The installer pulls container images, the install scripts, and the Helm chart, then connects to the tracebloc platform. Allow traffic to `*.docker.io`, `ghcr.io`, `raw.githubusercontent.com`, `*.github.io`, `*.tracebloc.io`, and `pypi.org`.
 
 ---
 
@@ -123,7 +123,7 @@ To upgrade a one-liner install later, run `helm upgrade <workspace> tracebloc/cl
 
 ### GPU Support
 
-The installer auto-detects GPU hardware and configures the cluster accordingly:
+The installer detects your GPU and configures the cluster:
 
 - **Linux (NVIDIA/AMD)** — drivers, container toolkit, and Kubernetes device plugin are installed automatically. A reboot may be required after driver installation.
 - **macOS** — CPU-only. For GPU workloads, deploy on a Linux machine or use [AWS (EKS)](/environment-setup/eks-client-deployment-guide).
