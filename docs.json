@@ -90,6 +90,7 @@
               },
               "environment-setup/configuration",
               "environment-setup/operations",
+              "environment-setup/cli",
               "environment-setup/security",
               "environment-setup/troubleshooting"
             ]

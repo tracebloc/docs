@@ -1,0 +1,101 @@
+---
+title: "tracebloc CLI"
+description: "Manage and operate your workspace from the command line — inspect the cluster, ingest and remove datasets, validate configs."
+---
+
+The `tracebloc` CLI is how you **manage and operate your workspace and its data** from your own machine: inspect the cluster, ingest datasets, remove them, validate configs — with more verbs on the way. It's the friendly front end to the same ingestion protocol the [Helm ingestor chart](https://github.com/tracebloc/client/tree/main/ingestor) speaks, so it works against any workspace running the `tracebloc/client` chart.
+
+<Note>
+You never touch Helm, edit YAML, or run `kubectl cp`. `dataset push` discovers your workspace, stages the files, submits, and streams the job for you.
+</Note>
+
+## Install
+
+If you deployed with the [Quick Start](/environment-setup/quickstart) one-liner, the CLI is **already installed**. Otherwise:
+
+<Tabs>
+  <Tab title="macOS / Linux">
+  ```bash
+  curl -fsSL https://github.com/tracebloc/cli/releases/latest/download/install.sh | sh
+  ```
+  </Tab>
+  <Tab title="Windows (PowerShell)">
+  ```powershell
+  irm https://github.com/tracebloc/cli/releases/latest/download/install.ps1 | iex
+  ```
+  </Tab>
+</Tabs>
+
+Binaries are cosign-signed and multi-arch. Pin a version with `--version vX.Y.Z` (or `$env:RELEASE_VERSION` on Windows). Verify:
+```bash
+tracebloc version
+```
+
+## Operate your workspace
+
+```bash
+tracebloc cluster info
+```
+Shows the cluster, namespace, parent release, and ingestor-token state — your first check that the CLI can reach your workspace.
+
+<Note>
+If `cluster info` reports *"no parent client release found in namespace default"*, your client runs in another namespace — add `-n <your-namespace>`, or set it once with `kubectl config set-context --current --namespace <your-namespace>`. Every command below accepts `-n`.
+</Note>
+
+## Manage data
+
+**Ingest a dataset** — stage local data into your workspace and run ingestion in one step:
+```bash
+tracebloc dataset push ./train.csv \
+  --category tabular_classification \
+  --table my_dataset_train \
+  --intent train \
+  --label-column label
+```
+Omit the flags to run **guided** (the CLI prompts you), or add `--dry-run` to preview without submitting. Under the hood it discovers your workspace, validates the schema locally, mints a token, stages the files to the shared volume, submits, and watches the job.
+
+It covers 9 task categories: `image_classification`, `object_detection`, `keypoint_detection`, `text_classification`, `masked_language_modeling`, `tabular_classification`, `tabular_regression`, `time_series_forecasting`, `time_to_event_prediction`.
+
+**Remove a dataset** — delete its table and staged files:
+```bash
+tracebloc dataset rm my_dataset_train
+```
+
+## Validate a config locally
+
+```bash
+tracebloc ingest validate ingest.yaml
+```
+Checks an `ingest.yaml` against the embedded schema — no cluster required. The declarative form (also accepted by the Helm ingestor chart):
+```yaml
+apiVersion: tracebloc.io/v1
+kind: IngestConfig
+category: tabular_classification
+table: my_dataset_train
+intent: train
+csv: /data/shared/my_dataset/train.csv
+label: label
+```
+
+## Command reference
+
+| Command | Does |
+|---|---|
+| `tracebloc dataset push <path>` | Stage + ingest a local dataset (guided if you omit flags) |
+| `tracebloc dataset rm <table>` | Delete a pushed dataset (table + staged files) |
+| `tracebloc cluster info` | Cluster, namespace, parent release, and token state |
+| `tracebloc ingest validate <path>` | Validate an `ingest.yaml` against the v1 schema, locally |
+| `tracebloc version` | CLI version, git SHA, and build date |
+| `tracebloc completion` | Generate shell completion |
+
+Add `--help` to any command for the full flag list. For workspace lifecycle (upgrade, stop/start, uninstall), see [Operations](/environment-setup/operations).
+
+## CLI or Helm chart?
+
+Both submit to the same ingestion protocol — pick the one that fits your workflow:
+- **CLI** — local data on your workstation; the everyday choice. Handles staging and submission for you.
+- **[Helm ingestor chart](https://github.com/tracebloc/client/tree/main/ingestor)** — Kubernetes-native / GitOps, when your data is already staged on the cluster.
+
+## Coming soon
+
+Cloud-source ingestion (S3 / GCS / HTTPS) for large datasets, a `dataset list` verb, and `semantic_segmentation` support.

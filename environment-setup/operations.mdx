@@ -5,6 +5,10 @@ description: "Run, monitor, upgrade, and maintain a tracebloc workspace day to d
 
 Everything you do *after* your workspace is running. Commands assume the default namespace `tracebloc` — substitute yours if you changed it.
 
+<Note>
+Day-to-day management — inspecting the cluster, ingesting and removing data — is easiest with the [tracebloc CLI](/environment-setup/cli). The Helm/kubectl commands here cover the lifecycle bits the CLI doesn't (upgrade, stop/start, uninstall) and deeper debugging.
+</Note>
+
 ## Which version am I on?
 
 ```bash
