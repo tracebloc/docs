@@ -14,8 +14,8 @@ The single source of truth for the words we use — in the product UI, docs, web
 
 | Concept | Preferred | Don't use | Definition |
 |---|---|---|---|
-| Our software on the user's infra | **client** | agent, node, box, instance | tracebloc's software running on your own infrastructure — your private AI workspace, where you invite contributors to train models on your data. |
-| The user's deployed environment | **workspace** | environment, deployment, "the install" | Your private, dedicated AI workspace on one machine (the client plus your data). |
+| The software you run on your infra (and the environment it gives you) | **workspace** | client (as a noun), agent, node, box, instance, deployment | tracebloc's software running on your own infrastructure — your private, dedicated AI environment, where you invite contributors to train models on your data. |
+| The credential that connects it to the platform | **Client ID** | client key, token, API key | Created on the clients page; identifies your workspace to the platform. ("client" survives **only** here, matching the current UI.) |
 | The hosted tracebloc service | **the platform** | the cloud, the server, the backend, SaaS | The hosted side (ai.tracebloc.io) that contributors connect through. |
 | The user's own servers / laptop | **your infrastructure** | your box, your environment, on-prem (as a noun) | The hardware the workspace runs on — owned and controlled by the user. |
 | The person who deploys & owns it | **workspace owner** | admin, host, customer, "the user" | The person who deploys the workspace, ingests data, creates use cases, and controls what's shared. |
@@ -35,9 +35,6 @@ The single source of truth for the words we use — in the product UI, docs, web
 
 ## Open questions (decide before enforcing)
 
-1. **client vs. workspace** — the big one; we currently use both for "the thing on your infra." Options:
-   - **(a)** *workspace* = the user-facing concept ("your private AI workspace"); *client* = the registered object on the platform (has a **Client ID**, shows **Online/Offline**). Framing: "you deploy your workspace; it connects as a client."
-   - **(b)** Use *workspace* everywhere user-facing; keep *client* only in **Client ID**.
-   - Pick one — docs and UI follow it.
+1. ✅ **client vs. workspace — DECIDED 2026-06-05 (Lukas): use _workspace_.** Option (b): *workspace* everywhere user-facing; *client* survives only in **Client ID** (the credential). The Environment Setup docs were swept to match. **Residual gap:** the app UI still shows "client" / "clients page" — a UI rename is the follow-up so docs and product fully agree.
 2. **workspace owner vs. admin vs. data owner** — what do we call the deploying person, especially in the UI ("admin panel")?
 3. **contributor vs. data scientist** — is *contributor* the term in both product and marketing?

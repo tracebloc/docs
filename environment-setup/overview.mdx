@@ -3,7 +3,7 @@ title: "Overview"
 description: "How tracebloc runs on your infrastructure — and why your data never leaves it."
 ---
 
-**Models come to your data — your data never leaves your infrastructure.** You run a tracebloc *client* on your own hardware. Contributors submit models that are scanned and run in isolation against your data, on your machines. Only results leave — and trained model weights only if you choose to share them.
+**Models come to your data — your data never leaves your infrastructure.** You run a tracebloc *workspace* on your own hardware. Contributors submit models that are scanned and run in isolation against your data, on your machines. Only results leave — and trained model weights only if you choose to share them.
 
 ## The trust boundary
 
@@ -11,7 +11,7 @@ description: "How tracebloc runs on your infrastructure — and why your data ne
 flowchart LR
   subgraph YOURS["Your infrastructure"]
     DATA["Your datasets — raw data"]
-    CLIENT["tracebloc client"]
+    CLIENT["tracebloc workspace"]
     TRAIN["Isolated training"]
     DATA --> TRAIN
     CLIENT --> TRAIN
@@ -23,7 +23,7 @@ flowchart LR
   style DATA fill:#e6f6fb,stroke:#0184A3
 ```
 
-Raw data stays inside your infrastructure. The client opens an **outbound-only** connection — nothing reaches in to pull your data out.
+Raw data stays inside your infrastructure. Your workspace opens an **outbound-only** connection — nothing reaches in to pull your data out.
 
 ## How it works
 
@@ -60,15 +60,15 @@ Raw data stays inside your infrastructure. The client opens an **outbound-only**
 Enforced by per-job container isolation, a NetworkPolicy that blocks data egress from training pods, a vulnerability scan before any model runs, and TLS on all traffic.
 
 <Note>
-**The mental model:** `1 machine = 1 client = 1 workspace = n datasets`. One deployment per machine; as many datasets inside it as you like.
+**The mental model:** `1 machine = 1 workspace = n datasets`. One deployment per machine; as many datasets inside it as you like.
 </Note>
 
 ## Vocabulary
 
 | Term | What it is |
 |---|---|
-| **Client** | Your private AI workspace — tracebloc's software running on your own infrastructure, where you invite contributors to train models on your data |
-| **Workspace** | The everyday name for your client — your dedicated, private AI environment on one machine |
+| **Workspace** | Your private, dedicated AI environment — tracebloc's software running on your own infrastructure, where you invite contributors to train models on your data |
+| **Client ID** | The credential that connects your workspace to the platform (created on the clients page) |
 | **Dataset** | Data you've staged locally for use cases |
 | **Use case** | A task contributors build models for, against your datasets |
 | **Contributor** | An external data scientist who submits models — and never sees your raw data |

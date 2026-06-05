@@ -3,7 +3,7 @@ title: "Operations"
 description: "Run, monitor, upgrade, and maintain a tracebloc workspace day to day."
 ---
 
-Everything you do *after* the client is running. Commands assume the default namespace `tracebloc` — substitute yours if you changed it.
+Everything you do *after* your workspace is running. Commands assume the default namespace `tracebloc` — substitute yours if you changed it.
 
 ## Which version am I on?
 
@@ -16,11 +16,11 @@ The install summary also prints the version, and `--diagnose` reports it on its 
 ## Health & status
 
 ```bash
-kubectl get pods -n tracebloc          # all client pods Running?
+kubectl get pods -n tracebloc          # all workspace pods Running?
 kubectl get pods -n tracebloc-node-agents   # the resource-monitor DaemonSet
 ```
 
-Then check your [clients page](https://ai.tracebloc.io/clients) — the client should read **Online**.
+Then check your [clients page](https://ai.tracebloc.io/clients) — your workspace should read **Online**.
 
 ## Logs
 
@@ -39,7 +39,7 @@ k3d cluster start tracebloc    # resume where you left off
 
 ## Upgrade
 
-The auto-upgrade CronJob keeps the client current by default. To upgrade manually:
+The auto-upgrade CronJob keeps your workspace current by default. To upgrade manually:
 
 ```bash
 helm repo update
@@ -64,7 +64,7 @@ The client's identity is its **Client ID**, not the machine. To relocate: run th
 <Tabs>
   <Tab title="Local / k3d">
   ```bash
-  k3d cluster delete tracebloc      # removes the cluster and the client
+  k3d cluster delete tracebloc      # removes the cluster and your workspace
   ```
   </Tab>
   <Tab title="Helm (any cluster)">

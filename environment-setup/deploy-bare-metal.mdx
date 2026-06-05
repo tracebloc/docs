@@ -1,9 +1,9 @@
 ---
 title: "Bare-metal"
-description: "Deploy the tracebloc client on your own on-prem Kubernetes cluster."
+description: "Deploy a tracebloc workspace on your own on-prem Kubernetes cluster."
 ---
 
-**When to pick it** — You already run Kubernetes on-prem (k3s, kubeadm, RKE, …) and want the client on it, with full control over scheduling and storage.
+**When to pick it** — You already run Kubernetes on-prem (k3s, kubeadm, RKE, …) and want a workspace on it, with full control over scheduling and storage.
 
 ## Prerequisites
 
@@ -30,7 +30,7 @@ Set your credentials in `values.yaml` (see [Configuration → Authentication](/e
 kubectl get pods -n tracebloc
 ```
 
-Pods `Running`, client **Online** on the clients page.
+Pods `Running`, your workspace **Online** on the clients page.
 
 ## Environment-specific config
 

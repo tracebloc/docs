@@ -20,7 +20,7 @@ tracebloc is built so your data never has to leave your network. This page is th
 - **Isolation.** Each training job runs in its own container with restricted system access; Kubernetes namespaces separate workloads.
 - **Network policy.** Training pods are denied data egress — they can't reach MySQL, other pods, or the Kubernetes API.
 - **Model scanning.** Submitted models are scanned for vulnerabilities (Bandit) before anything executes.
-- **Encryption in transit.** All client ↔ platform traffic is TLS, on an **outbound-only** connection.
+- **Encryption in transit.** All workspace ↔ platform traffic is TLS, on an **outbound-only** connection.
 - **Access control.** Only contributors you whitelist by email can join a use case.
 - **Minimal footprint.** The installer touches only Docker and `~/.tracebloc` — no system-wide changes.
 
@@ -34,4 +34,4 @@ If support asks for diagnostics, `--diagnose` produces a bundle with **credentia
 
 ## Outbound access
 
-The client needs outbound HTTPS to: `*.docker.io`, `ghcr.io`, `raw.githubusercontent.com`, `*.github.io`, `*.tracebloc.io`, and `pypi.org`. Nothing needs to reach *in*.
+Your workspace needs outbound HTTPS to: `*.docker.io`, `ghcr.io`, `raw.githubusercontent.com`, `*.github.io`, `*.tracebloc.io`, and `pypi.org`. Nothing needs to reach *in*.

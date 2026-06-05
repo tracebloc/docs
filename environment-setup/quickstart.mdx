@@ -19,7 +19,7 @@ A running workspace in about 10 minutes, with one command. Deploying on a specif
 The installer runs below these too — it only warns, and more RAM mainly helps once models train.
 
 <Steps>
-  <Step title="Register a client">
+  <Step title="Register your workspace">
     On the [clients page](https://ai.tracebloc.io/clients), click **+** and note your **Client ID** and **password** — you'll enter them during install.
   </Step>
 
@@ -36,10 +36,6 @@ The installer runs below these too — it only warns, and more RAM mainly helps 
       ```
       </Tab>
     </Tabs>
-
-    <Info>
-      **▶ Install demo** — a ~90-second terminal recording goes here, showing the one-liner run end to end: prompts → setup steps → summary → the client turning **Online**. *(placeholder)*
-    </Info>
 
     **What to expect:** about 5 minutes. It asks for your Client ID and password, installs Docker (if missing) and a local Kubernetes cluster, and touches only `~/.tracebloc` and Docker. Safe to re-run anytime.
 
@@ -61,7 +57,7 @@ The installer runs below these too — it only warns, and more RAM mainly helps 
     kubectl get pods -A
     ```
 
-    Look for the tracebloc pods (`mysql-client`, `…-jobs-manager`, `…-requests-proxy`) in `Running` state. Then open your [clients page](https://ai.tracebloc.io/clients) — the client should show **Online**.
+    Look for the tracebloc pods (`mysql-client`, `…-jobs-manager`, `…-requests-proxy`) in `Running` state. Then open your [clients page](https://ai.tracebloc.io/clients) — your workspace should show **Online**.
   </Step>
 </Steps>
 
