@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /cdn-cgi/
+Disallow: /mintlify-assets/
+
+Sitemap: https://docs.tracebloc.io/sitemap.xml

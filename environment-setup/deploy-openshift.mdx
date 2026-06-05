@@ -1,0 +1,58 @@
+---
+title: "OpenShift"
+description: "Deploy a tracebloc workspace on Red Hat OpenShift or OKD."
+---
+
+**When to pick it** — You run Red Hat OpenShift (or OKD) and need the workspace to fit its security model (SCCs, OVN networking).
+
+## Prerequisites
+
+- An OpenShift cluster, and `oc` / `kubectl` access.
+- **Helm 3.x**.
+- Your **Client ID** and password from the [clients page](https://ai.tracebloc.io/clients).
+
+## Install
+
+```bash
+helm repo add tracebloc https://tracebloc.github.io/client
+helm repo update
+helm show values tracebloc/client > values.yaml   # edit per below
+helm upgrade --install tracebloc tracebloc/client \
+  -n tracebloc --create-namespace -f values.yaml
+```
+
+Set your credentials in `values.yaml` (see [Configuration → Authentication](/environment-setup/configuration#authentication)).
+
+## Verify
+
+```bash
+oc get pods -n tracebloc
+```
+
+Pods `Running`, your workspace **Online** on the clients page.
+
+## Environment-specific config
+
+```yaml
+storageClass:
+  create: false
+  name: ocs-storagecluster-cephfs
+clusterScope: false
+openshift:
+  scc:
+    enabled: true            # SCC for the privileged resource-monitor
+networkPolicy:
+  training:
+    enabled: true
+    dnsNamespace: openshift-dns
+    dnsSelector:
+      dns.operator.openshift.io/daemonset-dns: default
+```
+
+- OVN-Kubernetes **enforces** NetworkPolicy by default, so the training-pod egress lockdown works out of the box.
+- `metrics-server` is present on OpenShift.
+
+## Production notes
+
+- The bundled SCC grants the resource-monitor the host access it needs — review it against your cluster policy.
+- Size training compute per job; day-2 management is in [Operations](/environment-setup/operations).

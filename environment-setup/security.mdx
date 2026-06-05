@@ -1,0 +1,37 @@
+---
+title: "Security & data handling"
+description: "What stays on your infrastructure, what leaves, and how tracebloc enforces it — the page to share with your security team."
+---
+
+tracebloc is built so your data never has to leave your network. This page is the summary to hand to your security or compliance team.
+
+## What's shared, what isn't
+
+| Data | Shared with the platform? |
+|---|---|
+| Raw training & test data | **Never** — it stays on your infrastructure |
+| Dataset metadata (schema, row counts) | Yes — so contributors know what's available |
+| Training & evaluation results | Yes — the metrics models are judged on |
+| Trained model weights | **Only if you allow it** — your choice per collaboration, set in the admin panel |
+
+## How it's enforced
+
+- **Data locality.** Training runs against your data on your hardware. Raw data never crosses the boundary.
+- **Isolation.** Each training job runs in its own container with restricted system access; Kubernetes namespaces separate workloads.
+- **Network policy.** Training pods are denied data egress — they can't reach MySQL, other pods, or the Kubernetes API.
+- **Model scanning.** Submitted models are scanned for vulnerabilities (Bandit) before anything executes.
+- **Encryption in transit.** All workspace ↔ platform traffic is TLS, on an **outbound-only** connection.
+- **Access control.** Only contributors you whitelist by email can join a use case.
+- **Minimal footprint.** The installer touches only Docker and `~/.tracebloc` — no system-wide changes.
+
+## You control what leaves
+
+Trained weights are shared only when you choose to share them. Whom you collaborate with, and whether weights are downloadable, is set in the admin panel — per use case.
+
+## Support bundles are redacted
+
+If support asks for diagnostics, `--diagnose` produces a bundle with **credentials removed** (passwords, tokens, and proxy secrets stripped before the archive is written). See [Troubleshooting](/environment-setup/troubleshooting).
+
+## Outbound access
+
+Your workspace needs outbound HTTPS to: `*.docker.io`, `ghcr.io`, `raw.githubusercontent.com`, `*.github.io`, `*.tracebloc.io`, and `pypi.org`. Nothing needs to reach *in*.

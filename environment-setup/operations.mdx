@@ -1,0 +1,81 @@
+---
+title: "Operations"
+description: "Run, monitor, upgrade, and maintain a tracebloc workspace day to day."
+---
+
+Everything you do *after* your workspace is running. Commands assume the default namespace `tracebloc` — substitute yours if you changed it.
+
+## Which version am I on?
+
+```bash
+helm list -n tracebloc        # CHART column shows client-<version>
+```
+
+The install summary also prints the version, and `--diagnose` reports it on its first line.
+
+## Health & status
+
+```bash
+kubectl get pods -n tracebloc          # all workspace pods Running?
+kubectl get pods -n tracebloc-node-agents   # the resource-monitor DaemonSet
+```
+
+Then check your [clients page](https://ai.tracebloc.io/clients) — your workspace should read **Online**.
+
+## Logs
+
+```bash
+kubectl logs -n tracebloc -l app=manager --tail=200 -f
+```
+
+## Stop & start (local / k3d)
+
+Free up your machine without losing anything — data persists between stops.
+
+```bash
+k3d cluster stop tracebloc     # frees CPU/RAM
+k3d cluster start tracebloc    # resume where you left off
+```
+
+## Upgrade
+
+The auto-upgrade CronJob keeps your workspace current by default. To upgrade manually:
+
+```bash
+helm repo update
+helm upgrade tracebloc tracebloc/client -n tracebloc --reset-then-reuse-values
+```
+
+`--reset-then-reuse-values` preserves the values the installer applied. Append `--version <x.y.z>` to pin a specific release.
+
+## Roll back
+
+```bash
+helm history tracebloc -n tracebloc      # find the revision to return to
+helm rollback tracebloc <revision> -n tracebloc
+```
+
+## Move to another machine
+
+The client's identity is its **Client ID**, not the machine. To relocate: run the installer on the new host with the **same Client ID**, then re-ingest your datasets (or copy `~/.tracebloc`). The old host can be uninstalled once the new one shows **Online**.
+
+## Uninstall
+
+<Tabs>
+  <Tab title="Local / k3d">
+  ```bash
+  k3d cluster delete tracebloc      # removes the cluster and your workspace
+  ```
+  </Tab>
+  <Tab title="Helm (any cluster)">
+  ```bash
+  helm uninstall tracebloc -n tracebloc
+  ```
+  </Tab>
+</Tabs>
+
+PVCs are annotated `helm.sh/resource-policy: keep`, so your data survives an uninstall. To remove it too: `kubectl delete pvc --all -n tracebloc`.
+
+## Back up
+
+Your data lives in the data PVCs (or `~/.tracebloc` on a local install). Back up that directory / those volumes on your normal schedule — tracebloc keeps nothing of yours off your infrastructure.

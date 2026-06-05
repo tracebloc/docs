@@ -1,0 +1,55 @@
+---
+title: "Local / k3d"
+description: "Run a tracebloc workspace on a single machine — laptop or on-prem server. Production-capable."
+---
+
+**When to pick it** — A single machine you own: a laptop to try things, or an on-prem server you run in production. The installer brings up a self-contained Kubernetes cluster (k3d) inside Docker — you don't need a cluster of your own.
+
+## Prerequisites
+
+- A machine: macOS, Linux, or Windows · 2 CPU · 4 GB RAM · 20 GB free disk.
+- Your **Client ID** and password from the [clients page](https://ai.tracebloc.io/clients).
+
+That's it — no Docker or Kubernetes knowledge needed. The installer sets up Docker and the cluster for you.
+
+## Install
+
+<Tabs>
+  <Tab title="macOS / Linux">
+  ```bash
+  bash <(curl -fsSL https://tracebloc.io/i.sh)
+  ```
+  </Tab>
+  <Tab title="Windows (PowerShell as admin)">
+  ```powershell
+  irm https://tracebloc.io/i.ps1 | iex
+  ```
+  </Tab>
+</Tabs>
+
+See [Quick Start](/environment-setup/quickstart) for the full walkthrough, including the inspect-first option.
+
+## Verify
+
+```bash
+kubectl get pods -A
+```
+
+The tracebloc pods should be `Running`, and your workspace should read **Online** on the clients page.
+
+## Environment-specific config
+
+Set these as environment variables before the install command (full list in [Configuration](/environment-setup/configuration#installer-options)):
+
+```bash
+CLUSTER_NAME=my-cluster AGENTS=2 HOST_DATA_DIR=/data/tracebloc bash <(curl -fsSL https://tracebloc.io/i.sh)
+```
+
+GPUs are auto-detected on Linux (NVIDIA/AMD) — drivers, container toolkit, and device plugin are installed for you.
+
+## Production notes
+
+- **Local is production-capable.** Point it at a server rather than a laptop and it's a real deployment.
+- Your data persists in `HOST_DATA_DIR` across stop/start cycles (see [Operations](/environment-setup/operations)).
+- Need more headroom? Re-run the installer on a bigger machine, or add worker nodes with `AGENTS`.
+- For multi-node high availability, use [bare-metal](/environment-setup/deploy-bare-metal) or a managed cloud instead.

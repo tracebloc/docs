@@ -7,12 +7,22 @@ Most issues fall into a few categories: pods not starting, client not connecting
 
 For real-time cluster monitoring, try [k9s](https://k9scli.io/) — run `k9s -n <workspace>` to get a live view of pods, logs, and events.
 
+<Note>
+**Stuck? Generate a support bundle.** Re-run the installer with `--diagnose`:
+
+```bash
+bash <(curl -fsSL https://tracebloc.io/i.sh) --diagnose
+```
+
+It writes a redacted `~/.tracebloc/tracebloc-diagnose-<timestamp>.tgz` — logs, pod status, and versions with **credentials removed** — that you can send to support. The first line of output shows your client version.
+</Note>
+
 ## Quick Checks
 
 | Symptom | Check | Fix |
 |---------|-------|-----|
 | Pods not starting | `kubectl describe pod <pod> -n <workspace>` | Check resource limits, Docker status |
-| Client shows Offline | `kubectl logs -n <workspace> -l app=tracebloc-jobs-manager` | Verify client ID/password, check network |
+| Client shows Offline | `kubectl logs -n <workspace> -l app=manager` | Verify client ID/password, check network |
 | Docker not running | `docker info` | Start Docker Desktop or daemon |
 | Cluster not found | `k3d cluster list` | Re-run the installer |
 | GPU not detected | `nvidia-smi` | Install NVIDIA drivers, reboot, re-run installer |
