@@ -1,0 +1,54 @@
+---
+title: "Azure AKS"
+description: "Deploy the tracebloc client on Azure Kubernetes Service."
+---
+
+**When to pick it** — You're on Azure and want managed Kubernetes with autoscaling and GPU node pools.
+
+## Prerequisites
+
+- An AKS cluster, and `kubectl` pointed at it (`az aks get-credentials …`).
+- **Helm 3.x**.
+- Your **Client ID** and password from the [clients page](https://ai.tracebloc.io/clients).
+
+## Install
+
+```bash
+helm repo add tracebloc https://tracebloc.github.io/client
+helm repo update
+helm show values tracebloc/client > values.yaml   # edit per below
+helm upgrade --install tracebloc tracebloc/client \
+  -n tracebloc --create-namespace -f values.yaml
+```
+
+Set your credentials in `values.yaml` (see [Configuration → Authentication](/environment-setup/configuration#authentication)).
+
+## Verify
+
+```bash
+kubectl get pods -n tracebloc
+```
+
+Pods `Running`, client **Online** on the clients page.
+
+## Environment-specific config
+
+Use Azure Files for shared storage:
+
+```yaml
+storageClass:
+  create: true
+  provisioner: file.csi.azure.com
+  parameters:
+    skuName: Standard_LRS
+  mountOptions: [dir_mode=0750, file_mode=0640, uid=999, gid=999, mfsymlinks, cache=strict, actimeo=30]
+clusterScope: true
+```
+
+- **NetworkPolicy:** create the AKS cluster with `--network-policy azure` (Azure NPM) or Calico — otherwise the training-pod egress lockdown won't enforce.
+- `metrics-server` is bundled on AKS.
+
+## Production notes
+
+- Use GPU node pools for training workloads; size requests/limits per job.
+- Day-2 upgrades and rollbacks: see [Operations](/environment-setup/operations).

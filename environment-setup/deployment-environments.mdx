@@ -1,0 +1,28 @@
+---
+title: "Deployment environments"
+description: "Run tracebloc anywhere — local, bare-metal, EKS, AKS, or OpenShift. Same chart, same steps, your choice of infrastructure."
+---
+
+tracebloc runs the same way everywhere: one chart (`tracebloc/client`), one set of steps, your choice of infrastructure. **Local is a first-class production option** — a workspace on an on-prem server is every bit as real as one on a managed cloud cluster.
+
+## Pick your environment
+
+| Environment | Runs on | GPU | Best when |
+|---|---|---|---|
+| [Local / k3d](/environment-setup/deploy-local) | One machine you own | NVIDIA / AMD, auto-detected | A laptop or a single on-prem server — the fastest start |
+| [Bare-metal](/environment-setup/deploy-bare-metal) | Your own Kubernetes cluster | Your nodes | You already run on-prem Kubernetes |
+| [Amazon EKS](/environment-setup/eks-client-deployment-guide) | AWS (managed) | GPU nodegroups | You're on AWS and want managed, autoscaling compute |
+| [Azure AKS](/environment-setup/deploy-aks) | Azure (managed) | GPU node pools | You're on Azure |
+| [OpenShift](/environment-setup/deploy-openshift) | OpenShift / OKD | Your nodes | You run Red Hat OpenShift |
+
+<Note>
+Just want it running fast on one machine? The [Quick Start](/environment-setup/quickstart) one-liner is the local path with zero configuration.
+</Note>
+
+## Every environment, same shape
+
+Each guide follows the same six headings, so you always know where to look:
+
+**When to pick it · Prerequisites · Install · Verify · Environment-specific config · Production notes.**
+
+Adding a new target later (GKE, on-prem k3s, …) means filling the same template. All environments deploy the same chart — see [Configuration](/environment-setup/configuration) for every value, and [Operations](/environment-setup/operations) for day-2 management.

@@ -1,0 +1,58 @@
+---
+title: "Bare-metal"
+description: "Deploy the tracebloc client on your own on-prem Kubernetes cluster."
+---
+
+**When to pick it** — You already run Kubernetes on-prem (k3s, kubeadm, RKE, …) and want the client on it, with full control over scheduling and storage.
+
+## Prerequisites
+
+- A running Kubernetes cluster and `kubectl` access.
+- **Helm 3.x**.
+- `metrics-server` installed (the resource monitor needs it).
+- Your **Client ID** and password from the [clients page](https://ai.tracebloc.io/clients).
+
+## Install
+
+```bash
+helm repo add tracebloc https://tracebloc.github.io/client
+helm repo update
+helm show values tracebloc/client > values.yaml   # edit per below
+helm upgrade --install tracebloc tracebloc/client \
+  -n tracebloc --create-namespace -f values.yaml
+```
+
+Set your credentials in `values.yaml` (see [Configuration → Authentication](/environment-setup/configuration#authentication)).
+
+## Verify
+
+```bash
+kubectl get pods -n tracebloc
+```
+
+Pods `Running`, client **Online** on the clients page.
+
+## Environment-specific config
+
+Use hostPath-backed volumes:
+
+```yaml
+hostPath:
+  enabled: true
+pvcAccessMode: ReadWriteOnce
+storageClass:
+  create: true
+  provisioner: kubernetes.io/no-provisioner
+namespace:
+  podSecurity:
+    enforce: ""        # hostPath needs the privileged init-mysql-data container
+clusterScope: true
+```
+
+- **NetworkPolicy** (training-pod egress lockdown) only enforces if your CNI supports it — Calico, Cilium, or kube-router. Flannel alone does **not** enforce.
+
+## Production notes
+
+- Schedule MySQL and storage on reliable nodes; back up the data PVCs.
+- Size training compute per job via `RESOURCE_REQUESTS` / `RESOURCE_LIMITS` ([Configuration](/environment-setup/configuration#resource-limits-for-training-jobs)).
+- Day-2 upgrades and rollbacks: see [Operations](/environment-setup/operations).

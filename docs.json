@@ -77,10 +77,22 @@
             "pages": [
               "environment-setup/overview",
               "environment-setup/quickstart",
-              "environment-setup/setup-guide",
+              {
+                "group": "Deployment environments",
+                "pages": [
+                  "environment-setup/deployment-environments",
+                  "environment-setup/deploy-local",
+                  "environment-setup/deploy-bare-metal",
+                  "environment-setup/eks-client-deployment-guide",
+                  "environment-setup/deploy-aks",
+                  "environment-setup/deploy-openshift"
+                ]
+              },
               "environment-setup/configuration",
-              "environment-setup/eks-client-deployment-guide",
-              "environment-setup/troubleshooting"
+              "environment-setup/operations",
+              "environment-setup/security",
+              "environment-setup/troubleshooting",
+              "environment-setup/setup-guide"
             ]
           },
           {
