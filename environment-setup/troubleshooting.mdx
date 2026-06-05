@@ -22,7 +22,7 @@ It writes a redacted `~/.tracebloc/tracebloc-diagnose-<timestamp>.tgz` — logs,
 | Symptom | Check | Fix |
 |---------|-------|-----|
 | Pods not starting | `kubectl describe pod <pod> -n <workspace>` | Check resource limits, Docker status |
-| Client shows Offline | `kubectl logs -n <workspace> -l app=tracebloc-jobs-manager` | Verify client ID/password, check network |
+| Client shows Offline | `kubectl logs -n <workspace> -l app=manager` | Verify client ID/password, check network |
 | Docker not running | `docker info` | Start Docker Desktop or daemon |
 | Cluster not found | `k3d cluster list` | Re-run the installer |
 | GPU not detected | `nvidia-smi` | Install NVIDIA drivers, reboot, re-run installer |
