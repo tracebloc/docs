@@ -7,21 +7,9 @@ description: "How tracebloc runs on your infrastructure — and why your data ne
 
 ## The trust boundary
 
-```mermaid
-flowchart LR
-  subgraph YOURS["Your infrastructure"]
-    DATA["Your datasets — raw data"]
-    CLIENT["tracebloc workspace"]
-    TRAIN["Isolated training"]
-    DATA --> TRAIN
-    CLIENT --> TRAIN
-  end
-  CONTRIB["Contributors"] -->|submit models| PLATFORM["tracebloc platform"]
-  PLATFORM -->|scanned models in| CLIENT
-  CLIENT -->|"results out — TLS, outbound-only"| PLATFORM
-  style YOURS fill:#f2fafc,stroke:#0184A3,stroke-width:2px
-  style DATA fill:#e6f6fb,stroke:#0184A3
-```
+<Frame>
+  ![How tracebloc keeps your data on your infrastructure — models come to the data, only results leave](/images/traceblocfederatedlearning.png)
+</Frame>
 
 Raw data stays inside your infrastructure. Your workspace opens an **outbound-only** connection — nothing reaches in to pull your data out.
 
