@@ -1,0 +1,88 @@
+---
+title: "Overview"
+description: "How tracebloc runs on your infrastructure — and why your data never leaves it."
+---
+
+**Models come to your data — your data never leaves your infrastructure.** You run a tracebloc *client* on your own hardware. Contributors submit models that are scanned and run in isolation against your data, on your machines. Only metrics and trained weights ever leave.
+
+## The trust boundary
+
+```mermaid
+flowchart LR
+  subgraph YOURS["Your infrastructure"]
+    DATA["Your datasets — raw data"]
+    CLIENT["tracebloc client"]
+    TRAIN["Isolated training"]
+    DATA --> TRAIN
+    CLIENT --> TRAIN
+  end
+  CONTRIB["Contributors"] -->|submit models| PLATFORM["tracebloc platform"]
+  PLATFORM -->|scanned models in| CLIENT
+  CLIENT -->|"metrics + weights out — TLS, outbound-only"| PLATFORM
+  style YOURS fill:#f2fafc,stroke:#0184A3,stroke-width:2px
+  style DATA fill:#e6f6fb,stroke:#0184A3
+```
+
+Raw data stays inside the box. The client opens an **outbound-only** connection — nothing reaches in to pull your data out.
+
+## How it works
+
+<Steps>
+  <Step title="Deploy a client on your infrastructure">
+    One client per machine — a laptop, an on-prem server, or a cloud cluster. It runs a self-contained Kubernetes environment.
+  </Step>
+  <Step title="Stage your datasets">
+    You ingest datasets locally. Metadata syncs to the platform so contributors can see what's available — **the raw data never moves.**
+  </Step>
+  <Step title="A contributor submits a model">
+    Submitted models are **scanned for vulnerabilities** before anything runs.
+  </Step>
+  <Step title="The model trains against your data — on your hardware">
+    Training runs in an **isolated container** with restricted network and system access.
+  </Step>
+  <Step title="Only results leave">
+    Evaluation metrics and trained weights flow back out over TLS. Your data does not.
+  </Step>
+</Steps>
+
+## What stays, what leaves
+
+| Stays on your infrastructure | Leaves (outbound, TLS) | Enforced by |
+|---|---|---|
+| Raw training data | Dataset *metadata* (schema, counts) | Per-job container isolation |
+| Datasets at rest | Evaluation *metrics* | NetworkPolicy — no data egress from training pods |
+| Training compute | Trained model *weights* | Vulnerability scan before any model runs |
+| | | TLS on all client ↔ platform traffic |
+
+<Note>
+**The mental model:** `1 machine = 1 client = 1 workspace = n datasets`. One deployment per machine; as many datasets inside it as you like.
+</Note>
+
+## Vocabulary
+
+| Term | What it is |
+|---|---|
+| **Client** | The tracebloc agent running on your infrastructure |
+| **Workspace** | Your client's identity on one machine (its Kubernetes namespace) |
+| **Dataset** | Data you've staged locally for use cases |
+| **Use case** | A task contributors build models for, against your datasets |
+| **Contributor** | An external data scientist who submits models — and never sees your raw data |
+
+## What it touches
+
+The installer changes only **Docker** and **`~/.tracebloc`** on your host — no system-wide changes. Uninstalling is a single command, and your data is yours throughout.
+
+## Get started
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/environment-setup/quickstart">
+    A running workspace in about 10 minutes, with one command.
+  </Card>
+  <Card title="Deployment environments" icon="server" href="/environment-setup/setup-guide">
+    Deploy on local / k3d, bare-metal, EKS, AKS, or OpenShift.
+  </Card>
+</CardGroup>
+
+<Note>
+Want the guarantees in detail for your security team? See [Security & data handling](/environment-setup/configuration#security).
+</Note>

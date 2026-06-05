@@ -75,6 +75,8 @@
           {
             "group": "Environment Setup",
             "pages": [
+              "environment-setup/overview",
+              "environment-setup/quickstart",
               "environment-setup/setup-guide",
               "environment-setup/configuration",
               "environment-setup/eks-client-deployment-guide",

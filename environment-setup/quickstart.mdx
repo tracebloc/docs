@@ -1,0 +1,80 @@
+---
+title: "Quick Start"
+description: "From zero to a running tracebloc workspace in about 10 minutes."
+---
+
+A running workspace in about 10 minutes, with one command. Deploying on a specific environment instead (EKS, AKS, bare-metal, OpenShift)? See [Deployment environments](/environment-setup/setup-guide).
+
+## Before you start
+
+| You need | Minimum |
+|---|---|
+| A machine | macOS, Linux, or Windows · 4 CPU · 8 GB RAM · 20 GB free disk |
+| Docker | Installed and running |
+| A tracebloc account | [Sign up free](https://ai.tracebloc.io) — no credit card |
+
+<Steps>
+  <Step title="Register a client">
+    On the [clients page](https://ai.tracebloc.io/clients), click **+** and note your **Client ID** and **password** — you'll enter them during install.
+  </Step>
+
+  <Step title="Run the installer">
+    <Tabs>
+      <Tab title="macOS / Linux">
+      ```bash
+      bash <(curl -fsSL https://tracebloc.io/i.sh)
+      ```
+      </Tab>
+      <Tab title="Windows (PowerShell as admin)">
+      ```powershell
+      irm https://tracebloc.io/i.ps1 | iex
+      ```
+      </Tab>
+    </Tabs>
+
+    <Info>
+      **▶ Install demo** — a ~90-second terminal recording goes here, showing the one-liner run end to end: prompts → setup steps → summary → the client turning **Online**. *(placeholder)*
+    </Info>
+
+    **What to expect:** about 5 minutes. It asks for your Client ID and password, installs Docker (if missing) and a local Kubernetes cluster, and touches only `~/.tracebloc` and Docker. Safe to re-run anytime.
+
+    <Accordion title="Prefer to read the script before running it?">
+      Every install script is open source. Download, inspect, then run:
+
+      ```bash
+      curl -fsSL https://tracebloc.io/i.sh -o install.sh
+      less install.sh        # review it
+      bash install.sh
+      ```
+
+      Source: [github.com/tracebloc/client](https://github.com/tracebloc/client/blob/main/scripts/install.sh). Release binaries are cosign-signed, so you can verify their signature before trusting them.
+    </Accordion>
+  </Step>
+
+  <Step title="Verify it's connected">
+    ```bash
+    kubectl get pods -A
+    ```
+
+    Look for the tracebloc pods (`mysql-client`, `…-jobs-manager`, `…-requests-proxy`) in `Running` state. Then open your [clients page](https://ai.tracebloc.io/clients) — the client should show **Online**.
+  </Step>
+</Steps>
+
+<Note>
+**What changed on your machine** — only Docker and `~/.tracebloc`. To remove everything: `k3d cluster delete tracebloc`.
+</Note>
+
+## Locked-down environment?
+
+If your security policy forbids piping scripts from the internet, skip the one-liner and [deploy with Helm](/environment-setup/configuration#manual-deployment) instead — same result, full control over every step.
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Stage a dataset" icon="database" href="/create-use-case/prepare-dataset">
+    Ingest data so contributors can build models against it.
+  </Card>
+  <Card title="Create a use case" icon="diagram-project" href="/create-use-case/prerequisites">
+    Define a task and invite contributors.
+  </Card>
+</CardGroup>
