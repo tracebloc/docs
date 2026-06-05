@@ -3,7 +3,7 @@ title: "Overview"
 description: "How tracebloc runs on your infrastructure — and why your data never leaves it."
 ---
 
-**Models come to your data — your data never leaves your infrastructure.** You run a tracebloc *client* on your own hardware. Contributors submit models that are scanned and run in isolation against your data, on your machines. Only metrics and trained weights ever leave.
+**Models come to your data — your data never leaves your infrastructure.** You run a tracebloc *client* on your own hardware. Contributors submit models that are scanned and run in isolation against your data, on your machines. Only results leave — and trained model weights only if you choose to share them.
 
 ## The trust boundary
 
@@ -18,41 +18,46 @@ flowchart LR
   end
   CONTRIB["Contributors"] -->|submit models| PLATFORM["tracebloc platform"]
   PLATFORM -->|scanned models in| CLIENT
-  CLIENT -->|"metrics + weights out — TLS, outbound-only"| PLATFORM
+  CLIENT -->|"results out — TLS, outbound-only"| PLATFORM
   style YOURS fill:#f2fafc,stroke:#0184A3,stroke-width:2px
   style DATA fill:#e6f6fb,stroke:#0184A3
 ```
 
-Raw data stays inside the box. The client opens an **outbound-only** connection — nothing reaches in to pull your data out.
+Raw data stays inside your infrastructure. The client opens an **outbound-only** connection — nothing reaches in to pull your data out.
 
 ## How it works
 
 <Steps>
-  <Step title="Deploy a client on your infrastructure">
-    One client per machine — a laptop, an on-prem server, or a cloud cluster. It runs a self-contained Kubernetes environment.
+  <Step title="Deploy your workspace">
+    One command sets up your private workspace on your own infrastructure — a laptop, an on-prem server, or a cloud cluster.
   </Step>
-  <Step title="Stage your datasets">
-    You ingest datasets locally. Metadata syncs to the platform so contributors can see what's available — **the raw data never moves.**
+  <Step title="Ingest your datasets">
+    Stage your training and test data locally. Metadata syncs to the platform so contributors can see what's available — **the raw data never moves.**
   </Step>
-  <Step title="A contributor submits a model">
-    Submitted models are **scanned for vulnerabilities** before anything runs.
+  <Step title="Create a use case">
+    Define a use case from your datasets and set how submitted models are evaluated.
   </Step>
-  <Step title="The model trains against your data — on your hardware">
-    Training runs in an **isolated container** with restricted network and system access.
+  <Step title="Invite contributors">
+    Whitelist contributors by email. Only the people you invite can take part.
   </Step>
-  <Step title="Only results leave">
-    Evaluation metrics and trained weights flow back out over TLS. Your data does not.
+  <Step title="Contributors submit and train models">
+    Each model is **scanned for vulnerabilities**, then trains against your data in an **isolated container**, on your hardware.
+  </Step>
+  <Step title="Only results are shared">
+    Training and evaluation results flow back to you over TLS. Trained model weights are shared **only if you choose to** — you control that in the admin panel.
   </Step>
 </Steps>
 
 ## What stays, what leaves
 
-| Stays on your infrastructure | Leaves (outbound, TLS) | Enforced by |
-|---|---|---|
-| Raw training data | Dataset *metadata* (schema, counts) | Per-job container isolation |
-| Datasets at rest | Evaluation *metrics* | NetworkPolicy — no data egress from training pods |
-| Training compute | Trained model *weights* | Vulnerability scan before any model runs |
-| | | TLS on all client ↔ platform traffic |
+| Data | Shared with the platform? |
+|---|---|
+| Raw training & test data | **Never** — it stays on your infrastructure |
+| Dataset metadata (schema, row counts) | Yes — so contributors know what's available |
+| Training & evaluation results | Yes — the metrics models are judged on |
+| Trained model weights | **Only if you allow it** — your choice per collaboration, set in the admin panel |
+
+Enforced by per-job container isolation, a NetworkPolicy that blocks data egress from training pods, a vulnerability scan before any model runs, and TLS on all traffic.
 
 <Note>
 **The mental model:** `1 machine = 1 client = 1 workspace = n datasets`. One deployment per machine; as many datasets inside it as you like.
@@ -62,8 +67,8 @@ Raw data stays inside the box. The client opens an **outbound-only** connection 
 
 | Term | What it is |
 |---|---|
-| **Client** | The tracebloc agent running on your infrastructure |
-| **Workspace** | Your client's identity on one machine (its Kubernetes namespace) |
+| **Client** | Your private AI workspace — tracebloc's software running on your own infrastructure, where you invite contributors to train models on your data |
+| **Workspace** | The everyday name for your client — your dedicated, private AI environment on one machine |
 | **Dataset** | Data you've staged locally for use cases |
 | **Use case** | A task contributors build models for, against your datasets |
 | **Contributor** | An external data scientist who submits models — and never sees your raw data |

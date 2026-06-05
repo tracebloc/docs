@@ -5,13 +5,18 @@ description: "From zero to a running tracebloc workspace in about 10 minutes."
 
 A running workspace in about 10 minutes, with one command. Deploying on a specific environment instead (EKS, AKS, bare-metal, OpenShift)? See [Deployment environments](/environment-setup/setup-guide).
 
+<Note>
+**No Docker or Kubernetes knowledge needed.** The installer sets up the whole container stack for you — on macOS and Linux it even installs Docker if it's missing. You just need a machine.
+</Note>
+
 ## Before you start
 
 | You need | Minimum |
 |---|---|
-| A machine | macOS, Linux, or Windows · 4 CPU · 8 GB RAM · 20 GB free disk |
-| Docker | Installed and running |
+| A machine | macOS, Linux, or Windows · 2 CPU · 4 GB RAM · 20 GB free disk |
 | A tracebloc account | [Sign up free](https://ai.tracebloc.io) — no credit card |
+
+The installer runs below these too — it only warns, and more RAM mainly helps once models train.
 
 <Steps>
   <Step title="Register a client">
