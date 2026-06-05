@@ -43,9 +43,9 @@ The installer runs below these too — it only warns, and more RAM mainly helps 
       Every install script is open source. Download, inspect, then run:
 
       ```bash
-      curl -fsSL https://tracebloc.io/i.sh -o install.sh
-      less install.sh        # review it
-      bash install.sh
+      curl -fsSL https://tracebloc.io/i.sh -o install.sh   # silent download — no output means it worked
+      less install.sh        # review it (q to quit)
+      bash install.sh        # run it
       ```
 
       Source: [github.com/tracebloc/client](https://github.com/tracebloc/client/blob/main/scripts/install.sh). Release binaries are cosign-signed, so you can verify their signature before trusting them.
