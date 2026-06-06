@@ -13,13 +13,13 @@ The installer deploys a **single-node workspace on one machine** — a local Kub
 
 ## Requirements
 
-The installer runs on any modern machine (one host per workspace). These are the minimum specs to run a workspace comfortably:
+The installer runs on any modern machine (one host per workspace) and **checks these before it starts** — below the minimum it stops on Linux with a clear message (on macOS/Windows it warns; raise Docker Desktop's memory in Settings → Resources). "To run" keeps a workspace online; **training on the same machine needs the headroom** — a single training job alone reserves ~8 GB.
 
-| | Minimum | Recommended |
+| | To run the workspace | To train on this machine |
 |---|---------|-------------|
-| **CPU** | 2 cores | 8+ cores |
-| **RAM** | 4 GB | 16+ GB |
-| **Disk** | 20 GB free | 50+ GB free |
+| **CPU** | 2 cores | 4+ cores |
+| **RAM** | 5 GB | 16 GB |
+| **Disk** | 10 GB free | 50+ GB free |
 
 **Supported platforms:** macOS (Intel & Apple Silicon) · Linux (x86_64 & arm64) · Windows (x86_64 & arm64)
 
