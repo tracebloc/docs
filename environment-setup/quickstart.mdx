@@ -13,10 +13,10 @@ A running workspace in about 10 minutes, with one command. Deploying on a specif
 
 | You need | Minimum |
 |---|---|
-| A machine | macOS, Linux, or Windows · 2 CPU · 4 GB RAM · 20 GB free disk |
+| A machine | macOS, Linux, or Windows · 2 CPU · 5 GB RAM · 10 GB free disk |
 | A tracebloc account | [Sign up free](https://ai.tracebloc.io) — no credit card |
 
-The installer runs below these too — it only warns, and more RAM mainly helps once models train.
+That's enough to run a workspace. To **train on this machine**, give it 4 CPU · 16 GB RAM · 50 GB disk — a single training job alone reserves ~8 GB. The installer checks before it starts: below the minimum it stops on Linux (on macOS/Windows it warns — raise Docker Desktop's memory in Settings → Resources).
 
 <Steps>
   <Step title="Register your workspace">
@@ -79,3 +79,4 @@ If your security policy forbids piping scripts from the internet, skip the one-l
     Define a task and invite contributors.
   </Card>
 </CardGroup>
+

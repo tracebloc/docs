@@ -1,0 +1,154 @@
+name: Docs preview page coverage
+
+# Verifies that every page declared in docs.json's navigation is reachable
+# (HTTP 200) on both the dev preview and prod docs site.
+#
+# Catches the failure mode from 2026-06-06: Mintlify's incremental builder
+# left tracebloc-develop.mintlify.app with most pages returning 404 for days
+# because the full-page index was wiped and only files touched by subsequent
+# commits got re-rendered. Mintlify's own check reported "deploy success"
+# every time. This workflow probes the actual rendered URLs and fails the
+# build if any page is missing.
+#
+# Trigger:
+#   - schedule:      daily 06:00 UTC (catches Mintlify state drift)
+#   - push:          to develop / main (catches build regressions immediately)
+#   - workflow_dispatch: manual rerun
+#
+# After a push, waits 120s for Mintlify's deploy to complete before probing.
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "Which environment to probe (default: both)"
+        type: choice
+        options: [both, dev, prod]
+        default: both
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-coverage-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  resolve-env:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - id: set
+        env:
+          CHOICE: ${{ github.event.inputs.env || 'both' }}
+        run: |
+          case "$CHOICE" in
+            dev)  m='[{"name":"dev","url":"https://tracebloc-develop.mintlify.app"}]' ;;
+            prod) m='[{"name":"prod","url":"https://docs.tracebloc.io"}]' ;;
+            both|*) m='[{"name":"dev","url":"https://tracebloc-develop.mintlify.app"},{"name":"prod","url":"https://docs.tracebloc.io"}]' ;;
+          esac
+          echo "matrix=$m" >> "$GITHUB_OUTPUT"
+
+  probe:
+    needs: resolve-env
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env: ${{ fromJSON(needs.resolve-env.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for Mintlify to deploy (push events only)
+        if: github.event_name == 'push'
+        env:
+          ENV_NAME: ${{ matrix.env.name }}
+        run: |
+          # Mintlify's deploy typically completes in 30-90s after push.
+          # Allow a generous buffer so the probe sees the new state.
+          if [ "$ENV_NAME" = "prod" ] && [ "$GITHUB_REF_NAME" != "main" ]; then
+            echo "Push not to main — prod deploy won't run, skipping wait."
+          elif [ "$ENV_NAME" = "dev" ] && [ "$GITHUB_REF_NAME" != "develop" ]; then
+            echo "Push not to develop — dev deploy won't run, skipping wait."
+          else
+            echo "Waiting 120s for Mintlify ($ENV_NAME) deploy to complete..."
+            sleep 120
+          fi
+
+      - name: Extract every page path from docs.json
+        run: |
+          set -euo pipefail
+          # Walk the entire navigation tree and collect string-valued
+          # page references. docs.json nests pages under .navigation.tabs[]
+          # .groups[].pages[] (which can itself recurse).
+          jq -r '
+            [.. | objects | .pages? | values | .[]?]
+            | map(select(type == "string"))
+            | unique
+            | .[]
+          ' docs.json > /tmp/pages.txt
+          count=$(wc -l < /tmp/pages.txt | tr -d ' ')
+          echo "Found $count pages to probe"
+          if [ "$count" = "0" ]; then
+            echo "::error::No pages found in docs.json — navigation structure may have changed"
+            exit 1
+          fi
+
+      - name: Probe each page on ${{ matrix.env.name }}
+        env:
+          BASE_URL: ${{ matrix.env.url }}
+          ENV_NAME: ${{ matrix.env.name }}
+        run: |
+          set -uo pipefail
+          : > /tmp/broken.csv
+          : > /tmp/ok.csv
+          while IFS= read -r path; do
+            [ -z "$path" ] && continue
+            # Follow redirects (-L); cap each request at 15s.
+            code=$(curl -s -L -o /dev/null -w "%{http_code}" --max-time 15 "$BASE_URL/$path" 2>/dev/null || echo "000")
+            if [ "$code" = "200" ]; then
+              echo "/$path,$code" >> /tmp/ok.csv
+            else
+              echo "/$path,$code" >> /tmp/broken.csv
+              echo "  ✗ /$path -> HTTP $code"
+            fi
+          done < /tmp/pages.txt
+
+          ok=$(wc -l < /tmp/ok.csv | tr -d ' ')
+          broken=$(wc -l < /tmp/broken.csv | tr -d ' ')
+          total=$((ok + broken))
+
+          echo ""
+          echo "═══ Result on $ENV_NAME: $ok/$total ok, $broken broken ═══"
+
+          {
+            echo "## $ENV_NAME page coverage"
+            echo ""
+            echo "**$total pages probed · $ok ok · $broken broken**"
+            echo ""
+            echo "Base URL: \`$BASE_URL\`"
+            echo ""
+            if [ "$broken" -gt 0 ]; then
+              echo "### Broken paths"
+              echo ""
+              echo "| Path | HTTP code |"
+              echo "|---|---|"
+              awk -F, '{print "| `"$1"` | "$2" |"}' /tmp/broken.csv
+              echo ""
+              echo "**Likely cause:** Mintlify incremental builder did not re-render"
+              echo "these paths. Fix by touching every \`.mdx\` in one commit to"
+              echo "force a full rebuild (see PR #55 from 2026-06-06)."
+            else
+              echo "All pages render correctly. ✓"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$broken" -gt 0 ]; then
+            echo "::error::$broken pages on $ENV_NAME returned non-200"
+            exit 1
+          fi
