@@ -25,6 +25,10 @@ The installer runs on any modern machine (one host per workspace) and **checks t
 
 **Outbound access needed:** The installer pulls container images, the install scripts, and the Helm chart, then connects to the tracebloc platform. Allow traffic to `*.docker.io`, `ghcr.io`, `raw.githubusercontent.com`, `*.github.io`, `*.tracebloc.io`, and `pypi.org`.
 
+<Warning>
+  **Storage must be on a local disk.** The data directory (`HOST_DATA_DIR`, default `~/.tracebloc`) holds the workspace database, which corrupts on network filesystems — the installer **fails fast** if it is on NFS/CIFS/SMB. To keep large datasets on a network mount, point `HOST_DATASET_DIR` at it instead: only the dataset volume moves there, while the database stays local. See [Configuration](/environment-setup/configuration).
+</Warning>
+
 ---
 
 ## 1. Create an Account

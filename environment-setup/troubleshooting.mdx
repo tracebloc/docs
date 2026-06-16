@@ -44,6 +44,7 @@ Issues specific to local (k3d) deployments:
 | Error Message | Description | Resolution |
 |---------------|-------------|------------|
 | ServiceBus connection error after Docker restart | When Docker overutilizes local resources and restarts, the ServiceBus connection may fail with `NoneType` errors. | Monitor resources via Docker Dashboard. Restart the jobs manager pod (e.g. in k9s, exit with Ctrl+D) to restore the connection. |
+| MySQL pod in `CrashLoopBackOff` (often ~20 min into install) | The data directory (`HOST_DATA_DIR`) is on a network filesystem (NFS/CIFS/SMB). MySQL/InnoDB corrupts on network storage, and NFS `root_squash` blocks the data-dir setup. | Point `HOST_DATA_DIR` at a **local** disk (the default `~/.tracebloc` is local) and re-run. Keep large datasets on the network mount via `HOST_DATASET_DIR`. Newer installers catch this in preflight before the install starts. |
 
 ## Debugging Commands
 
