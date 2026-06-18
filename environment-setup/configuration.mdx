@@ -17,7 +17,8 @@ Override defaults by setting environment variables before the install command. U
 | `SERVERS` | `1` | Number of control-plane nodes |
 | `AGENTS` | `1` | Number of worker nodes |
 | `K8S_VERSION` | `v1.29.4-k3s1` | k3s image tag |
-| `HOST_DATA_DIR` | `~/.tracebloc` | Persistent data directory on host |
+| `HOST_DATA_DIR` | `~/.tracebloc` | Persistent data directory on host — **must be a local disk** (NFS/CIFS/SMB is rejected; the database corrupts on network storage). |
+| `HOST_DATASET_DIR` | _(unset)_ | Optional. Place the large dataset volume on a separate mount (e.g. a network/NFS share); the database + logs stay on `HOST_DATA_DIR`. Must already exist and be writable. |
 
 Example — custom cluster name with two worker nodes:
 
@@ -155,6 +156,10 @@ pvc:
   logs: 10Gi
   data: 50Gi
 ```
+
+<Note>
+  **The database must stay on local disk.** MySQL/InnoDB is unsafe on NFS/CIFS, so the database and logs always use the local `/tracebloc` tree. To place large **datasets** on a network mount, set the installer's `HOST_DATASET_DIR` — it relocates only the dataset volume (the chart's `hostPath.datasetPath` → `/tracebloc-data`) and runs ingestion as the mount's owner uid, so writes succeed under NFS `root_squash`.
+</Note>
 
 Platform snippets (drop into your values file):
 
