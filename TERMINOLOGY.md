@@ -6,7 +6,7 @@
 >
 > **Status: working draft — started 2026-07-11, being aligned over the coming days.** Rows marked ✅ are decided; rows marked **🔵 OPEN** await a team decision (see Open questions at the bottom).
 >
-> **We align the vocabulary here first.** The "words to retire" section lists the drift terms currently live in the code/UI, recorded from a full cross-repo sweep **for awareness — not as a signal to start renaming.** No code or UI renames happen until the open questions are settled (especially #1 — what we call the on-prem environment). This file leads; the codebase follows later.
+> **We align the vocabulary here first.** The "words to retire" section lists the drift terms currently live in the code/UI, recorded from a full cross-repo sweep **for awareness — not as a signal to start renaming.** The load-bearing question #1 (what we call the on-prem environment) is now **decided — _secure environment_ (2026-07-12)**; the remaining open questions still gate the broader rename. This file leads; the codebase follows later.
 
 ## How to use it
 
@@ -18,22 +18,23 @@
 
 | Concept | Preferred | Don't use | Status | Definition |
 |---|---|---|---|---|
-| The software you run on your infra (+ what it gives you) | **secure environment** / **environment** *(leaning)* | edge device, agent, box, node, cluster, instance, deployment, site | 🔵 **OPEN** | Three candidates: **environment / secure environment** — now favored (the marketing hero uses "Your own secure environment" / "Deploy Your Environment"); **workspace** — the 2026-06-05 pick; **client** — the established federated-learning term collaborators know. ⚠️ "environment" leading *reverses* the earlier workspace decision **and** the prior soft-ban on "environment" — confirm with the team. This is the load-bearing decision (drives the biggest rename). |
-| The credential connecting it to the platform | **Client ID** | client key, token, API key | ✅ | Created on the clients page; identifies your workspace. "client" as a bare noun survives **only** here. |
+| The software you run on your infra (+ what it gives you) | **secure environment** | workspace, edge device, agent, box, node, cluster, instance, deployment, site | ✅ | **DECIDED 2026-07-12 (Lukas):** the on-prem environment is a **secure environment** everywhere user-facing (matches the marketing hero "Your own secure environment" + the installer/home-screen work). Supersedes the 2026-06-05 "workspace" pick and lifts the old "environment" soft-ban. **`client`** survives as the deep-tech / federated-learning synonym collaborators know (and in **Client ID**), but the default word is *secure environment*. The load-bearing rename. |
+| The command-line tool | **the tracebloc CLI** (the `tracebloc` / `tb` command) | the client, the binary, the agent | ✅ | What you run to manage your secure environment — ingest data, check status, diagnose. `tb` is the short alias. |
+| The credential connecting it to the platform | **Client ID** | client key, token, API key | ✅ | Created on the clients page; identifies your secure environment. "client" as a bare noun survives **only** here. |
 | The hosted tracebloc service | **the platform** | the cloud, the server, the backend, SaaS | ✅ | The hosted side (ai.tracebloc.io) collaborators connect through. |
 | The web app you log into | **the dashboard** (at ai.tracebloc.io) | portal, console, "the platform" (for the UI), **Hub** | 🔵 **OPEN** | The browser UI. Brand called this the **Hub** — keep "dashboard" or adopt "Hub"? Pair once: dashboard = ai.tracebloc.io, docs = docs.tracebloc.io. |
-| The user's own servers / laptop | **your infrastructure** | your box, on-prem (as a noun) | ✅ | The **hardware** tracebloc runs on. Distinct from the **(secure) environment** above, which is the tracebloc software/runtime it gives you — don't conflate the two. |
+| The user's own servers / laptop | **your infrastructure** (the specific host: **this machine**) | your box, on-prem (as a noun) | ✅ | The **hardware** the secure environment runs on. Distinct from the **secure environment** above (the tracebloc software/runtime it gives you) — don't conflate the two. In CLI/installer copy the specific host is "this machine". |
 | The user's data | **dataset** | data source, "data set" (two words), "client dataset" | ✅ | Training & test data ingested and staged locally. (It's "your dataset" — never "client data set".) |
-| Bringing data in | **ingest** | upload, import, load, **push**, send, transfer | ✅ | Copying a dataset into your workspace's storage. Raw data never leaves your infrastructure. |
-| Removing a dataset | **delete** | rm, drop, teardown | ✅ | Say "removes the dataset from your workspace (the record is kept)"; keep table/PVC detail behind `--verbose`. |
-| Connection status | **Online / Offline** | connected/disconnected, up/down | ✅ | Whether the workspace has an active secure connection. |
+| Bringing data in | **ingest** | upload, import, load, **push**, send, transfer | ✅ | Copying a dataset into your secure environment's storage. Raw data never leaves your infrastructure. |
+| Removing a dataset | **delete** | rm, drop, teardown | ✅ | Say "removes the dataset from your secure environment (the record is kept)"; keep table/PVC detail behind `--verbose`. |
+| Connection status | **Online / Offline** | connected/disconnected, up/down | ✅ | Whether your secure environment has an active secure connection. |
 
 ## 2. People
 
 | Concept | Preferred | Don't use | Status | Definition |
 |---|---|---|---|---|
 | The people who build & train models on your data | **collaborators** | vendor, contributor, participant, expert, "the user" | ✅ | Invited, whitelisted data scientists who train models and never see the raw data. **(Decided 2026-07-11 — supersedes the seed's "contributor".)** |
-| The person who deploys & owns the workspace | **workspace owner** | admin, host, customer, data owner, "the user" | 🔵 **OPEN** | Deploys the workspace, ingests data, creates use cases, controls sharing. (Esp. the UI "admin panel" — decide.) |
+| The person who deploys & owns the secure environment | **owner** *(label TBD)* | admin, host, customer, "the user" | 🔵 **OPEN** | Deploys the secure environment, ingests data, creates use cases, controls sharing. Was "workspace owner" — needs a new label now that *workspace* is retired (data owner / admin panel — decide). |
 
 ## 3. The ML problem type: **task**
 
@@ -111,7 +112,7 @@ How the user lays out each task's data, and what the label/target column is actu
 
 | Concept | Preferred | Don't use | Status | Definition |
 |---|---|---|---|---|
-| Training across workspaces + combining weights | **federated training** ("build together") | distributed learning, FedAvg (in user copy) | ✅ | User-facing. |
+| Training across secure environments + combining weights | **federated training** ("build together") | distributed learning, FedAvg (in user copy) | ✅ | User-facing. |
 | The infra that merges the weights | **averaging service** / **federated averaging** | — | ✅ | Internal component name. |
 
 ## 7. Positioning / brand terms (folded in from the communication skill)
@@ -142,7 +143,7 @@ Command group is `data` (alias `dataset` one cycle). Keep cluster/namespace/PVC/
 
 | Thing | Today | Proposed |
 |---|---|---|
-| Helm chart that deploys the workspace | `client` repo | **workspace-chart** |
+| Helm chart that deploys the secure environment | `client` repo | **environment-chart** |
 | Training-execution container images | `tracebloc-client` repo | keep; describe as "training images" |
 | In-cluster pod orchestration | `client-runtime` repo | keep; "runtime" |
 | The credential | Client ID | unchanged (the one legit "client") |
@@ -150,7 +151,7 @@ Command group is `data` (alias `dataset` one cycle). Keep cluster/namespace/PVC/
 
 - **Ingestor:** distribution **`tracebloc-ingestor`** (PyPI) / import **`tracebloc_ingestor`** — state both (fix data-ingestors/CLAUDE.md which claims the PyPI name is the underscore form).
 - **SDK methods:** snake_case (`upload_model`, `link_model_dataset`); camelCase (`uploadModel`) forms are **deprecated aliases** — fix the model-zoo README quick-start.
-- **Backend model:** `EdgeDevice`/`edge` = the workspace/client; `Competition`/`PrivateCompetition` = a **use case**. Biggest reality-vs-canon gap (rename = migration + API; own epic).
+- **Backend model:** `EdgeDevice`/`edge` = the secure environment (`client` in FL terms); `Competition`/`PrivateCompetition` = a **use case**. Biggest reality-vs-canon gap (rename = migration + API; own epic).
 
 ## 10. Casing & style
 
@@ -160,7 +161,8 @@ Command group is `data` (alias `dataset` one cycle). Keep cluster/namespace/PVC/
 ## 11. Words to retire (currently live in the code/UI — review targets)
 
 - **competition / PrivateCompetition** → **use case** *(frontend ×782, backend `Competition` model + route)*
-- **edge / edge device / EdgeDevice** → **workspace/client** *(frontend "edge" ×449, backend `EdgeDevice`)*
+- **workspace** → **secure environment** *(docs, website hero, decks, and the `communication` skill's Terminology Bible)*
+- **edge / edge device / EdgeDevice** → **secure environment / client** *(frontend "edge" ×449, backend `EdgeDevice`)*
 - **vendor** → **collaborators** *(client README, SDK README, frontend "Vendor Testing Platform" ×54, several docs pages)*
 - **push / `dataset push`** → **ingest / `data ingest`** *(client README quick-install, docs cli.mdx)*
 - **`dataset rm`** → **`data delete`** *(cli README)*
@@ -168,12 +170,12 @@ Command group is `data` (alias `dataset` one cycle). Keep cluster/namespace/PVC/
 - **category** → **task** *(docs cli.mdx, "9 task categories")*
 - **uploadModel()** → **upload_model()** *(model-zoo README)*
 - **Tracebloc** (capitalized) → **tracebloc** *(docs key-terms.mdx, frontend alt text)*
-- **admin / data owner** → **workspace owner** *(pending Q, docs + UI)*
+- **admin / "workspace owner"** → **owner (label TBD)** *(pending Q4 — the owner label is undecided now that workspace is retired)*
 - **"compliance by design"** → **Compliance by architecture** *(the website hero currently says "compliance by design" — fix it)*
 
 ## 12. Open questions (decide before enforcing)
 
-1. **What we call the on-prem thing** — the load-bearing one. Candidates: **secure environment / environment** (*now leaning* — marketing hero: "Your own secure environment"), **workspace** (2026-06-05 pick), **client** (FL-standard). Reverses the earlier workspace decision + the prior "environment" ban — needs team sign-off before the rename.
+1. ✅ **What we call the on-prem thing — DECIDED 2026-07-12 (Lukas): _secure environment_.** Supersedes the 2026-06-05 "workspace" pick + lifts the old "environment" ban. *workspace* → retired user-facing; *client* survives as the deep-tech/FL synonym + in Client ID. **Propagation (do next):** the `communication` skill's embedded "Terminology Bible" still says *workspace* + "don't say environment" — replace it with a reference to this file; sweep the website + decks; then the code rename (edge / EdgeDevice → secure environment) is unblocked (its own epic).
 2. **Hub vs the dashboard/platform** — one name for the web UI.
 3. **The model verb** — submit / upload / contribute a model?
 4. **workspace owner vs admin** — esp. the UI "admin panel".
