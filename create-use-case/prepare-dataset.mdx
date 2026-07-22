@@ -30,7 +30,7 @@ Start with the declarative method below. Drop down to the custom-template flow o
 Describe your dataset in ~8 lines of YAML, then `helm install`. The official ingestor image (published as `ghcr.io/tracebloc/ingestor`) runs it. No Dockerfile, no Python script.
 
 <Note>
-**Before you run any commands in this section:** if you installed the client via the one-liner (`bash <(curl -fsSL https://tracebloc.io/i.sh)`), every later `helm upgrade <workspace> tracebloc/client …` **must** include `--reset-then-reuse-values`, otherwise the upgrade drops the values the installer applied and breaks the workspace:
+**Before you run any commands in this section:** if you installed the client via the one-liner (`curl -fsSL https://tracebloc.io/i.sh | bash`), every later `helm upgrade <workspace> tracebloc/client …` **must** include `--reset-then-reuse-values`, otherwise the upgrade drops the values the installer applied and breaks the workspace:
 
 ```bash
 helm upgrade <workspace> tracebloc/client -n <namespace> --reset-then-reuse-values

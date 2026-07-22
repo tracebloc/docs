@@ -23,7 +23,7 @@ Override defaults by setting environment variables before the install command. U
 Example — custom cluster name with two worker nodes:
 
 ```bash
-CLUSTER_NAME=my-cluster AGENTS=2 bash <(curl -fsSL https://tracebloc.io/i.sh)
+curl -fsSL https://tracebloc.io/i.sh | CLUSTER_NAME=my-cluster AGENTS=2 bash
 ```
 
 ## Cluster Management

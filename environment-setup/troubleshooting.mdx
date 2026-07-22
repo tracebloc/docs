@@ -11,7 +11,7 @@ For real-time cluster monitoring, try [k9s](https://k9scli.io/) — run `k9s -n 
 **Stuck? Generate a support bundle.** Re-run the installer with `--diagnose`:
 
 ```bash
-bash <(curl -fsSL https://tracebloc.io/i.sh) --diagnose
+curl -fsSL https://tracebloc.io/i.sh | bash -s -- --diagnose
 ```
 
 It writes a redacted `~/.tracebloc/tracebloc-diagnose-<timestamp>.tgz` — logs, pod status, and versions with **credentials removed** — that you can send to support. The first line of output shows your client version.
