@@ -17,7 +17,7 @@ That's it — no Docker or Kubernetes knowledge needed. The installer sets up Do
 <Tabs>
   <Tab title="macOS / Linux">
   ```bash
-  bash <(curl -fsSL https://tracebloc.io/i.sh)
+  curl -fsSL https://tracebloc.io/i.sh | bash
   ```
   </Tab>
   <Tab title="Windows (PowerShell as admin)">
@@ -42,7 +42,7 @@ The tracebloc pods should be `Running`, and your workspace should read **Online*
 Set these as environment variables before the install command (full list in [Configuration](/environment-setup/configuration#installer-options)):
 
 ```bash
-CLUSTER_NAME=my-cluster AGENTS=2 HOST_DATA_DIR=/data/tracebloc bash <(curl -fsSL https://tracebloc.io/i.sh)
+curl -fsSL https://tracebloc.io/i.sh | CLUSTER_NAME=my-cluster AGENTS=2 HOST_DATA_DIR=/data/tracebloc bash
 ```
 
 GPUs are auto-detected on Linux (NVIDIA/AMD) — drivers, container toolkit, and device plugin are installed for you.
