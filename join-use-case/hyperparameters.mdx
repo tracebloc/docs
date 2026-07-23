@@ -122,6 +122,8 @@ Control training behavior with various callbacks:
 
 Configure the platform's built-in preprocessing per experiment. Available for tabular classification, tabular regression, time-to-event, and time-series classification; time-series forecasting supports the imputation pair (`handle_missing_values` / `imputation_strategy`).
 
+The calls below are **illustrative alternatives, not a recommended combination** — for example, `handle_missing_values(False)` and `imputation_strategy('iterative')` contradict each other (the first disables the step the second configures).
+
 ```python
 # Turn built-in imputation off so your model owns missing-data handling
 training_plan.handle_missing_values(False)
