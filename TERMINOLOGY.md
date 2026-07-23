@@ -139,12 +139,12 @@ Command group is `data` (alias `dataset` one cycle). Keep cluster/namespace/PVC/
 
 ## 9. Component & code naming (engineering-internal)
 
-**"client" today names five different things** — disambiguate 🔵:
+**"client" today names four different things** (a fifth — the training-images repo — is already resolved by the `tracebloc-engine` rename) — disambiguate 🔵:
 
 | Thing | Today | Proposed |
 |---|---|---|
 | Helm chart that deploys the secure environment | `client` repo | **environment-chart** |
-| Training-execution container images | `tracebloc-client` repo | keep; describe as "training images" |
+| Training-execution container images | `tracebloc-engine` repo | ✅ renamed from `tracebloc-client`; describe as "the engine" / "training images" |
 | In-cluster pod orchestration | `client-runtime` repo | keep; "runtime" |
 | The credential | Client ID | unchanged (the one legit "client") |
 | CLI command group | `tracebloc client` | installer-internal, hidden |
@@ -162,7 +162,7 @@ Command group is `data` (alias `dataset` one cycle). Keep cluster/namespace/PVC/
 
 - **competition / PrivateCompetition** → **use case** *(frontend ×782, backend `Competition` model + route)*
 - **workspace** → **secure environment** *(docs, website hero, decks, and the `communication` skill's Terminology Bible)*
-- **edge / edge device / EdgeDevice** → **secure environment / client** *(frontend "edge" ×449, backend `EdgeDevice`)*
+- **edge / edge device / EdgeDevice** → **secure environment** — *client* only in FL-technical contexts, never in UI copy *(frontend "edge" ×449, backend `EdgeDevice`)*
 - **vendor** → **collaborators** *(client README, SDK README, frontend "Vendor Testing Platform" ×54, several docs pages)*
 - **push / `dataset push`** → **ingest / `data ingest`** *(client README quick-install, docs cli.mdx)*
 - **`dataset rm`** → **`data delete`** *(cli README)*
