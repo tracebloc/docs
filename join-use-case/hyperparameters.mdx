@@ -118,8 +118,40 @@ Control training behavior with various callbacks:
 | **Model Checkpoint** | Save model weights at specific intervals | metric, save_best_only | `training_plan.model_checkpoint_callback('val_loss', True)` |
 | **Terminate on NaN** | Stop training if validation loss becomes NaN | None | `training_plan.terminate_on_nan_callback()` |
 
+## Preprocessing (Tabular & Time Series)
 
+Configure the platform's built-in preprocessing per experiment. Available for tabular classification, tabular regression, time-to-event, and time-series classification; time-series forecasting supports the imputation pair (`handle_missing_values` / `imputation_strategy`).
 
+The calls below are **illustrative alternatives, not a recommended combination** — for example, `handle_missing_values(False)` and `imputation_strategy('iterative')` contradict each other (the first disables the step the second configures).
+
+```python
+# Turn built-in imputation off so your model owns missing-data handling
+training_plan.handle_missing_values(False)
+
+# Or pick the imputation strategy: median (default), mean, most_frequent,
+# constant, iterative (MICE), or 'none'
+training_plan.imputation_strategy('iterative')
+
+# Categorical encoding: label (default) or onehot
+training_plan.encoding_strategy('onehot')
+
+# Numeric feature scaling on/off + scaler choice (tabular & time-to-event)
+training_plan.normalize_features(True)
+training_plan.scaler('RobustScaler')
+
+# Time-series classification only: opt-in missingness-indicator channels —
+# a 0/1 <column>__missing feature per numeric column carrying the raw NaN
+# mask. The model's input width grows, identically at every edge.
+training_plan.missingness_indicators(True)
+```
+
+**When to disable imputation:** if your model embeds its own imputer (an sklearn `Pipeline`) or handles NaNs natively (XGBoost, LightGBM, HistGradientBoosting, CatBoost, EBM), set `handle_missing_values(False)` — otherwise the built-in step fills every gap first and your model never sees a raw NaN.
+
+<Info>
+`knn` imputation and the `QuantileTransformer` scaler are deliberately unavailable: their fitted state memorizes raw training data, which would leave the secure environment inside the preprocessing artifact. `iterative` (MICE) persists only learned coefficients — the same privacy class as model weights.
+</Info>
+
+Defaults reproduce the historical platform behaviour (median imputation on, label encoding, z-score feature scaling on), so an experiment that never touches these knobs is unchanged.
 
 ## Data Augmentation for Image Data
 

@@ -55,7 +55,7 @@ The SDK's starting defaults — sent verbatim if you don't change them in the no
 
 **Class weighting** is applied automatically by the platform for **image classification** and **tabular classification** only, when your loss function is cross-entropy, NLL, or binary BCE. The formula is described in those sections. Other use cases do not reweight the loss.
 
-To replicate a run locally, read the actual values your experiment was launched with from the experiment view (or your notebook), then match the per-use-case preprocessing and metrics described below — those parts are baked into the platform pipeline and are not configurable from the notebook.
+To replicate a run locally, read the actual values your experiment was launched with from the experiment view (or your notebook), then match the per-use-case preprocessing and metrics described below. The preprocessing *defaults* are part of the platform pipeline, but the key levers — imputation on/off and strategy, categorical encoding, feature scaling — are configurable per experiment from the notebook (see [Preprocessing on the Hyperparameters page](/join-use-case/hyperparameters#preprocessing-tabular--time-series)), so always replicate with the values your experiment actually ran with.
 
 ## Per use case
 
@@ -312,13 +312,13 @@ Each metric is computed independently; if one fails (for example, AUC-ROC on a s
 The preprocessing pipeline runs in this order, and the full set of fitted statistics (which columns to use, imputation values, category mappings, label-to-index map, scaling means and standard deviations) is **frozen in the first training cycle and reused** in subsequent cycles and at inference. When reproducing a run locally, pull these statistics from the experiment artifacts rather than refitting on your own data slice.
 
 1. **Column selection.** You can configure which columns the model sees from the notebook — either an include list, an exclude list, or derived feature definitions. If you don't configure anything, all columns from the dataset's schema are used.
-2. **Missing value imputation.** Numeric columns are filled with the **median** of the training split. Categorical columns are filled with the literal string `"Unknown"`. The label column is not imputed.
+2. **Missing value imputation.** On by default and configurable from the notebook: `imputation_strategy(...)` selects the numeric method — `median` (default), `mean`, `most_frequent`, `constant` (fills `0.0`), or `iterative` (MICE, fitted per site on the local training split). Categorical columns are filled with the literal string `"Unknown"` (or the per-column mode under `most_frequent`). The label column is never imputed. `handle_missing_values(False)` — or `imputation_strategy('none')` — disables the step entirely and hands raw NaNs to the model: the right setting when your model owns its own missing-data handling (an sklearn `Pipeline` with an imputer, or a native-NaN model like XGBoost/LightGBM/CatBoost). `knn` is deliberately not offered: a fitted KNN imputer memorizes raw training rows, which would leave the secure environment inside the preprocessing artifact.
 3. **Binary encoding.** Columns with exactly two distinct values that look like booleans (`Y`/`N`, `YES`/`NO`, `TRUE`/`FALSE`, `1`/`0`, plus literal Python booleans) are auto-encoded to `0`/`1` integers. The truthy and falsy strings are configurable.
 4. **Categorical encoding.** Two strategies, configurable from the notebook:
    - **Label encoding** (default): each distinct string in a categorical column maps to a small integer based on the order it first appears in the training split. Categories not seen during training map to `-1` at inference.
    - **One-hot encoding**: each distinct string becomes its own `0`/`1` column.
 5. **Label-to-index mapping.** Class labels are mapped to integer indices in the order defined by your dataset's class list, so a class always lines up with the same logit position. By default, encountering a label that isn't in the class list fails the run; this strict check is configurable.
-6. **Numeric feature scaling.** Numeric feature columns are z-scored (mean 0, standard deviation 1) using training-split statistics; the label column is excluded. On by default and can be turned off.
+6. **Numeric feature scaling.** Numeric feature columns are scaled using training-split statistics; the label column is excluded. On by default (`normalize_features(False)` turns it off) and z-scored by default; `scaler(...)` selects another scikit-learn scaler (`MinMaxScaler`, `RobustScaler`, `MaxAbsScaler`, `Normalizer`, `PowerTransformer`). `QuantileTransformer` is not offered — its fitted state memorizes per-feature value tables, which would leave the secure environment inside the preprocessing artifact.
 
 **Train/validation split**
 
@@ -409,6 +409,7 @@ Rows with NaN in either prediction or target are filtered out before metrics are
 
 **Preprocessing**
 
+- **Missing value imputation.** On by default, with the same `handle_missing_values` / `imputation_strategy` notebook knobs as the tabular use cases: feature columns are forward-filled in timestamp order (each gap takes the most recent earlier observation), and a leading gap with no earlier observation falls back to a per-column statistic fitted on the training window (median by default, honoring your configured strategy). The timestamp and target columns are never imputed — a missing target stays your data-quality signal. The fitted fallback statistics are persisted alongside the scalers and reused across cycles and at inference.
 - **Feature and target scaling.** Both the feature columns and the target column are scaled using statistics fit on the training window only, then re-applied to the validation window and to inference data. The choice of scaler is configurable from the notebook (Min-Max scaling or standard z-scoring); Min-Max is the default. The fitted scaler instances are persisted alongside your weights and reused in subsequent cycles and at inference, so a federated run keeps a consistent scale across cycles.
 - **Sliding-window construction.** From the chronologically ordered, scaled rows the platform builds sliding-window samples: each input is a sequence of length **sequence length** (the lookback window you set in the notebook, default 60), and each target covers the next **forecast horizon** steps (default 1). With a single-step horizon the target is scalar; with a longer horizon it's a vector of that length.
 - **Auto-adjusted sequence length.** If your training or validation window is too short to fit even one full lookback-plus-horizon sample, the platform shortens the sequence length to the largest feasible value rather than crashing, and logs a warning. Forecast horizon is never silently shrunk — that's part of your experiment contract.
@@ -456,7 +457,7 @@ Each metric is wrapped in error handling — degenerate inputs return NaN rather
 **Preprocessing**
 
 - A small set of internal bookkeeping columns is dropped from the feature set automatically (filename, IDs, timestamps, etc.) so all three frameworks see the same feature columns.
-- For the **PyTorch** path, the same tabular preprocessing pipeline used by tabular classification and regression is applied: median / `"Unknown"` imputation, binary and categorical encoding, and z-scoring of numeric features. The fitted state is frozen in cycle 1 and reused thereafter.
+- For the **PyTorch** path, the same tabular preprocessing pipeline used by tabular classification and regression is applied — missing-value imputation (strategy configurable, `median` default), binary and categorical encoding (`label`/`onehot`), and numeric feature scaling (`StandardScaler` default, configurable) — with the same notebook knobs as the tabular use cases. The fitted state is frozen in cycle 1 and reused thereafter.
 - For the **lifelines** and **scikit-survival** paths, the data is passed through to the estimator unmodified — those libraries handle their own preprocessing internally.
 
 **Train/validation split**
