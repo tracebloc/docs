@@ -18,7 +18,7 @@ tracebloc is built so your data never has to leave your network. This page is th
 
 - **Data locality.** Training runs against your data on your hardware. Raw data never crosses the boundary.
 - **Isolation.** Each training job runs in its own container with restricted system access; Kubernetes namespaces separate workloads.
-- **Network policy.** Training pods are denied data egress — they can't reach MySQL, other pods, or the Kubernetes API.
+- **Network policy.** The chart applies a Kubernetes `NetworkPolicy` that denies all inbound to training pods and restricts their outbound traffic — arbitrary pod-to-pod connections and the Kubernetes API are blocked, while the in-cluster MySQL that serves the training data and the in-cluster proxy that reports results and FLOPs stay reachable. Direct outbound HTTPS is still allowed by default today; a stricter lockdown that instead routes it through an in-cluster egress gateway ships with the chart and can be enabled per cluster, and enforcement requires a [CNI that honors NetworkPolicy](/environment-setup/eks-client-deployment-guide).
 - **Model scanning.** Submitted models are scanned for vulnerabilities (Bandit) before anything executes.
 - **Encryption in transit.** All workspace ↔ platform traffic is TLS, on an **outbound-only** connection.
 - **Access control.** Only contributors you whitelist by email can join a use case.
