@@ -11,7 +11,7 @@ For real-time cluster monitoring, try [k9s](https://k9scli.io/) — run `k9s -n 
 **Stuck? Generate a support bundle.** Re-run the installer with `--diagnose`:
 
 ```bash
-bash <(curl -fsSL https://tracebloc.io/i.sh) --diagnose
+curl -fsSL https://tracebloc.io/i.sh | bash -s -- --diagnose
 ```
 
 It writes a redacted `~/.tracebloc/tracebloc-diagnose-<timestamp>.tgz` — logs, pod status, and versions with **credentials removed** — that you can send to support. The first line of output shows your client version.
@@ -44,6 +44,7 @@ Issues specific to local (k3d) deployments:
 | Error Message | Description | Resolution |
 |---------------|-------------|------------|
 | ServiceBus connection error after Docker restart | When Docker overutilizes local resources and restarts, the ServiceBus connection may fail with `NoneType` errors. | Monitor resources via Docker Dashboard. Restart the jobs manager pod (e.g. in k9s, exit with Ctrl+D) to restore the connection. |
+| MySQL pod in `CrashLoopBackOff` (often ~20 min into install) | The data directory (`HOST_DATA_DIR`) is on a network filesystem (NFS/CIFS/SMB). MySQL/InnoDB corrupts on network storage, and NFS `root_squash` blocks the data-dir setup. | Point `HOST_DATA_DIR` at a **local** disk (the default `~/.tracebloc` is local) and re-run. Keep large datasets on the network mount via `HOST_DATASET_DIR`. Newer installers catch this in preflight before the install starts. |
 
 ## Debugging Commands
 

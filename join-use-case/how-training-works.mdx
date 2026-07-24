@@ -55,7 +55,7 @@ The SDK's starting defaults — sent verbatim if you don't change them in the no
 
 **Class weighting** is applied automatically by the platform for **image classification** and **tabular classification** only, when your loss function is cross-entropy, NLL, or binary BCE. The formula is described in those sections. Other use cases do not reweight the loss.
 
-To replicate a run locally, read the actual values your experiment was launched with from the experiment view (or your notebook), then match the per-use-case preprocessing and metrics described below — those parts are baked into the platform pipeline and are not configurable from the notebook.
+To replicate a run locally, read the actual values your experiment was launched with from the experiment view (or your notebook), then match the per-use-case preprocessing and metrics described below. The preprocessing *defaults* are part of the platform pipeline, but the key levers — imputation on/off and strategy, categorical encoding, feature scaling — are configurable per experiment from the notebook (see [Preprocessing on the Hyperparameters page](/join-use-case/hyperparameters#preprocessing-tabular--time-series)), so always replicate with the values your experiment actually ran with.
 
 ## Per use case
 
@@ -312,13 +312,13 @@ Each metric is computed independently; if one fails (for example, AUC-ROC on a s
 The preprocessing pipeline runs in this order, and the full set of fitted statistics (which columns to use, imputation values, category mappings, label-to-index map, scaling means and standard deviations) is **frozen in the first training cycle and reused** in subsequent cycles and at inference. When reproducing a run locally, pull these statistics from the experiment artifacts rather than refitting on your own data slice.
 
 1. **Column selection.** You can configure which columns the model sees from the notebook — either an include list, an exclude list, or derived feature definitions. If you don't configure anything, all columns from the dataset's schema are used.
-2. **Missing value imputation.** Numeric columns are filled with the **median** of the training split. Categorical columns are filled with the literal string `"Unknown"`. The label column is not imputed.
+2. **Missing value imputation.** On by default and configurable from the notebook: `imputation_strategy(...)` selects the numeric method — `median` (default), `mean`, `most_frequent`, `constant` (fills `0.0`), or `iterative` (MICE, fitted per site on the local training split). Categorical columns are filled with the literal string `"Unknown"` (or the per-column mode under `most_frequent`). The label column is never imputed. `handle_missing_values(False)` — or `imputation_strategy('none')` — disables the step entirely and hands raw NaNs to the model: the right setting when your model owns its own missing-data handling (an sklearn `Pipeline` with an imputer, or a native-NaN model like XGBoost/LightGBM/CatBoost). `knn` is deliberately not offered: a fitted KNN imputer memorizes raw training rows, which would leave the secure environment inside the preprocessing artifact.
 3. **Binary encoding.** Columns with exactly two distinct values that look like booleans (`Y`/`N`, `YES`/`NO`, `TRUE`/`FALSE`, `1`/`0`, plus literal Python booleans) are auto-encoded to `0`/`1` integers. The truthy and falsy strings are configurable.
 4. **Categorical encoding.** Two strategies, configurable from the notebook:
    - **Label encoding** (default): each distinct string in a categorical column maps to a small integer based on the order it first appears in the training split. Categories not seen during training map to `-1` at inference.
    - **One-hot encoding**: each distinct string becomes its own `0`/`1` column.
 5. **Label-to-index mapping.** Class labels are mapped to integer indices in the order defined by your dataset's class list, so a class always lines up with the same logit position. By default, encountering a label that isn't in the class list fails the run; this strict check is configurable.
-6. **Numeric feature scaling.** Numeric feature columns are z-scored (mean 0, standard deviation 1) using training-split statistics; the label column is excluded. On by default and can be turned off.
+6. **Numeric feature scaling.** Numeric feature columns are scaled using training-split statistics; the label column is excluded. On by default (`normalize_features(False)` turns it off) and z-scored by default; `scaler(...)` selects another scikit-learn scaler (`MinMaxScaler`, `RobustScaler`, `MaxAbsScaler`, `Normalizer`, `PowerTransformer`). `QuantileTransformer` is not offered — its fitted state memorizes per-feature value tables, which would leave the secure environment inside the preprocessing artifact.
 
 **Train/validation split**
 
@@ -400,7 +400,7 @@ Rows with NaN in either prediction or target are filtered out before metrics are
 
 </Accordion>
 
-<Accordion title="Time series forecasting" icon="wave-square">
+<Accordion title="Time-series forecasting" icon="wave-square">
 
 **Frameworks:** PyTorch
 
@@ -409,8 +409,9 @@ Rows with NaN in either prediction or target are filtered out before metrics are
 
 **Preprocessing**
 
+- **Missing value imputation.** On by default, with the same `handle_missing_values` / `imputation_strategy` notebook knobs as the tabular use cases: feature columns are forward-filled in timestamp order (each gap takes the most recent earlier observation), and a leading gap with no earlier observation falls back to a per-column statistic fitted on the training window (median by default, honoring your configured strategy). The timestamp and target columns are never imputed — a missing target stays your data-quality signal. The fitted fallback statistics are persisted alongside the scalers and reused across cycles and at inference.
 - **Feature and target scaling.** Both the feature columns and the target column are scaled using statistics fit on the training window only, then re-applied to the validation window and to inference data. The choice of scaler is configurable from the notebook (Min-Max scaling or standard z-scoring); Min-Max is the default. The fitted scaler instances are persisted alongside your weights and reused in subsequent cycles and at inference, so a federated run keeps a consistent scale across cycles.
-- **Sliding-window construction.** From the chronologically ordered, scaled rows the platform builds sliding-window samples: each input is a sequence of length **sequence length** (the lookback window you set in the notebook, default 60), and each target covers the next **forecast horizon** steps (default 1). With a single-step horizon the target is scalar; with a longer horizon it's a vector of that length.
+- **Sliding-window construction.** From the chronologically ordered, scaled rows the platform builds sliding-window samples: each input is a sequence of length **sequence length** (the lookback window), and each target covers the next **forecast horizon** steps. Both values come from your model template's declarations or your notebook settings; when neither sets them, the platform defaults apply — **sequence length 25** and **forecast horizon 1**. Model templates commonly declare their own window and override those defaults, so read the values your experiment actually ran with from the experiment view. With a single-step horizon the target is scalar; with a longer horizon it's a vector of that length.
 - **Auto-adjusted sequence length.** If your training or validation window is too short to fit even one full lookback-plus-horizon sample, the platform shortens the sequence length to the largest feasible value rather than crashing, and logs a warning. Forecast horizon is never silently shrunk — that's part of your experiment contract.
 
 **Train/validation split**
@@ -446,6 +447,62 @@ Each metric is wrapped in error handling — degenerate inputs return NaN rather
 
 </Accordion>
 
+<Accordion title="Time-series classification" icon="heart-pulse">
+
+**Frameworks:** PyTorch
+
+**Input**
+- A table where each row is one timestep of a sequence: a `sequence_id` column (which sequence the row belongs to), a `timestamp` column (temporal order within the sequence — a SQL timestamp or a numeric step index), one or more feature columns, and a `label` column.
+- The class is a property of the **whole sequence**, not of a single row: `label` must be constant across all rows of a `sequence_id`. This is validated before training — a sequence carrying two different labels fails the run instead of training on corrupted targets.
+- The sample unit everywhere in this use case is **one sequence**: the train/validation split, the batches, the class counts, the metrics, and the predictions all count sequences, never rows.
+- Class labels are mapped to integer indices in the order defined by the dataset's class list, so the same class always lines up with the same logit position across cycles and inference. A label outside the class list fails the run.
+
+**Preprocessing**
+
+The fitted preprocessing state (imputation fallbacks, category mappings, label map, scaler statistics) is **frozen in the first training cycle and reused** in subsequent cycles and at inference, persisted alongside your weights. When reproducing a run locally, pull these statistics from the experiment artifacts rather than refitting on your own data slice.
+
+1. **Per-sequence missing-value imputation.** Each feature column is forward-filled *within its own sequence* in timestamp order — a gap takes the most recent earlier observation from the same sequence, never from another sequence and never from the future. A **leading gap** (a missing value with no earlier observation in its sequence) falls back to a per-column statistic fitted on the training split: the median for numeric columns (if you configured a different numeric imputation strategy in the notebook, its statistic is used instead; strategies that don't reduce to a per-column statistic fall back to the median here), and the most frequent observed value for categorical columns. `sequence_id`, `timestamp`, and `label` are never imputed. Imputation is on by default and can be turned off from the notebook, in which case raw missing values pass through to the model unchanged.
+2. **`sequence_id` and `timestamp` are set aside** before the feature pipeline runs and re-attached unchanged after it — they are never encoded or scaled, so timestamps don't get z-scored and sequence ids never end up in the feature matrix.
+3. **Binary and categorical encoding.** Same behavior as tabular classification: the feature set defaults to every column in the dataset's schema, two-valued boolean-like columns are auto-encoded to `0`/`1`, and categorical string columns are label-encoded (default) or one-hot encoded — the encoding strategy is configurable from the notebook.
+4. **Numeric feature scaling.** Numeric feature columns are scaled using training-split statistics with the scaler configured in the notebook — the same `scaler` parameter the forecasting use case uses, Min-Max unless you change it; z-scoring and other scikit-learn scalers are selectable. The label column is excluded. Scaling is on by default and can be turned off from the notebook.
+5. **Sequence assembly — scale first, then pad.** After scaling, rows are grouped by `sequence_id` and sorted by `timestamp`, and every sequence becomes exactly one fixed-length sample of **sequence length** timesteps (the notebook parameter shared with the forecasting use case; when neither your model template nor the notebook sets it, the platform default of **25** applies, though templates commonly declare their own — read the value your experiment ran with from the experiment view). Shorter sequences are **zero post-padded** (real timesteps first, zero rows after); longer sequences are **tail-keep truncated** (the most recent timesteps survive). Padding is applied *after* scaling, so padding zeros never pass through the scaler and a model can recover the padding mask by treating all-zero timestep rows as padding. Unlike forecasting, the sequence length is never auto-shrunk on short data — it is part of your experiment contract and identical across secure environments, which federated weight averaging requires.
+
+The model therefore sees batches of shape `(batch, sequence length, features)` as float32 with one int64 class label per sequence, and is expected to return one logit per class for each sequence.
+
+**Train/validation split**
+
+Split **by sequence**, stratified on the per-sequence class label, with a deterministic seed. All rows of a given sequence land on the same side of the split, so within-sequence signal can never leak into validation. Default 85/15. If a class has too few sequences to stratify, the run silently falls back to a random (still sequence-level) split; if the configured split would leave one side empty, it is retried with the ratio clamped into a safe range.
+
+**Training step**
+
+1. Training batches are drawn with a **weighted random sampler**: each sequence is weighted inversely to its class frequency and drawn with replacement, so minority-class sequences are oversampled toward class-balanced batches. This is the platform's class-imbalance mechanism for this use case — the **loss is not reweighted** (unlike image and tabular classification), and no synthetic samples are generated. A local run with a plain shuffled loader will see a different batch composition, and different loss curves, on imbalanced data.
+2. The forward pass produces a logit per class for each sequence. Models that emit per-timestep outputs of shape `(batch, length, classes)` are collapsed to the last timestep; 1-D outputs are lifted to a single-logit column.
+3. The loss function you configured in the notebook is applied; cross-entropy is the typical choice. BCE-style losses get one-hot (or reshaped single-column) float targets, and regression-style losses (MSE, L1, smooth L1) get float or one-hot targets so the shapes line up.
+4. Backward pass and optimizer step. Gradient clipping is applied **only when the global gradient norm exceeds 10**, then clipped to 10 — well-behaved runs see no clipping. A non-finite loss skips the weight update for that batch, and a mini-batch reduced to a single sequence is skipped entirely (it would crash batch-normalization layers in training mode).
+
+**Per-batch monitoring metric**: accuracy — the fraction of sequences whose predicted class matches the ground-truth class.
+
+**Validation step**
+
+- Same forward pass without backward, over an unshuffled loader that sees every validation sequence exactly once — the weighted sampler applies to training only. Raw logits are retained so the cycle metrics layer can compute the probability-based metrics.
+- Predictions are the argmax over the class logits; a binary model that emits a single logit is thresholded at sigmoid > 0.5.
+
+**Cycle metrics**
+
+The metric suite is identical to tabular classification — per-sequence labels and logits have the same shape as per-row tabular ones — with every number computed over sequences:
+
+- **Classification basics** (per-class, macro-averaged): precision, recall, F1.
+- **Other classification metrics**: balanced accuracy, F-beta at β = 0.5 and β = 2.0 (macro), Matthews correlation coefficient, Cohen's kappa, quadratic weighted kappa, Hamming loss, Jaccard score (macro), specificity, negative predictive value (binary direct; multiclass macro-averaged).
+- **Probability-based** (computed from the retained logits): AUC-ROC (binary on the positive class; multiclass one-vs-rest macro), AUC-PR (average precision; multiclass macro over one-hot), Gini coefficient and normalized Gini, Brier score (multiclass squared-error form).
+- **Confusion matrix**: produced with a fixed label order matching your dataset's class list — pin to that order when comparing locally.
+
+Each metric is computed independently; if one fails, it falls back to zero rather than crashing the cycle.
+
+**Inference output**
+- Per sequence: a predicted class index (argmax over the class logits; sigmoid > 0.5 for a single-logit binary model). The preprocessing artifact saved during training is replayed as-is — nothing is refit on the test slice — and the full cycle-metric suite above, including the confusion matrix, is reported over the test set.
+
+</Accordion>
+
 <Accordion title="Time-to-event prediction" icon="clock">
 
 **Frameworks:** PyTorch (a neural risk model trained with the Cox partial-likelihood loss), plus lifelines and scikit-survival (classical survival estimators that fit in a single pass and skip the neural training loop).
@@ -456,7 +513,7 @@ Each metric is wrapped in error handling — degenerate inputs return NaN rather
 **Preprocessing**
 
 - A small set of internal bookkeeping columns is dropped from the feature set automatically (filename, IDs, timestamps, etc.) so all three frameworks see the same feature columns.
-- For the **PyTorch** path, the same tabular preprocessing pipeline used by tabular classification and regression is applied: median / `"Unknown"` imputation, binary and categorical encoding, and z-scoring of numeric features. The fitted state is frozen in cycle 1 and reused thereafter.
+- For the **PyTorch** path, the same tabular preprocessing pipeline used by tabular classification and regression is applied — missing-value imputation (strategy configurable, `median` default), binary and categorical encoding (`label`/`onehot`), and numeric feature scaling (`StandardScaler` default, configurable) — with the same notebook knobs as the tabular use cases. The fitted state is frozen in cycle 1 and reused thereafter.
 - For the **lifelines** and **scikit-survival** paths, the data is passed through to the estimator unmodified — those libraries handle their own preprocessing internally.
 
 **Train/validation split**
@@ -506,7 +563,7 @@ To validate a result you saw on the platform:
 
 <Steps>
   <Step title="Take the same data slice">
-    Use the same dataset and the same train/validation split ratio you configured. Match the split strategy for your use case — stratified by label for image and tabular classification, deduplicated by image for object detection, temporal (no shuffle) for time series, and so on.
+    Use the same dataset and the same train/validation split ratio you configured. Match the split strategy for your use case — stratified by label for image and tabular classification, deduplicated by image for object detection, temporal (no shuffle) for time-series forecasting, sequence-level and stratified by sequence label for time-series classification, and so on.
   </Step>
   <Step title="Apply the same preprocessing">
     Match the preprocessing described in the section for your use case — especially feature scaling, target scaling (for regression and time series), and categorical encoding, all of which materially shift loss values. For use cases where the preprocessing state is frozen in the first cycle (tabular, time series, time-to-event), pull the saved statistics from your experiment artifacts rather than refitting on your slice.
