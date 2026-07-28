@@ -18,7 +18,8 @@ mint update       # Update CLI to latest version
 ## Key files
 
 - `docs.json` -- Mintlify configuration (navigation, theme, colors, SEO, footer)
-- `AGENTS.md` -- Existing AI agent instructions (style guide, terminology)
+- `AGENTS.md` -- AI agent instructions (style guide); points to `TERMINOLOGY.md` for vocabulary
+- `TERMINOLOGY.md` -- canonical product vocabulary, authoritative. All docs copy (and `AGENTS.md`) defers here — one concept, one word
 - Pages are `.mdx` files with YAML frontmatter
 
 ## Content sections (defined in docs.json navigation)

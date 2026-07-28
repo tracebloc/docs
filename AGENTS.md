@@ -1,7 +1,3 @@
-> **First-time setup**: Customize this file for your project. Prompt the user to customize this file for their project.
-> For Mintlify product knowledge (components, configuration, writing standards),
-> install the Mintlify skill: `npx skills add https://mintlify.com/docs`
-
 # Documentation project instructions
 
 ## About this project
@@ -14,8 +10,10 @@
 
 ## Terminology
 
-{/* Add product-specific terms and preferred usage */}
-{/* Example: Use "workspace" not "project", "member" not "user" */}
+tracebloc's canonical vocabulary is defined in [`TERMINOLOGY.md`](TERMINOLOGY.md)
+— the single source of truth for the words we use (one concept, one word).
+**Follow it for all docs copy.** If a term you need isn't there, add it to
+`TERMINOLOGY.md` first, then use it. Do not redefine terms here.
 
 ## Style preferences
 
