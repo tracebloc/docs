@@ -288,7 +288,7 @@ The CronJob's ServiceAccount is bound to the built-in `cluster-admin` ClusterRol
 
 #### NetworkPolicy hardening for training pods
 
-Training pods run untrusted ML code. The chart can apply a NetworkPolicy that denies ingress and restricts egress to DNS + external HTTPS only — blocking pod-to-pod, MySQL, and Kubernetes API access from the training pod.
+Training pods run untrusted ML code. The chart can apply a NetworkPolicy that denies all ingress and restricts egress — arbitrary pod-to-pod traffic and the Kubernetes API are blocked, while the in-cluster MySQL that serves the training data and the proxy that reports results stay reachable. Direct outbound HTTPS is allowed by default; a stricter lockdown that instead routes it through an in-cluster egress gateway can be enabled per cluster.
 
 ```yaml
 networkPolicy:

@@ -45,7 +45,7 @@ Raw data stays inside your infrastructure. Your workspace opens an **outbound-on
 | Training & evaluation results | Yes — the metrics models are judged on |
 | Trained model weights | **Only if you allow it** — your choice per collaboration, set in the admin panel |
 
-Enforced by per-job container isolation, a NetworkPolicy that blocks data egress from training pods, a vulnerability scan before any model runs, and TLS on all traffic.
+Enforced by per-job container isolation, a NetworkPolicy that restricts training-pod egress, a vulnerability scan before any model runs, and TLS on all traffic.
 
 <Note>
 **The mental model:** `1 machine = 1 workspace = n datasets`. One deployment per machine; as many datasets inside it as you like.
