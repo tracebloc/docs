@@ -16,6 +16,23 @@
 
 ## 1. Core product terms
 
+> **"Secure environment" — the quotable definition** (RFC-0003 §1): the tracebloc
+> software running on infrastructure the customer controls (a laptop, a cloud
+> cluster, or bare metal), with **exactly three ingress channels, one egress
+> channel, and nothing sideways** — in: the **data ingester** (raw datasets),
+> the **tracebloc control plane** (models, weights, experiment instructions),
+> and the **tracebloc software** (digest-pinned images, chart, CLI); out: the
+> **tracebloc control plane** (trained weights, metrics, status). **Raw data is
+> never an egress channel** — it stays inside the customer's infrastructure, and
+> no inbound ports are required (the environment only dials out).
+>
+> **Wording discipline (external copy):** say *"defined, auditable ingress and
+> egress — and raw data is never an egress channel."* **Never call it
+> "air-gapped"** — a secure environment *requires* outbound connectivity (it
+> authenticates to the backend to obtain its Service Bus credentials; no backend
+> egress ⇒ experiments sit Pending), so a literal air-gap claim fails the first
+> serious security review. *"Almost air-gapped"* is internal shorthand only.
+
 | Concept | Preferred | Don't use | Status | Definition |
 |---|---|---|---|---|
 | The software you run on your infra (+ what it gives you) | **secure environment** | workspace, edge device, agent, box, node, cluster, instance, deployment, site | ✅ | **DECIDED 2026-07-12 (Lukas):** the on-prem environment is a **secure environment** everywhere user-facing (matches the marketing hero "Your own secure environment" + the installer/home-screen work). Supersedes the 2026-06-05 "workspace" pick and lifts the old "environment" soft-ban. **`client`** survives as the deep-tech / federated-learning synonym collaborators know (and in **Client ID**), but the default word is *secure environment*. The load-bearing rename. |

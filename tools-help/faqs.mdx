@@ -28,8 +28,8 @@ Kubernetes 1.24 and above. See the [setup guide](/environment-setup/setup-guide)
 ### Can I run on-premise only?
 Yes. The standalone installer provisions a local cluster on your machine, or you can deploy the unified Helm chart into your existing on-prem Kubernetes. The client never depends on cloud infrastructure for training.
 
-### Do you support air-gapped clusters?
-Yes — see the [packaged-chart install path in tracebloc/client INSTALL.md](https://github.com/tracebloc/client/blob/main/docs/INSTALL.md) for the offline flow.
+### Can I run offline / on disconnected infrastructure?
+The packaged-chart install path (see [tracebloc/client INSTALL.md](https://github.com/tracebloc/client/blob/main/docs/INSTALL.md)) supports an **offline install** — you can bring the digest-pinned images and chart in without pulling from the internet at install time. A *running* secure environment is **not** "air-gapped", though: it has **defined, auditable ingress and egress** — it dials out to the tracebloc control plane for experiment instructions and to report results, metrics, and weights — but **raw data is never an egress channel**, so your datasets stay inside your infrastructure. No inbound ports are required; the environment only dials out.
 
 ## Training & models
 
