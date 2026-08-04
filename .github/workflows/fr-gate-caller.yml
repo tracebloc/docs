@@ -1,0 +1,25 @@
+name: FR gate
+
+# Per-repo caller. Blocks merges to staging/main unless every contained kanban
+# item is in "Ready for staging" or "Ready for prod" respectively.
+# All logic lives in tracebloc/.github/.github/workflows/fr-gate.yml.
+#
+# `branches:` omits `master` — docs promotes to `main` and has never had a
+# `master` (listing a branch that does not exist is how dead filters accumulate,
+# backend#1428).
+#
+# NOTE (backend#1420): docs is fr-gate EXEMPT by policy (backend#1276) — content
+# PRs may target `main` directly without the develop -> staging -> main gate. This
+# caller only makes the `gate / gate` CHECK EXIST; it is deliberately NOT made a
+# required check here. Whether/where to require it is the open decision this PR
+# surfaces, not one it settles.
+
+on:
+  pull_request:
+    branches: [staging, main]
+    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
+
+jobs:
+  gate:
+    uses: tracebloc/.github/.github/workflows/fr-gate.yml@main
+    secrets: inherit
