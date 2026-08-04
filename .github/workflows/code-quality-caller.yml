@@ -1,0 +1,23 @@
+name: Code quality
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+# Supersede the previous run when a branch is pushed again.
+concurrency:
+  group: code-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    uses: tracebloc/.github/.github/workflows/code-quality.yml@main
+    with:
+      python: false   # 0 .py in docs
+      shell: false     # 0 .sh in docs
+      # gitleaks + house-rules run by default -- these are docs' real content gates
+      # (backend#1420, off-train gates-only). soft-fail left default (advisory) until
+      # a first green run is observed; arm required on main afterward.
