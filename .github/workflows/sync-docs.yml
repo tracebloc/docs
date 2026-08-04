@@ -121,19 +121,43 @@ jobs:
         if: steps.filter.outputs.count != '0'
         env:
           GH_TOKEN: ${{ secrets.SOURCE_REPOS_TOKEN || secrets.GITHUB_TOKEN }}
+          # true only when the PAT actually exists — used to give an actionable
+          # error, without ever exposing the secret value.
+          HAS_SOURCE_TOKEN: ${{ secrets.SOURCE_REPOS_TOKEN != '' && 'yes' || 'no' }}
         run: |
           mkdir -p /tmp/sync-cache
-          jq -c '.[]' /tmp/sources.json | while read -r s; do
+          failed=""
+          # Fetch every source, then report — don't die on the first one. The
+          # default GITHUB_TOKEN is scoped to THIS repo, so a private source
+          # (e.g. tracebloc-py-package) 404s unless SOURCE_REPOS_TOKEN is set;
+          # dying on the first source hid the other four and produced only a
+          # cryptic `gh: Not Found`. Process substitution (not `jq | while`) so
+          # the loop runs in this shell and `failed` survives.
+          while read -r s; do
             id=$(jq -r .id <<<"$s")
             repo=$(jq -r .repo <<<"$s")
             ref=$(jq -r .ref <<<"$s")
             src=$(jq -r .src <<<"$s")
             echo "Fetching $repo@$ref:$src -> /tmp/sync-cache/$id"
-            gh api "repos/$repo/contents/$src?ref=$ref" \
-              -H "Accept: application/vnd.github.raw" \
-              > "/tmp/sync-cache/$id"
-          done
-          ls -la /tmp/sync-cache
+            if gh api "repos/$repo/contents/$src?ref=$ref" \
+                 -H "Accept: application/vnd.github.raw" \
+                 > "/tmp/sync-cache/$id" 2>/tmp/gh-err; then
+              continue
+            fi
+            rm -f "/tmp/sync-cache/$id"   # don't sync a truncated/empty file
+            echo "::error::Could not fetch ${repo}@${ref}:${src} — $(tr -d '\n' < /tmp/gh-err)"
+            failed="$failed ${id}(${repo})"
+          done < <(jq -c '.[]' /tmp/sources.json)
+
+          ls -la /tmp/sync-cache || true
+
+          if [ -n "$failed" ]; then
+            echo "::error::Upstream fetch failed for:$failed"
+            if [ "$HAS_SOURCE_TOKEN" = "no" ]; then
+              echo "::error::SOURCE_REPOS_TOKEN is not set. Private sources are then read with the docs-scoped GITHUB_TOKEN, which 404s cross-repo. Create a fine-grained PAT with Contents:read on the private source repo(s) — currently tracebloc/tracebloc-py-package — and add it as the SOURCE_REPOS_TOKEN Actions secret on this repo (or the org)."
+            fi
+            exit 1
+          fi
 
       - name: Run Claude to update docs
         if: steps.filter.outputs.count != '0'
