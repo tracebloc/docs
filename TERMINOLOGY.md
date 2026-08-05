@@ -19,19 +19,20 @@
 > **"Secure environment" — the quotable definition** (RFC-0003 §1): the tracebloc
 > software running on infrastructure the customer controls (a laptop, a cloud
 > cluster, or bare metal), with **exactly three ingress channels, one egress
-> channel, and nothing sideways** — in: the **data ingester** (raw datasets),
-> the **tracebloc control plane** (models, weights, experiment instructions),
-> and the **tracebloc software** (digest-pinned images, chart, CLI); out: the
-> **tracebloc control plane** (trained weights, metrics, status). **Raw data is
-> never an egress channel** — it stays inside the customer's infrastructure, and
-> no inbound ports are required (the environment only dials out).
+> channel, and nothing sideways** — in: the **data ingestor** (raw datasets),
+> **the platform** (models, weights, experiment instructions), and the signed
+> release artifacts (digest-pinned images, chart, CLI); out: **the platform**
+> (trained weights, metrics, status). **Raw data is never an egress channel** —
+> it stays inside the customer's infrastructure, and no inbound ports are
+> required (the environment only dials out).
 >
 > **Wording discipline (external copy):** say *"defined, auditable ingress and
 > egress — and raw data is never an egress channel."* **Never call it
 > "air-gapped"** — a secure environment *requires* outbound connectivity (it
-> authenticates to the backend to obtain its Service Bus credentials; no backend
-> egress ⇒ experiments sit Pending), so a literal air-gap claim fails the first
-> serious security review. *"Almost air-gapped"* is internal shorthand only.
+> authenticates to **the platform** to obtain its messaging credentials; no
+> platform egress ⇒ experiments sit Pending), so a literal air-gap claim fails
+> the first serious security review. *"Almost air-gapped"* is internal
+> shorthand only.
 
 | Concept | Preferred | Don't use | Status | Definition |
 |---|---|---|---|---|
