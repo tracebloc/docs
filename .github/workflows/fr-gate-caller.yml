@@ -1,0 +1,22 @@
+name: FR gate
+
+# Per-repo caller. Blocks merges to staging/main/master unless every contained
+# kanban item is in "Ready for staging" or "Ready for prod" respectively.
+# All logic lives in tracebloc/.github/.github/workflows/fr-gate.yml.
+#
+# docs joins the release train (backend#1420) and the train's settle/release
+# stages poll this exact check ("gate / gate") on every hop PR, fail-closed —
+# a train repo without it can never complete a hop. The 2026-06-04 docs
+# exception (direct-to-main merges at Lukas's request, no FR process) is NOT
+# revoked by this gate: it lives on the train path only, and D6 self-signed
+# FR keeps it one /fr-pass per stage.
+
+on:
+  pull_request:
+    branches: [staging, main, master]
+    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
+
+jobs:
+  gate:
+    uses: tracebloc/.github/.github/workflows/fr-gate.yml@main
+    secrets: inherit

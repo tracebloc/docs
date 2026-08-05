@@ -77,6 +77,7 @@
             "pages": [
               "environment-setup/overview",
               "environment-setup/quickstart",
+              "environment-setup/setup-guide",
               {
                 "group": "Deployment environments",
                 "pages": [

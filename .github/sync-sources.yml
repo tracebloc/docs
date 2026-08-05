@@ -48,7 +48,7 @@ sources:
 
   - id: data-ingestors
     repo: tracebloc/data-ingestors
-    ref: master
+    ref: main
     src: Readme.md
     dest: create-use-case/prepare-dataset.mdx
     private: false
@@ -59,7 +59,7 @@ sources:
 
   - id: model-zoo
     repo: tracebloc/model-zoo
-    ref: master
+    ref: main
     src: README.md
     dest: create-use-case/templates.mdx
     private: false
