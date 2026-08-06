@@ -16,15 +16,16 @@
 
 ## 1. Core product terms
 
-> **"Secure environment" — the quotable definition** (RFC-0003 §1): the tracebloc
-> software running on infrastructure the customer controls (a laptop, a cloud
+> **"Secure environment" — the quotable definition** (restates **RFC-CLI-0003 §1**
+> in the terms below — house wording, not a verbatim quote): the tracebloc
+> software running on infrastructure the **owner** controls (a laptop, a cloud
 > cluster, or bare metal), with **exactly three ingress channels, one egress
 > channel, and nothing sideways** — in: the **data ingestor** (raw datasets),
 > **the platform** (models, weights, experiment instructions), and the signed
 > release artifacts (digest-pinned images, chart, CLI); out: **the platform**
 > (trained weights, metrics, status). **Raw data is never an egress channel** —
-> it stays inside the customer's infrastructure, and no inbound ports are
-> required (the environment only dials out).
+> it stays inside **your infrastructure**, and no inbound ports are required
+> (the environment only dials out).
 >
 > **Wording discipline (external copy):** say *"defined, auditable ingress and
 > egress — and raw data is never an egress channel."* **Never call it
@@ -44,6 +45,7 @@
 | The user's own servers / laptop | **your infrastructure** (the specific host: **this machine**) | your box, on-prem (as a noun) | ✅ | The **hardware** the secure environment runs on. Distinct from the **secure environment** above (the tracebloc software/runtime it gives you) — don't conflate the two. In CLI/installer copy the specific host is "this machine". |
 | The user's data | **dataset** | data source, "data set" (two words), "client dataset" | ✅ | Training & test data ingested and staged locally. (It's "your dataset" — never "client data set".) |
 | Bringing data in | **ingest** | upload, import, load, **push**, send, transfer | ✅ | Copying a dataset into your secure environment's storage. Raw data never leaves your infrastructure. |
+| The component that does the ingesting | **data ingestor** (the **ingestor** on second mention) | ingester (the -er spelling), importer, loader, connector, ETL job, data pipeline | ✅ | The containerized service that validates a dataset and stages it into your secure environment's storage — the first of the three ingress channels in the definition above. **`ingestor`, never `ingester`** (the distribution is `tracebloc-ingestor`, the import `tracebloc_ingestor` — see §9). It is a *component*; **ingest** above is the *verb*. |
 | Removing a dataset | **delete** | rm, drop, teardown | ✅ | Say "removes the dataset from your secure environment (the record is kept)"; keep table/PVC detail behind `--verbose`. |
 | Connection status | **Online / Offline** | connected/disconnected, up/down | ✅ | Whether your secure environment has an active secure connection. |
 
@@ -184,6 +186,7 @@ Command group is `data` (alias `dataset` one cycle). Keep cluster/namespace/PVC/
 - **vendor** → **collaborators** *(client README, SDK README, frontend "Vendor Testing Platform" ×54, several docs pages)*
 - **push / `dataset push`** → **ingest / `data ingest`** *(client README quick-install, docs cli.mdx)*
 - **`dataset rm`** → **`data delete`** *(cli README)*
+- **ingester** → **data ingestor** *(exactly one instance org-wide: the `Data ingester` channel row in `cli/docs/rfcs/0003-storage-and-offboard-hygiene.md` §1 — the RFC the definition above restates. Left in place: that RFC is Accepted with a dated decision log, so it is a review target here, not a silent edit there.)*
 - **"data set" (two words) / "client dataset"** → **dataset** / "your dataset"
 - **category** → **task** *(docs cli.mdx, "9 task categories")*
 - **uploadModel()** → **upload_model()** *(model-zoo README)*
