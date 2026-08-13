@@ -1,0 +1,50 @@
+name: SDK install extras
+
+# Asserts that every documented `pip install "tracebloc[...]"` line names an
+# extra that actually exists in the release its version floor resolves to.
+#
+# Catches the failure mode from backend#1858: tools-help/tracebloc.mdx
+# documented `tracebloc[boosting]` and `tracebloc[survival]` for eight
+# published releases after both were removed in 0.10.0.
+#
+# This is the one class of docs error no other check here can see:
+#   - Mintlify validates links and MDX; a fenced code block is opaque to it.
+#   - `pip` does not fail on an unknown extra. It warns, installs the core
+#     package, and exits 0 — so the reader's install "succeeds" and then dies
+#     later as an ImportError, far from the command that caused it.
+#
+# Runs on a schedule as well as on push, because the docs can rot without the
+# docs changing: a floating `>=` floor silently re-points at each new release,
+# so an extra removed upstream breaks a page nobody edited.
+#
+# No step interpolates event data into a shell command; the only expression
+# used is github.ref, in the concurrency key.
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    paths:
+      - '**.mdx'
+      - '**.md'
+      - 'scripts/check-sdk-extras.py'
+      - '.github/workflows/sdk-extras-check.yml'
+  schedule:
+    - cron: '30 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sdk-extras-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Validate documented extras against PyPI
+        run: python3 scripts/check-sdk-extras.py
