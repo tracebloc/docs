@@ -70,17 +70,50 @@ def parse_version(value: str) -> tuple:
     return tuple(parts)
 
 
+# A PEP 440 pre-release / dev-release marker on the end of the release segment:
+# 0.19.0a1, 1.2b3, 2.0rc1, 1.0.dev1. `.postN` is deliberately NOT here — post
+# releases install by default, so they are ordinary candidates.
+#
+# Hand-rolled because this script is stdlib-only by construction: its workflow
+# runs `python3 scripts/check-sdk-extras.py` with no setup-python and no pip
+# install, so `packaging.version` is not importable and adding it would mean
+# adding a dependency step to a docs check.
+_PRERELEASE_RE = re.compile(
+    r"^\d+(?:\.\d+)*[._-]?(?:a|b|c|rc|alpha|beta|pre|preview|dev)\d*",
+    re.IGNORECASE,
+)
+
+
+def is_prerelease(value: str) -> bool:
+    return bool(_PRERELEASE_RE.match(value))
+
+
 def resolve_version(floor: str | None, operator: str | None, releases: list[str]) -> str:
     """Which published version does this documented specifier actually select?
 
     `pip` picks the NEWEST version satisfying the specifier, so that — not the
     floor itself — is the version whose extras the reader ends up with.
+
+    PRE-RELEASES ARE EXCLUDED, because pip does not install them without `--pre`
+    and the documented commands do not pass it. `parse_version` reduces a tag to
+    a digit tuple, so `0.19.0a1` became (0, 19, 0) and outranked `0.18.1` — the
+    gate would then check the extras of a version no reader can get, and pass or
+    fail on a package they will never install (Bugbot, docs#114).
+
+    If a package has ONLY pre-releases the filter would leave nothing to pick, so
+    it falls back to the unfiltered list rather than crashing on an empty max().
+    WHICH pre-release that picks is arbitrary: `parse_version` reduces 1.0.0a1
+    and 1.0.0b2 to the same (1, 0, 0), and ordering them properly needs real
+    PEP 440 parsing, which this stdlib-only script cannot do. Stated rather than
+    silently relied on — tracebloc has 11 stable releases, so the branch is a
+    guard against an empty max(), not a code path anyone rides.
     """
+    stable = [r for r in releases if not is_prerelease(r)] or releases
     if floor is None:
-        return max(releases, key=parse_version)
+        return max(stable, key=parse_version)
     if operator == "==":
         return floor
-    candidates = [r for r in releases if parse_version(r) >= parse_version(floor)]
+    candidates = [r for r in stable if parse_version(r) >= parse_version(floor)]
     if not candidates:
         return floor
     return max(candidates, key=parse_version)
