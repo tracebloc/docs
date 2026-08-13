@@ -32,8 +32,9 @@ conda create -n tracebloc python=3.12
 conda activate tracebloc
 ```
 
-The SDK requires Python 3.11 or 3.12. On an older Python, `pip` cannot see any
-current release and silently falls back to 0.8.1, which is eight releases behind.
+The SDK requires Python 3.11 or 3.12. On an older Python, no release satisfies
+the `>=0.18.1` requirement below, so `pip` stops with a `No matching distribution
+found` error instead of installing anything.
 
 Then, install requirements:
 
