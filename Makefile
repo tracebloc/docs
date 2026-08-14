@@ -30,7 +30,17 @@ help:
 
 # ---- check -------------------------------------------------------
 #
-# MEASURED at 1.8 s on the current tree, and green.
+# MEASURED at 1.8 s warm (2.9 s cold) on the current tree, and green.
+#
+# The "and green" half of that claim was false from the day it was
+# written, and is only true again as of this commit. `mint broken-links`
+# MDX-parses the repo-meta markdown at the root, and the org-standards
+# sync had already written HTML comments — which MDX cannot represent —
+# into CLAUDE.md on 2026-08-10, the day before this target landed. So
+# `make check` was red on develop for its entire life up to here, and the
+# pre-push hook that runs it would have blocked every push. Fixed by
+# listing those files in .mintignore, which carries the reasoning and the
+# per-file measurements.
 #
 # This repo has no test suite. The automated checks on a docs PR are the
 # org-shared ones (gitleaks + house-rules, which need the shared checker

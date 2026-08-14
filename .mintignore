@@ -3,8 +3,39 @@
 # — but in practice the dev server still tries to MDX-parse files inside
 # .github (e.g. pull_request_template.md, which uses HTML <!-- comments),
 # so list it explicitly.
+#
+# The same trap catches the repo-meta markdown at the root. `mint
+# broken-links` MDX-parses it, and MDX cannot represent an HTML comment
+# — it fails the whole run with a hard "Syntax error … Unexpected
+# character `!`", not a warning. CLAUDE.md hit this the moment the
+# org-standards sync from tracebloc/.github wrote its <!-- org-standards:begin -->
+# markers into it — and so `make check`, and the pre-push hook that runs
+# it, were red on develop from the day they were added.
+#
+# Measured, not assumed — each candidate was probed by appending an HTML
+# comment and re-running `mint broken-links` (2026-08-14, mint 4.2.802):
+#
+#   CLAUDE.md         PARSED   -> listed below (this is the one that broke)
+#   AGENTS.md         PARSED   -> listed below
+#   TERMINOLOGY.md    PARSED   -> listed below
+#   .cursor/BUGBOT.md PARSED   -> listed below (via .cursor/)
+#   README.md         skipped  -> auto-ignore genuinely holds here
+#   CONTRIBUTING.md   skipped  -> auto-ignore genuinely holds here
+#   .claude/**        skipped  -> auto-ignore genuinely holds here
+#
+# None of these are pages: no root markdown file appears in docs.json
+# navigation, so ignoring them checks nothing less. They are listed
+# pre-emptively rather than reactively — any of them can grow an HTML
+# comment (the org-standards sync is automated and will keep writing
+# them), and the failure mode is a red run for every contributor, not a
+# local nuisance.
 .github/
 .github/**
+.cursor/
+.cursor/**
+CLAUDE.md
+AGENTS.md
+TERMINOLOGY.md
 
 # Draft content
 drafts/
