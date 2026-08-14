@@ -43,8 +43,12 @@ help:
 # `mint broken-links` is what catches a bad link before pushing. It is
 # also the check that would have caught the class of problem
 # preview-page-coverage.yml exists to catch, one step earlier.
+#
+# The prerequisite is spelled `guard-toolchain` — the uniform name the pre-push
+# hook asks for before it runs `make check` (backend#1995) — and in this repo
+# that is guard-mint.
 .PHONY: check
-check: guard-mint
+check: guard-toolchain
 	$(MINT) broken-links
 
 # check-all adds the one gate that needs network: every documented
@@ -77,6 +81,38 @@ guard-mint:
 	  echo "  npm i -g mint      (or: make setup)"; \
 	  exit 1; }
 
+# guard-toolchain: is the toolchain `check` needs on PATH at all?
+#
+# The uniform name every repo exposes, so the pre-push hook can ask one
+# question — "can this shell run check at all?" — and skip itself on failure
+# rather than hard-failing the push on "mint: command not found"
+# (backend#1995). GUI/IDE git clients launch hooks with a minimal PATH, where
+# /usr/bin/make is present but `npm i -g mint` output is not.
+#
+# Reuses guard-mint rather than making a second copy of that check: `check`
+# depends on this target, so the mint probe lives in exactly one place and
+# cannot drift as `check` changes. (`check-all` additionally needs python3,
+# which is a base-system tool and is not gated here; the hook only runs
+# `check`.)
+#
+# node is checked too, because mint IS a node program — its bin is a
+# `#!/usr/bin/env node` script. mint on PATH without node on PATH is a REAL
+# combination: `npm i -g mint` can land the shim in a prefix a GUI hook shell
+# has while nvm/fnm/volta put node somewhere it does not. Then mint is found and
+# dies with "env: node: No such file or directory", exit 127 — the same hard
+# failure backend#1995 is about.
+#
+# TOOLS, NOT DEPENDENCIES: it asks whether mint and node are on PATH, never
+# whether the docs tree is in a state mint would accept. A broken link is a real
+# failure and must NOT be skipped just because "cannot run" and "runs and fails"
+# look similar from the outside.
+.PHONY: guard-toolchain
+guard-toolchain: guard-mint
+	@command -v node >/dev/null 2>&1 || { \
+	  echo "node is not on PATH — the Mintlify CLI is a Node program; install Node, then:"; \
+	  echo "  make setup"; \
+	  exit 1; }
+
 # dev: local preview, per README.md.
 .PHONY: dev
 dev: guard-mint
@@ -96,6 +132,26 @@ dev: guard-mint
 # `git rev-parse --git-path hooks` (not a hard-coded `.git/hooks`) so it lands
 # in the right place inside a linked worktree or a submodule, where the git dir
 # is not `.git`.
+#
+# The core.hooksPath guard below resolves the HOOKS DIRECTORY ITSELF, not its
+# parent (frontend-app#809). Two cases the parent-based version got wrong:
+#
+#   symlink   core.hooksPath=.githooks where .githooks is a symlink to a shared
+#             dir. `dirname` is the checkout root, which resolves in-repo, so it
+#             installed — and the write went THROUGH the symlink into the shared
+#             dir. The one path element that can point elsewhere was the only
+#             one never resolved.
+#   worktree  a linked worktree whose core.hooksPath is the main repo's
+#             .git/hooks. The parent is outside the worktree's toplevel, so it
+#             skipped — even though that directory belongs to the SAME
+#             repository, and the worktree silently got no hook.
+#
+# So: resolve the hooks dir itself when it exists, else the deepest existing
+# ancestor (there is no symlink left to resolve below that), and count it as
+# in-repo if it is under EITHER the worktree toplevel OR the repo's common git
+# dir. The common-git-dir arm is what fixes the worktree case without
+# re-opening the shared-dir case the guard legitimately exists to catch. An
+# unresolvable path still skips: "cannot tell" is not evidence that it is ours.
 .PHONY: install-hooks
 install-hooks:
 	@if ! git rev-parse --git-dir >/dev/null 2>&1; then \
@@ -103,11 +159,19 @@ install-hooks:
 	elif hp="$$(git config --get core.hooksPath 2>/dev/null || true)"; [ -n "$$hp" ] && { \
 	       hd="$$(git rev-parse --git-path hooks)"; \
 	       case "$$hd" in /*) hdd="$$hd";; *) hdd="$$PWD/$$hd";; esac; \
-	       cpar="$$(cd "$$(dirname "$$hdd")" 2>/dev/null && pwd -P || true)"; \
+	       hdx="$$hdd"; \
+	       while [ ! -d "$$hdx" ] && [ "$$hdx" != "$$(dirname "$$hdx")" ]; do \
+	         hdx="$$(dirname "$$hdx")"; \
+	       done; \
+	       chd="$$(cd "$$hdx" 2>/dev/null && pwd -P || true)"; \
 	       ctop="$$(cd "$$(git rev-parse --show-toplevel)" && pwd -P)"; \
-	       [ -z "$$cpar" ] || case "$$cpar/" in "$$ctop/"*) false;; *) true;; esac; \
+	       cgd="$$(cd "$$(git rev-parse --git-common-dir)" 2>/dev/null && pwd -P || true)"; \
+	       inr=0; \
+	       case "$$chd/" in "$$ctop/"*) inr=1;; esac; \
+	       if [ -n "$$cgd" ]; then case "$$chd/" in "$$cgd/"*) inr=1;; esac; fi; \
+	       [ -z "$$chd" ] || [ "$$inr" = 0 ]; \
 	     }; then \
-	  echo "note: core.hooksPath is set to '$$hp', outside this repo — skipping."; \
+	  echo "note: core.hooksPath is set to '$$hp' (resolves to '$$chd'), outside this repo — skipping."; \
 	  echo "      That is a shared hooks dir; installing here would run 'make check' from every repo you push."; \
 	  echo "      Add 'make check' to that hook by hand if you want it everywhere."; \
 	else \
@@ -141,8 +205,23 @@ install-hooks:
 	      '#' \
 	      '# Git exports GIT_DIR/GIT_WORK_TREE/etc into hook processes; a nested git' \
 	      '# invocation (from a test, tool, or setuptools-scm) then fails in a linked' \
-	      '# worktree with exit status 128. Clear them so make check runs as from the shell.' \
+	      '# worktree with exit status 128. Clear them so the make runs below behave' \
+	      '# as they do from an ordinary shell.' \
 	      'unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR GIT_OBJECT_DIRECTORY' \
+	      '#' \
+	      '# Guarding on make alone was not enough (backend#1995): /usr/bin/make ships' \
+	      '# with the Xcode CLT and sits on the default launchd PATH, while the tools' \
+	      '# make check actually runs — yarn/node via nvm/fnm/volta, mint via npm -g —' \
+	      '# are put on PATH by shell rc files this hook shell never sources. So the' \
+	      '# skip above passed and the push then hard-failed on "command not found":' \
+	      '# exactly the outcome the skip exists to prevent, and VS Code offers no' \
+	      '# --no-verify on push.' \
+	      '#' \
+	      '# Ask the Makefile rather than restating the tool list here: guard-toolchain' \
+	      '# is a prerequisite of check itself, so it cannot drift when check gains a' \
+	      '# dependency. It guards on the TOOLS, not on installed dependencies — a' \
+	      '# missing node_modules is a real failure and must not be skipped.' \
+	      'make guard-toolchain >/dev/null 2>&1 || exit 0' \
 	      'exec make check' > "$$hook" && \
 	    chmod +x "$$hook" && \
 	    echo "==> pre-push hook installed at $$hook" && \
