@@ -195,7 +195,22 @@ jobs:
 
       - name: Open or update PR
         if: steps.filter.outputs.count != '0'
-        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6.1.0
+        # v8, and BOTH halves of that are load-bearing.
+        #
+        # Compatibility: checkout v6+ writes its credentials under $RUNNER_TEMP,
+        # and create-pull-request before v7.0.9 then sends a duplicate
+        # `Authorization` header and fails this step outright
+        # (peter-evans/create-pull-request#4228, fixed by #4230). Bumping checkout
+        # to v7.0.1 in this commit while leaving v6.1.0 here would have stopped
+        # the docs sync opening or updating PRs at all — silently, since a sync
+        # that never runs files no complaint (Bugbot).
+        #
+        # Runtime: v7.0.11 fixes the clash but is still `using: node20`, so it
+        # would have failed THIS commit's whole purpose. v8.0.0 is the first
+        # `node24` release. Its only breaking change is requiring Actions Runner
+        # v2.327.1+ on SELF-HOSTED runners; every job in this repo is
+        # GitHub-hosted, so it does not apply here.
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           base: ${{ steps.setup.outputs.base }}
           branch: docs/sync-upstream
