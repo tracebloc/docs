@@ -85,7 +85,7 @@ Auto-detected. ROCm is installed automatically on Ubuntu and RHEL/CentOS. A logo
 
 ### macOS
 
-CPU only. Docker Desktop on macOS does not support GPU passthrough. For GPU workloads, deploy on a Linux machine with NVIDIA GPUs or use [AWS (EKS)](/environment-setup/eks-client-deployment-guide).
+CPU only, on both Intel and Apple silicon. Training runs inside Linux containers, which on macOS run in a virtual machine with no access to the Apple GPU — so macOS machines train on CPU by design, regardless of device settings. For GPU training, use a machine with an NVIDIA GPU (Linux, or Windows via WSL2), or deploy on [AWS (EKS)](/environment-setup/eks-client-deployment-guide).
 
 ### Windows
 
