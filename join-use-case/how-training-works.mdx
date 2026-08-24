@@ -7,6 +7,10 @@ This page documents the training and inference pipeline that the tracebloc clien
 
 If something here does not match what you observe in your run, please [contact us](mailto:support@tracebloc.io) so we can investigate together.
 
+<Note>
+  **TensorFlow is deprecated.** New TensorFlow model uploads are no longer accepted — use **PyTorch** for new models (scikit-learn is also supported where noted). Existing TensorFlow experiments remain readable, so the TensorFlow-specific behavior described below applies only to them.
+</Note>
+
 ## Shared lifecycle
 
 Every use case runs through the same outer loop on the edge:
@@ -63,7 +67,7 @@ To replicate a run locally, read the actual values your experiment was launched 
 
 <Accordion title="Image classification" icon="image">
 
-**Frameworks:** PyTorch, TensorFlow
+**Frameworks:** PyTorch (TensorFlow is deprecated and read-only for existing experiments)
 
 **Input**
 - Image files (JPEG / PNG) supplied through the dataset metadata as `data_id` (the image filename) and `label` (the class name).
@@ -302,7 +306,7 @@ Each metric is computed independently; if one fails (for example, AUC-ROC on a s
 
 <Accordion title="Tabular classification" icon="table">
 
-**Frameworks:** PyTorch, TensorFlow, and any scikit-learn-compatible estimator (including XGBoost and LightGBM).
+**Frameworks:** PyTorch and any scikit-learn-compatible estimator (including XGBoost and LightGBM). (TensorFlow is deprecated and read-only for existing experiments.)
 
 **Input**
 - A tabular file with feature columns plus a label column. The label column name is configurable; categorical feature values can be strings.
@@ -353,7 +357,7 @@ Each metric is computed independently; if one fails, it falls back to zero rathe
 
 <Accordion title="Tabular regression" icon="chart-line">
 
-**Frameworks:** PyTorch, TensorFlow, and any scikit-learn-compatible regressor (including XGBoost and LightGBM).
+**Frameworks:** PyTorch and any scikit-learn-compatible regressor (including XGBoost and LightGBM). (TensorFlow is deprecated and read-only for existing experiments.)
 
 **Input**
 - A tabular file with feature columns plus a continuous target column. The target column name is configurable.
