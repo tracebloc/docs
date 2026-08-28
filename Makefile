@@ -128,6 +128,14 @@ guard-toolchain: guard-mint
 dev: guard-mint
 	$(MINT) dev
 
+# test-hooks: run the install-hooks / pre-push-hook behaviour suite on demand.
+# Not a `check` dependency: it runs real `make` in throwaway git repos, so an
+# environment quirk (old git, noexec /tmp) could block a local push on something
+# CI never sees. Run it directly with `make test-hooks` (backend#1749).
+.PHONY: test-hooks
+test-hooks:
+	@sh scripts/tests/test-pre-push-hook.sh
+
 # install-hooks: put a pre-push hook in place that runs `make check`, so the
 # canon's "run the tests before you push" is carried by the tooling rather than
 # by memory. Factored out of `setup` so it is independently runnable and
@@ -162,6 +170,12 @@ dev: guard-mint
 # dir. The common-git-dir arm is what fixes the worktree case without
 # re-opening the shared-dir case the guard legitimately exists to catch. An
 # unresolvable path still skips: "cannot tell" is not evidence that it is ours.
+#
+# One escape the walk alone still missed: a `..` hidden behind a not-yet-created
+# prefix (core.hooksPath=missing/../..) makes it climb PAST the missing prefix to
+# the worktree and read it as in-repo — writing pre-push into the parent, the
+# stomp above. That suffix is unresolvable until the prefix exists, so the guard
+# tracks what it walked past and refuses any `..` left in that tail (backend#2716).
 .PHONY: install-hooks
 install-hooks:
 	@if ! git rev-parse --git-dir >/dev/null 2>&1; then \
@@ -169,9 +183,9 @@ install-hooks:
 	elif hp="$$(git config --get core.hooksPath 2>/dev/null || true)"; [ -n "$$hp" ] && { \
 	       hd="$$(git rev-parse --git-path hooks)"; \
 	       case "$$hd" in /*) hdd="$$hd";; *) hdd="$$PWD/$$hd";; esac; \
-	       hdx="$$hdd"; \
+	       hdx="$$hdd"; sfx=''; \
 	       while [ ! -d "$$hdx" ] && [ "$$hdx" != "$$(dirname "$$hdx")" ]; do \
-	         hdx="$$(dirname "$$hdx")"; \
+	         sfx="$$(basename "$$hdx")/$$sfx"; hdx="$$(dirname "$$hdx")"; \
 	       done; \
 	       chd="$$(cd "$$hdx" 2>/dev/null && pwd -P || true)"; \
 	       ctop="$$(cd "$$(git rev-parse --show-toplevel)" && pwd -P)"; \
@@ -179,9 +193,10 @@ install-hooks:
 	       inr=0; \
 	       case "$$chd/" in "$$ctop/"*) inr=1;; esac; \
 	       if [ -n "$$cgd" ]; then case "$$chd/" in "$$cgd/"*) inr=1;; esac; fi; \
+	       case "/$$sfx" in */../*) inr=0;; esac; \
 	       [ -z "$$chd" ] || [ "$$inr" = 0 ]; \
 	     }; then \
-	  echo "note: core.hooksPath is set to '$$hp' (resolves to '$$chd'), outside this repo — skipping."; \
+	  echo "note: core.hooksPath is set to '$$hp', outside this repo — skipping."; \
 	  echo "      That is a shared hooks dir; installing here would run 'make check' from every repo you push."; \
 	  echo "      Add 'make check' to that hook by hand if you want it everywhere."; \
 	else \
