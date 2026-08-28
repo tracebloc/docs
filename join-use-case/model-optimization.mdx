@@ -27,7 +27,12 @@ HuggingFace) while training — a training pod has no such egress. In practice y
 model file must **not**:
 
 - call `*.from_pretrained("<hub-id>")` for a model, tokenizer, or config, or
-- declare a `model_id`, `tokenizer_id`, or `hf_token` variable.
+- call `torch.hub.load(...)`, or reach the same functions indirectly via
+  `getattr(X, "from_pretrained")`.
+
+These are refused at upload by the model-validation check, not merely
+discouraged. Setting `model_id`, `tokenizer_id` or `hf_token` is a separate
+matter — see the note under [Additional variables](#additional-variables).
 
 To start from a pretrained model, download its weights once, build the same
 architecture in your model file, and upload the weights alongside it (see
@@ -92,7 +97,13 @@ Some additional variables are required for specific categories
 * **num_feature_points** : number of keypoints or feature points for which this model file is created. This variable is used only for keypoint_detection and generic_classification category.
 
 <Note>
-`model_id`, `tokenizer_id`, and `hf_token` are no longer supported — hub-referenced models are not accepted. See [Models build locally (no external hubs)](#models-build-locally-no-external-hubs).
+`model_id`, `tokenizer_id` and `hf_token` are **still accepted** by the SDK and
+the API — they are not rejected at upload. What changed is that they can no
+longer achieve a hub fetch: a training pod has no egress to an external hub, and
+the hub-fetching calls themselves are refused (see
+[Models build locally (no external hubs)](#models-build-locally-no-external-hubs)).
+So supplying them has no effect on where your architecture or tokenizer comes
+from — build locally and upload weights instead.
 </Note>
 
 <Warning>
