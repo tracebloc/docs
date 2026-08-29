@@ -17,12 +17,23 @@ Pick the extra that matches your ML framework — the default install ships the 
 
 ```bash
 pip install "tracebloc[pytorch]>=0.18.1"                       # most users
-# pip install "tracebloc[tensorflow]>=0.18.1"                  # TensorFlow
 # pip install "tracebloc[sklearn]>=0.18.1"                     # scikit-learn, incl. XGBoost / CatBoost / LightGBM
 # pip install "tracebloc[xgboost]>=0.18.1"                     # one boosting backend only (or: catboost, lightgbm)
 # pip install "tracebloc[lifelines,scikit-survival]>=0.18.1"   # survival analysis
-# pip install "tracebloc[all]>=0.18.1"                         # everything
+# pip install "tracebloc[all]>=0.18.1"                         # pytorch + sklearn + lifelines + scikit-survival
 ```
+
+<Note>
+**There is no `tensorflow` extra**, and `all` does not include TensorFlow — it
+resolves to `pytorch`, `sklearn`, `lifelines` and `scikit-survival`. The
+published extras are exactly: `pytorch`, `sklearn`, `xgboost`, `catboost`,
+`lightgbm`, `lifelines`, `scikit-survival`, `all` and `dev`.
+
+This matters because of how pip behaves: **an unknown extra is a warning, not an
+error, and pip still exits 0**. Asking for one that does not exist therefore
+appears to succeed while installing the core SDK only, and the failure surfaces
+much later as a missing framework.
+</Note>
 
 <Note>
   The umbrella `[boosting]` and `[survival]` extras were removed in 0.10.0, along with `[huggingface]` (the Hugging Face stack now ships inside `[pytorch]`). Use the per-library extras above. `pip` does not fail on an unknown extra — it prints a warning, installs the core SDK only, and exits 0, so the mistake surfaces later as an `ImportError`.
