@@ -85,7 +85,7 @@ Auto-detected. ROCm is installed automatically on Ubuntu and RHEL/CentOS. A logo
 
 ### macOS
 
-CPU only. Docker Desktop on macOS does not support GPU passthrough. For GPU workloads, deploy on a Linux machine with NVIDIA GPUs or use [AWS (EKS)](/environment-setup/eks-client-deployment-guide).
+CPU only, on both Intel and Apple silicon. Training runs inside Linux containers, which on macOS run in a virtual machine with no access to the Apple GPU — so macOS machines train on CPU by design, regardless of device settings. For GPU training, use a machine with an NVIDIA GPU (Linux, or Windows via WSL2), or deploy on [AWS (EKS)](/environment-setup/eks-client-deployment-guide).
 
 ### Windows
 
@@ -288,7 +288,7 @@ The CronJob's ServiceAccount is bound to the built-in `cluster-admin` ClusterRol
 
 #### NetworkPolicy hardening for training pods
 
-Training pods run untrusted ML code. The chart can apply a NetworkPolicy that denies ingress and restricts egress to DNS + external HTTPS only — blocking pod-to-pod, MySQL, and Kubernetes API access from the training pod.
+Training pods run untrusted ML code. The chart can apply a NetworkPolicy that denies all ingress and restricts egress — arbitrary pod-to-pod traffic and the Kubernetes API are blocked, while the in-cluster MySQL that serves the training data and the proxy that reports results stay reachable. Direct outbound HTTPS is allowed by default; a stricter lockdown that instead routes it through an in-cluster egress gateway can be enabled per cluster.
 
 ```yaml
 networkPolicy:

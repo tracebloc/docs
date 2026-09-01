@@ -28,9 +28,13 @@ Then, install the [Anaconda](https://www.anaconda.com/docs/getting-started/anaco
 Create a new environment, name it for example "tracebloc":
 
 ```bash
-conda create -n tracebloc python=3.9
+conda create -n tracebloc python=3.12
 conda activate tracebloc
 ```
+
+The SDK requires Python 3.11 or 3.12. On an older Python, no release satisfies
+the `>=0.18.1` requirement below, so `pip` stops with a `No matching distribution
+found` error instead of installing anything.
 
 Then, install requirements:
 
@@ -38,10 +42,9 @@ Then, install requirements:
 python -m pip install --upgrade pip
 
 # Install with the extra that matches your framework:
-pip install "tracebloc[pytorch]>=0.8.1"
-# pip install "tracebloc[tensorflow]>=0.8.1"
-# pip install "tracebloc[sklearn]>=0.8.1"
-# pip install "tracebloc[all]>=0.8.1"  # legacy behaviour — all frameworks
+pip install "tracebloc[pytorch]>=0.18.1"
+# pip install "tracebloc[sklearn]>=0.18.1"
+# pip install "tracebloc[all]>=0.18.1"  # pytorch + sklearn + lifelines + scikit-survival
 ```
 
 ## Install and Launch Jupyter Notebook

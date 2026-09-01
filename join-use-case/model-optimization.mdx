@@ -3,6 +3,10 @@ title: "Customize Models"
 description: "Learn the model format requirements, mandatory variables per framework and pre-trained weights for uploading and training models on the tracebloc workspace."
 ---
 
+<Note>
+  **TensorFlow is deprecated.** New TensorFlow model uploads are no longer accepted — author new models in **PyTorch** or **scikit-learn**. The TensorFlow mandatory variables and TensorFlow file-format examples below are retained only as reference for existing TensorFlow experiments, which remain readable.
+</Note>
+
 ## Use Pre-trained Weights
 
 Upload weights along with your model in the `user.upload_model()` step and set `weights=True`, the default value is False:
@@ -82,6 +86,10 @@ The file must contain these variables:
 * **batch_size** : name of the variable defining the batch size of the images considered for creating model layers.
 
 ### Tensorflow mandatory variables
+
+<Note>
+  Deprecated — retained for existing TensorFlow experiments. New uploads must use PyTorch or scikit-learn.
+</Note>
 
 Each format must contain these variables on the main file:
 * **framework** : name of the framework for which this model file is created. For tensorflow its value will be tensorflow.
@@ -207,6 +215,10 @@ The value of the above variables would look like this:
 * batch_size = 16
 
 ### 3. Single python file containing one/multiple methods for tensorflow
+
+<Note>
+  Formats 3 and 4 (TensorFlow) are deprecated and retained only for existing TensorFlow experiments. New uploads must use the PyTorch or scikit-learn formats above.
+</Note>
 
 All your model code needs to be contained in a **single python file** with the following structure:
 
